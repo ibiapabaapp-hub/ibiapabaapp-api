@@ -1,5 +1,9 @@
-@baseUrl = http://localhost:3000
+@baseUrl = http://localhost:3000/api/v1
 @leadUUID = leadUUIDexample
+
+# @name Hello
+GET {{baseUrl}}/
+###
 
 # @name CreateLead
 POST {{baseUrl}}/leads
