@@ -16,7 +16,9 @@ describe('AppController', () => {
 
   describe('root', () => {
     it('should return "Hello IbiapabaApp!"', () => {
-      expect(appController.getHello()).toBe('Hello IbiapabaApp!');
+      expect(appController.getHello()).toStrictEqual({
+        message: 'Hello IbiapabaApp!',
+      });
     });
   });
 });
