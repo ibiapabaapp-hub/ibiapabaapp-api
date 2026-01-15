@@ -37,29 +37,21 @@ export class LeadsService {
   }
 
   async update(id: string, updateLeadDto: UpdateLeadDto) {
-    const { name, email, phone_number, type, company_name } = updateLeadDto;
+    await this.findOne(id);
 
-    const updated = await this.prismaService.leads.updateMany({
+    return await this.prismaService.leads.update({
       where: { id },
-      data: { name, email, phone_number, type, company_name },
+      data: updateLeadDto,
     });
-
-    if (updated.count === 0) {
-      throw new NotFoundException('Lead does not exist');
-    }
-
-    return updated;
   }
 
   async remove(id: string) {
-    const deleted = await this.prismaService.leads.deleteMany({
+    await this.findOne(id);
+
+    await this.prismaService.leads.delete({
       where: { id },
     });
 
-    if (deleted.count === 0) {
-      throw new NotFoundException('Lead does not exist');
-    }
-
-    return deleted;
+    return { message: 'Lead deleted successfully' };
   }
 }
