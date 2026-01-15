@@ -1,26 +1,65 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
+import { PrismaService } from 'src/common/prisma/prisma.service';
 
 @Injectable()
 export class LeadsService {
-  create(createLeadDto: CreateLeadDto) {
-    return 'This action adds a new lead';
+  constructor(private prismaService: PrismaService) {}
+
+  async create(createLeadDto: CreateLeadDto) {
+    const { name, email, phone_number, type, company_name } = createLeadDto;
+    return await this.prismaService.leads.create({
+      data: {
+        name,
+        email,
+        phone_number,
+        type,
+        company_name,
+      },
+    });
   }
 
-  findAll() {
-    return `This action returns all leads`;
+  async findAll() {
+    return await this.prismaService.leads.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} lead`;
+  async findOne(id: string) {
+    const lead = await this.prismaService.leads.findFirst({
+      where: { id },
+    });
+
+    if (!lead) {
+      throw new NotFoundException('Lead does not exist');
+    }
+
+    return lead;
   }
 
-  update(id: number, updateLeadDto: UpdateLeadDto) {
-    return `This action updates a #${id} lead`;
+  async update(id: string, updateLeadDto: UpdateLeadDto) {
+    const { name, email, phone_number, type, company_name } = updateLeadDto;
+
+    const updated = await this.prismaService.leads.updateMany({
+      where: { id },
+      data: { name, email, phone_number, type, company_name },
+    });
+
+    if (updated.count === 0) {
+      throw new NotFoundException('Lead does not exist');
+    }
+
+    return updated;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} lead`;
+  async remove(id: string) {
+    const deleted = await this.prismaService.leads.deleteMany({
+      where: { id },
+    });
+
+    if (deleted.count === 0) {
+      throw new NotFoundException('Lead does not exist');
+    }
+
+    return deleted;
   }
 }
