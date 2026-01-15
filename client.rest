@@ -1,0 +1,36 @@
+@baseUrl = http://localhost:3000
+@leadUUID = leadUUIDexample
+
+# @name CreateLead
+POST {{baseUrl}}/leads
+Content-Type: application/json
+
+{
+    "name": "Manuel",
+    "email": "manuel@teste.com",
+    "type": "resident",
+    "phone_number": "(00) 0 0000-0000"
+}
+###
+
+# @name GetLeads
+GET {{baseUrl}}/leads
+###
+
+# @name GetLeadById
+GET {{baseUrl}}/leads/leadUUID
+###
+
+# @name UpdateLeadById
+PATCH {{baseUrl}}/leads/{{leadUUID}}
+Content-Type: application/json
+
+{
+    "name": "Teste"
+}
+###
+
+# @name DeleteLeadById
+DELETE {{baseUrl}}/leads/{{leadUUID}}
+Content-Type: application/json
+###
