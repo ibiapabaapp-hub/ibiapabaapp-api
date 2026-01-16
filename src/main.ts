@@ -17,6 +17,13 @@ async function bootstrap() {
   app.enableVersioning({
     type: VersioningType.URI,
   });
+  app.enableCors({
+    origin: [
+      'http://localhost:3001',
+      'https://ibiapabaapp.com.br',
+      'https://ibiapabaapp-landingpage.onrender.com',
+    ],
+  });
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap().catch((err) => {
