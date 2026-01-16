@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { PrismaService } from 'src/common/prisma/prisma.service';
@@ -9,6 +13,15 @@ export class LeadsService {
 
   async create(createLeadDto: CreateLeadDto) {
     const { name, email, phone_number, type, company_name } = createLeadDto;
+
+    const lead = await this.prismaService.leads.findFirst({
+      where: { email },
+    });
+
+    if (lead) {
+      throw new BadRequestException('Lead already exists');
+    }
+
     return await this.prismaService.leads.create({
       data: {
         name,
