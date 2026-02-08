@@ -18,3 +18,65 @@ model leads {
 
   @@index([id], map: "idx_lead")
 }
+
+enum user_role {
+  user
+  superuser
+}
+
+model users {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name               String               @db.VarChar(100)
+  cpf                String               @unique @db.VarChar(20)
+  birth_date         DateTime             @db.Date
+  username           String               @unique @db.VarChar(50)
+  email              String               @unique @db.VarChar(100)
+  phone_number       String               @unique @db.VarChar(200)
+  password           String               @db.VarChar(255)
+  role               user_role            @default(user)
+  active             Boolean              @default(true)
+  created_at         DateTime?            @default(now()) @db.Timestamp(6)
+  updated_at         DateTime?            @default(now()) @db.Timestamp(6)
+
+  companies      user_companies[]
+
+  @@index([id], map: "idx_user")
+}
+
+model companies {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug           String            @unique @db.VarChar(100)
+  name           String            @db.VarChar(150)
+  cnpj           String?           @db.VarChar(20)
+  description    String?
+  active         Boolean           @default(true)
+  created_at     DateTime          @default(now()) @db.Timestamp(6)
+  updated_at     DateTime          @updatedAt @db.Timestamp(6)
+
+  users          user_companies[]
+
+  @@index([id], map: "idx_company")
+}
+
+enum company_role {
+  owner
+  admin
+  editor
+  viewer
+}
+
+model user_companies {
+  id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String            @db.Uuid
+  company_id   String            @db.Uuid
+  role         company_role
+  created_at   DateTime          @default(now()) @db.Timestamp(6)
+  updated_at   DateTime          @updatedAt @db.Timestamp(6)
+
+  user         users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  company      companies         @relation(fields: [company_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, company_id], map: "uniq_user_company")
+  @@index([user_id], map: "idx_user_companies_user")
+  @@index([company_id], map: "idx_user_companies_company")
+}
