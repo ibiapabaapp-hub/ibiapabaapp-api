@@ -10,12 +10,14 @@ import {
 import { LeadsService } from './leads.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller({ path: 'leads', version: '1' })
 export class LeadsController {
   constructor(private readonly leadsService: LeadsService) {}
 
   @Post()
+  @Public()
   create(@Body() createLeadDto: CreateLeadDto) {
     return this.leadsService.create(createLeadDto);
   }
