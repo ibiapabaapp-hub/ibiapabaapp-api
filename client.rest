@@ -1,10 +1,18 @@
 @baseUrl = http://localhost:3000/api/v1
 @leadUUID = leadUUIDexample
+@userUUID = userUUIDexample
+@authToken = Bearer authToken
 
+// =====================================
+// App
+// =====================================
 # @name Hello
 GET {{baseUrl}}/
 ###
 
+// =====================================
+// Leads
+// =====================================
 # @name CreateLead
 POST {{baseUrl}}/leads
 Content-Type: application/json
@@ -19,14 +27,17 @@ Content-Type: application/json
 
 # @name GetLeads
 GET {{baseUrl}}/leads
+Authorization: {{authToken}}
 ###
 
 # @name GetLeadById
 GET {{baseUrl}}/leads/leadUUID
+Authorization: {{authToken}}
 ###
 
 # @name UpdateLeadById
 PATCH {{baseUrl}}/leads/{{leadUUID}}
+Authorization: {{authToken}}
 Content-Type: application/json
 
 {
@@ -36,5 +47,75 @@ Content-Type: application/json
 
 # @name DeleteLeadById
 DELETE {{baseUrl}}/leads/{{leadUUID}}
+Authorization: {{authToken}}
+Content-Type: application/json
+###
+
+// =====================================
+// Auth
+// =====================================
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "admin@teste.co",
+    "password": "12345678"
+}
+###
+
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "name": "Administrador",
+    "username": "admin-user",
+    "cpf": "000.000.000-01",
+    "birth_date": "01/05/2004",
+    "email": "admin@teste.co",
+    "phone_number": "+558999999999",
+    "role": "user",
+    "password": "12345678",
+    "password_confirm": "12345678"
+}
+###
+
+
+// =====================================
+// Users
+// =====================================
+# @name GetUsers
+GET {{baseUrl}}/users
+Authorization: {{authToken}}
+###
+
+# @name GetIsUsernameAvailable
+GET {{baseUrl}}/users/username-available?username=admin-sudo
+###
+
+# @name GetMe
+GET {{baseUrl}}/users/me
+Authorization: {{authToken}}
+###
+
+# @name GetUserById
+GET {{baseUrl}}/users/{{userUUID}}
+Authorization: {{authToken}}
+###
+
+# @name UpdateUserById
+PATCH {{baseUrl}}/users/{{userUUID}}
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+    "name": "Teste"
+}
+###
+
+# @name DeleteUserById
+DELETE {{baseUrl}}/users/{{userUUID}}
+Authorization: {{authToken}}
 Content-Type: application/json
 ###
