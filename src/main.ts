@@ -2,9 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import cookieParser from 'cookie-parser';
 
-async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+export async function bootstrap() {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: ['verbose'],
+  });
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -13,10 +17,15 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
   app.setGlobalPrefix('/api');
+
   app.enableVersioning({
     type: VersioningType.URI,
   });
+
+  app.use(cookieParser());
+
   app.enableCors({
     origin: [
       'http://localhost:3001',
@@ -25,9 +34,17 @@ async function bootstrap() {
       'https://ibiapabaapp-landingpage.vercel.app',
     ],
   });
+
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+
+if (require.main === module) {
+  (async () => {
+    try {
+      await bootstrap();
+    } catch (err) {
+      console.error(err);
+      process.exit(1);
+    }
+  })();
+}
