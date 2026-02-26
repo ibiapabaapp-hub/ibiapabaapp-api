@@ -1,3 +1,5 @@
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ibiapabaapp-hub_ibiapabaapp-api&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ibiapabaapp-hub_ibiapabaapp-api)
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
