@@ -28,6 +28,29 @@ export class AuthService {
     private readonly userService: UsersService,
   ) {}
 
+  private generateAuthResponse(user: Omit<User, 'password'>) {
+    const payload = { id: user.id, role: user.role };
+
+    return {
+      user,
+      accessToken: this.jwtService.sign(payload, { expiresIn: '40m' }),
+      refreshToken: this.jwtService.sign(payload, { expiresIn: '7d' }),
+    };
+  }
+
+  // TODO: implementar global exception filter para tratamento de erro eficiente
+  private handleError(e: any): never {
+    if (e instanceof HttpException) throw e;
+
+    const message = e instanceof Error ? e.message : 'Unknown error';
+    const code = e instanceof Error ? 'internal_server_error' : 'unknown';
+
+    throw new InternalServerErrorException({
+      message: message || 'Internal server error',
+      code: code,
+    });
+  }
+
   async login(loginDto: LoginDto): Promise<{
     accessToken: string;
     refreshToken: string;
@@ -58,43 +81,9 @@ export class AuthService {
         });
       }
 
-      return {
-        user: {
-          id: user.id,
-          // cpf: user.cpf,
-          name: user.name,
-          username: user.username,
-          email: user.email,
-          active: user.active,
-          created_at: user.created_at,
-          updated_at: user.updated_at,
-          birth_date: user.birth_date,
-          phone_number: user.phone_number,
-          role: user.role,
-        },
-        accessToken: this.jwtService.sign(
-          { id: user.id, role: user.role },
-          { expiresIn: '40m' }, //40min
-        ),
-        refreshToken: this.jwtService.sign(
-          { id: user.id, role: user.role },
-          { expiresIn: '7d' },
-        ),
-      };
+      return this.generateAuthResponse(user);
     } catch (e) {
-      if (e instanceof HttpException) {
-        throw e;
-      }
-      if (e instanceof Error) {
-        throw new InternalServerErrorException({
-          message: e.message || 'Internal server error',
-          code: 'internal_server_error',
-        });
-      }
-      throw new InternalServerErrorException({
-        message: 'Unknown error',
-        code: 'unknown',
-      });
+      this.handleError(e);
     }
   }
 
@@ -141,43 +130,9 @@ export class AuthService {
         omit: { password: true },
       });
 
-      return {
-        user: {
-          id: user.id,
-          // cpf: user.cpf,
-          username: user.username,
-          name: user.name,
-          email: user.email,
-          phone_number: user.phone_number,
-          birth_date: user.birth_date,
-          active: user.active,
-          role: user.role,
-          created_at: user.created_at,
-          updated_at: user.updated_at,
-        },
-        accessToken: this.jwtService.sign(
-          { id: user.id, role: user.role },
-          { expiresIn: '40m' }, //40min
-        ),
-        refreshToken: this.jwtService.sign(
-          { id: user.id, role: user.role },
-          { expiresIn: '7d' },
-        ),
-      };
+      return this.generateAuthResponse(user);
     } catch (e) {
-      if (e instanceof HttpException) {
-        throw e;
-      }
-      if (e instanceof Error) {
-        throw new InternalServerErrorException({
-          message: e.message || 'Internal server error',
-          code: 'internal_server_error',
-        });
-      }
-      throw new InternalServerErrorException({
-        message: 'Unknown error',
-        code: 'unknown',
-      });
+      this.handleError(e);
     }
   }
 
@@ -199,17 +154,7 @@ export class AuthService {
       });
     }
 
-    return {
-      user,
-      accessToken: this.jwtService.sign(
-        { id: user.id, role: user.role },
-        { expiresIn: '40m' }, //40min
-      ),
-      refreshToken: this.jwtService.sign(
-        { id: user.id, role: user.role },
-        { expiresIn: '7d' },
-      ),
-    };
+    return this.generateAuthResponse(user);
   }
 
   async isUniqueAvailable<K extends UniqueUserField>(field: K, value: User[K]) {
