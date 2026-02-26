@@ -24,8 +24,8 @@ export class AuthService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly passwordService: PasswordService,
-    private jwtService: JwtService,
-    private userService: UsersService,
+    private readonly jwtService: JwtService,
+    private readonly userService: UsersService,
   ) {}
 
   async login(loginDto: LoginDto): Promise<{

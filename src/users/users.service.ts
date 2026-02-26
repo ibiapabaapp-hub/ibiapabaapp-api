@@ -15,7 +15,7 @@ import { user_role } from '@prisma/client';
 @Injectable()
 export class UsersService {
   constructor(
-    private prismaService: PrismaService,
+    private readonly prismaService: PrismaService,
     private readonly passwordService: PasswordService,
   ) {}
 

@@ -12,8 +12,8 @@ import { JwtService } from '../../common/jwt/jwt.service';
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(
-    private reflector: Reflector,
-    private jwtService: JwtService,
+    private readonly reflector: Reflector,
+    private readonly jwtService: JwtService,
   ) {}
 
   canActivate(context: ExecutionContext): boolean {

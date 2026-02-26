@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 
 @Injectable()
 export class JwtService {
-  private SECRET_KEY = process.env.SECRET_KEY!;
+  private readonly SECRET_KEY = process.env.SECRET_KEY!;
 
   sign(data: object, options: jwt.SignOptions): string {
     return jwt.sign(data, this.SECRET_KEY, options);

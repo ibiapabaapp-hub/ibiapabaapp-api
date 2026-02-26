@@ -12,8 +12,8 @@ import { Request } from 'express';
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
-    private reflector: Reflector,
-    private jwtService: JwtService,
+    private readonly reflector: Reflector,
+    private readonly jwtService: JwtService,
   ) {}
 
   canActivate(context: ExecutionContext): boolean {

@@ -9,7 +9,7 @@ import { PrismaService } from 'src/common/prisma/prisma.service';
 
 @Injectable()
 export class LeadsService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   async create(createLeadDto: CreateLeadDto) {
     const { name, email, phone_number, type, company_name } = createLeadDto;
