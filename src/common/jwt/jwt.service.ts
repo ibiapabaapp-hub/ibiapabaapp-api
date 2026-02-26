@@ -9,8 +9,9 @@ export class JwtService {
     return jwt.sign(data, this.SECRET_KEY, options);
   }
 
-  verify<T = any>(token: string): T {
+  verify<T = any>(token?: string): T {
     try {
+      if (!token) throw new UnauthorizedException();
       return jwt.verify(token, this.SECRET_KEY) as T;
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
