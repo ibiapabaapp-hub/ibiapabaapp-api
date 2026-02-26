@@ -18,7 +18,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   // Post para criar usuário não é necessário, dado que isso acontece no em /auth/register
-  // TODO: dúvida: seria bom ter o createUser dentro de UsersService para AuthModule chamar? Ele usa prismaService direto
+  // TODO:  dúvida: seria bom ter o createUser dentro de UsersService para AuthModule chamar? Ele usa prismaService direto
 
   @Get()
   @UserRoles([user_role.superuser])
