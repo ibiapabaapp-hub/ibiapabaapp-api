@@ -172,7 +172,9 @@ describe('UsersService', () => {
       prisma.users.findFirst.mockResolvedValue({ id: '1' } as any);
       prisma.users.delete.mockRejectedValue(new Error('Delete failed'));
 
-      await expect(service.remove('1')).rejects.toThrow(InternalServerErrorException);
+      await expect(service.remove('1')).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
   });
 });

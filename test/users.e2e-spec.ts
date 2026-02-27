@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import {
+  INestApplication,
+  ValidationPipe,
+  VersioningType,
+} from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { UsersModule } from './../src/users/users.module';
 import { PrismaModule } from './../src/common/prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaService } from 'src/common/prisma/prisma.service';
@@ -20,26 +22,21 @@ describe('Users (e2e)', () => {
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({ isGlobal: true }),
-        PrismaModule,
-      ],
+      imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule],
       controllers: [UsersController],
-      providers: [
-        UsersService,
-        PasswordService,
-        JwtService,
-      ],
+      providers: [UsersService, PasswordService, JwtService],
     }).compile();
-  
+
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('/api');
     app.enableVersioning({ type: VersioningType.URI });
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
+
     prisma = moduleFixture.get<PrismaService>(PrismaService);
     passwordService = moduleFixture.get<PasswordService>(PasswordService);
-    
+
     await app.init();
   });
 
@@ -52,7 +49,10 @@ describe('Users (e2e)', () => {
     await app.close();
   });
 
-  const createMockUser = async (email = 'user@test.com', role = 'superuser') => {
+  const createMockUser = async (
+    email = 'user@test.com',
+    role = 'superuser',
+  ) => {
     return prisma.users.create({
       data: {
         name: 'Test User',
@@ -62,16 +62,14 @@ describe('Users (e2e)', () => {
         birth_date: new Date('1990-01-01'),
         phone_number: `+55859${Math.floor(Math.random() * 90000000 + 10000000)}`,
         role: role as any,
-      }
+      },
     });
   };
 
   describe('GET /users', () => {
     it('should return a list of users', async () => {
       await createMockUser();
-      const res = await request(app.getHttpServer())
-        .get(BASE_PATH)
-        .expect(200);
+      const res = await request(app.getHttpServer()).get(BASE_PATH).expect(200);
 
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body.length).toBeGreaterThan(0);
@@ -100,13 +98,13 @@ describe('Users (e2e)', () => {
   describe('PATCH /users/:id', () => {
     it('should update user successfully', async () => {
       const user = await createMockUser('update@test.com');
-      
+
       const res = await request(app.getHttpServer())
         .patch(`${BASE_PATH}/${user.id}`)
         .send({
           name: 'Novo Nome',
           password: 'password123',
-          role: 'user'
+          role: 'user',
         })
         .expect(200);
 
@@ -115,14 +113,14 @@ describe('Users (e2e)', () => {
 
     it('should return 401 if current password is wrong', async () => {
       const user = await createMockUser('auth-fail@test.com');
-      
+
       await request(app.getHttpServer())
         .patch(`${BASE_PATH}/${user.id}`)
-        .send({ 
-          name: 'Fail', 
-          password: 'wrong_password'
+        .send({
+          name: 'Fail',
+          password: 'wrong_password',
         })
-        .expect(401); 
+        .expect(401);
     });
   });
 

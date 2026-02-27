@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
+import {
+  INestApplication,
+  ValidationPipe,
+  VersioningType,
+} from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
@@ -13,7 +17,7 @@ describe('App (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     app.setGlobalPrefix('/api');
     app.enableVersioning({ type: VersioningType.URI });
 
@@ -33,7 +37,7 @@ describe('App (e2e)', () => {
       await request(app.getHttpServer())
         .get('/api/v1')
         .expect(200)
-        .expect({message: 'Hello IbiapabaApp!'});
+        .expect({ message: 'Hello IbiapabaApp!' });
     });
   });
 });

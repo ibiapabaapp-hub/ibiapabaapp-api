@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
+import {
+  INestApplication,
+  ValidationPipe,
+  VersioningType,
+} from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { Lead } from 'src/leads/entities/lead.entity';
@@ -23,7 +27,7 @@ describe('leads (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     app.setGlobalPrefix('/api');
     app.enableVersioning({ type: VersioningType.URI });
 
@@ -132,6 +136,8 @@ describe('leads (e2e)', () => {
 
     expect(res.body).toHaveProperty('message');
 
-    await request(app.getHttpServer()).get(`${BASE_PATH}/${created.id}`).expect(404);
+    await request(app.getHttpServer())
+      .get(`${BASE_PATH}/${created.id}`)
+      .expect(404);
   });
 });

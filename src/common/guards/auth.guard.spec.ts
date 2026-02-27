@@ -62,20 +62,26 @@ describe('AuthGuard', () => {
 
     it('should throw UnauthorizedException if no token is provided', () => {
       mockReflector.getAllAndOverride.mockReturnValue(false);
-      
+
       // Simula request sem header Authorization
       const req = { headers: {} };
-      (mockExecutionContext.switchToHttp().getRequest as jest.Mock).mockReturnValue(req);
+      (
+        mockExecutionContext.switchToHttp().getRequest as jest.Mock
+      ).mockReturnValue(req);
 
-      expect(() => guard.canActivate(mockExecutionContext)).toThrow(UnauthorizedException);
+      expect(() => guard.canActivate(mockExecutionContext)).toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should throw UnauthorizedException if token is invalid or expired', () => {
       mockReflector.getAllAndOverride.mockReturnValue(false);
-      
+
       const req = { headers: { authorization: 'Bearer invalid-token' } };
-      (mockExecutionContext.switchToHttp().getRequest as jest.Mock).mockReturnValue(req);
-      
+      (
+        mockExecutionContext.switchToHttp().getRequest as jest.Mock
+      ).mockReturnValue(req);
+
       mockJwtService.verify.mockImplementation(() => {
         throw new Error('Invalid token');
       });
@@ -87,11 +93,16 @@ describe('AuthGuard', () => {
 
     it('should return true and set user payload in request if token is valid', () => {
       mockReflector.getAllAndOverride.mockReturnValue(false);
-      
+
       const payload = { id: 'user-id', role: 'superuser' };
-      const req = { headers: { authorization: 'Bearer valid-token' }, user: null };
-      
-      (mockExecutionContext.switchToHttp().getRequest as jest.Mock).mockReturnValue(req);
+      const req = {
+        headers: { authorization: 'Bearer valid-token' },
+        user: null,
+      };
+
+      (
+        mockExecutionContext.switchToHttp().getRequest as jest.Mock
+      ).mockReturnValue(req);
       mockJwtService.verify.mockReturnValue(payload);
 
       const result = guard.canActivate(mockExecutionContext);

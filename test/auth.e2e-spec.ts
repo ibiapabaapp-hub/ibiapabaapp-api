@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
+import {
+  INestApplication,
+  ValidationPipe,
+  VersioningType,
+} from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AuthModule } from './../src/auth/auth.module';
@@ -24,7 +28,9 @@ describe('Auth (e2e)', () => {
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('/api');
     app.enableVersioning({ type: VersioningType.URI });
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
 
     prisma = moduleFixture.get<PrismaService>(PrismaService);
     await app.init();
@@ -61,7 +67,9 @@ describe('Auth (e2e)', () => {
 
   describe('POST /login', () => {
     it('should login successfully', async () => {
-      await request(app.getHttpServer()).post(`${BASE_PATH}/register`).send(testUser);
+      await request(app.getHttpServer())
+        .post(`${BASE_PATH}/register`)
+        .send(testUser);
 
       const res = await request(app.getHttpServer())
         .post(`${BASE_PATH}/login`)
@@ -74,7 +82,9 @@ describe('Auth (e2e)', () => {
 
   describe('GET /check-unique', () => {
     it('should return available false for existing email', async () => {
-      await request(app.getHttpServer()).post(`${BASE_PATH}/register`).send(testUser);
+      await request(app.getHttpServer())
+        .post(`${BASE_PATH}/register`)
+        .send(testUser);
 
       const res = await request(app.getHttpServer())
         .get(`${BASE_PATH}/check-unique`)
@@ -87,9 +97,7 @@ describe('Auth (e2e)', () => {
 
   describe('GET /me', () => {
     it('should return 401 instead of 500 when no token is provided', async () => {
-      await request(app.getHttpServer())
-        .get(`${BASE_PATH}/me`)
-        .expect(401);
+      await request(app.getHttpServer()).get(`${BASE_PATH}/me`).expect(401);
     });
   });
 });

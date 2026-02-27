@@ -46,39 +46,42 @@ export class UsersService {
       const userExists = await this.prismaService.users.findUnique({
         where: { id },
       });
-  
+
       if (!userExists) {
         throw new NotFoundException('User not found');
       }
-  
+
       if (!updateUserDto.password) {
-         throw new BadRequestException('Current password is required for updates');
+        throw new BadRequestException(
+          'Current password is required for updates',
+        );
       }
-  
+
       const isPasswordValid = await this.passwordService.verifyPassword(
         userExists.password,
         updateUserDto.password,
       );
-  
+
       if (!isPasswordValid) {
         throw new UnauthorizedException('Invalid credentials');
       }
-  
+
       const { role, password, ...rest } = updateUserDto;
-      
+
       const dataToUpdate: any = {
         ...rest,
         updated_at: new Date(),
       };
-  
+
       if (password) {
-        dataToUpdate.password = await this.passwordService.hashPassword(password);
+        dataToUpdate.password =
+          await this.passwordService.hashPassword(password);
       }
-  
+
       if (role) {
         dataToUpdate.role = role as user_role;
       }
-  
+
       return this.prismaService.users.update({
         where: { id },
         data: dataToUpdate,
@@ -86,7 +89,7 @@ export class UsersService {
       });
     } catch (e) {
       if (e instanceof HttpException) throw e;
-      
+
       throw new InternalServerErrorException(e.message);
     }
   }
