@@ -3,7 +3,6 @@ import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
-import 'tsconfig-paths/register';
 
 export async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -40,12 +39,10 @@ export async function bootstrap() {
 }
 
 if (require.main === module) {
-  await (async () => {
-    try {
-      await bootstrap();
-    } catch (err) {
-      console.error(err);
-      process.exit(1);
-    }
-  })();
+  bootstrap().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 }
+
+export default bootstrap;
