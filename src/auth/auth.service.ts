@@ -11,7 +11,7 @@ import { LoginDto } from './dtos/login.dto';
 import { RegisterDto } from './dtos/register.dto';
 import { randomUUID } from 'node:crypto';
 
-import { PasswordService } from 'src/common/password/password.service';
+import { PasswordService } from '../common/password/password.service';
 import { JwtService } from 'src/common/jwt/jwt.service';
 import { User } from 'src/users/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
