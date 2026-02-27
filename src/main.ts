@@ -38,27 +38,10 @@ export async function bootstrap() {
     // cookies no CORS
   });
 
-  const isProduction =
-    process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
-
-  if (!isProduction) {
-    const port = process.env.PORT ?? 3000;
-    await app.listen(port);
-    console.log(
-      `🚀 Application is running on: http://localhost:${port}/api/v1`,
-    );
-  }
-
-  await app.init();
-  return app.getHttpAdapter().getInstance();
+  await app.listen(process.env.PORT ?? 3000);
 }
 
-if (require.main === module) {
-  bootstrap().catch((err) => {
-    console.error('💥 Error during bootstrap:', err);
-    process.exit(1);
-  });
-}
-
-// 6. Exportação para Vercel
-export default bootstrap;
+bootstrap().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
