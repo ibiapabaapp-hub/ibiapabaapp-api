@@ -4,6 +4,7 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
 import { Request, Response } from 'express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 let app: NestExpressApplication;
 
@@ -42,16 +43,29 @@ export async function bootstrap() {
       // cookies no CORS
     });
 
+    const config = new DocumentBuilder()
+      .setTitle('IbiapabaApp API')
+      .setDescription(
+        'Ponte entre o IbiapabaApp mobile e web para a persistência de dados',
+      )
+      .setVersion('1.0')
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, document);
+
     await app.listen(process.env.PORT ?? 3000);
     await app.init();
   }
   return app.getHttpAdapter().getInstance();
 }
 
-bootstrap().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (process.env.NODE_ENV !== 'test') {
+  bootstrap().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
 
 export default async (req: Request, res: Response) => {
   const instance = await bootstrap();

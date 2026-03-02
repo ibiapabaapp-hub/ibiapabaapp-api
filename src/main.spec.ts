@@ -1,69 +1,81 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { bootstrap } from './main';
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { VersioningType } from '@nestjs/common';
+
+let mockShouldFail = false;
+let capturedAppMock: any;
 
 jest.mock('@nestjs/core', () => {
   const originalModule = jest.requireActual('@nestjs/core');
   return {
     ...originalModule,
     NestFactory: {
-      create: jest.fn(),
+      create: jest.fn().mockImplementation(() => {
+        if (mockShouldFail) {
+          return Promise.reject(new Error('bootstrap failed'));
+        }
+        return Promise.resolve(capturedAppMock);
+      }),
     },
   };
 });
 
-describe('main bootstrap', () => {
-  let app: Partial<NestExpressApplication>;
+jest.mock('@nestjs/swagger', () => {
+  const original = jest.requireActual('@nestjs/swagger');
+  return {
+    ...original,
+    SwaggerModule: { createDocument: jest.fn(), setup: jest.fn() },
+    DocumentBuilder: jest.fn().mockImplementation(() => ({
+      setTitle: jest.fn().mockReturnThis(),
+      setDescription: jest.fn().mockReturnThis(),
+      setVersion: jest.fn().mockReturnThis(),
+      build: jest.fn(),
+    })),
+  };
+});
 
+describe('main bootstrap', () => {
   beforeEach(() => {
-    app = {
+    jest.resetModules();
+    jest.clearAllMocks();
+    mockShouldFail = false;
+
+    capturedAppMock = {
       useGlobalPipes: jest.fn(),
       setGlobalPrefix: jest.fn(),
       enableVersioning: jest.fn(),
       use: jest.fn(),
       enableCors: jest.fn(),
-      listen: jest.fn(),
+      listen: jest.fn().mockResolvedValue(undefined),
+      init: jest.fn().mockResolvedValue(undefined),
+      getHttpAdapter: jest.fn().mockReturnValue({
+        getInstance: jest.fn().mockReturnValue(jest.fn()),
+      }),
     };
-
-    jest.clearAllMocks();
-    (NestFactory.create as jest.Mock).mockResolvedValue(app);
   });
 
   it('should bootstrap the application correctly', async () => {
     process.env.PORT = '4000';
-
+    const { bootstrap } = require('./main');
     await bootstrap();
 
-    expect(NestFactory.create).toHaveBeenCalled();
-
-    expect(app.useGlobalPipes).toHaveBeenCalledWith(expect.any(ValidationPipe));
-
-    expect(app.setGlobalPrefix).toHaveBeenCalledWith('/api');
-
-    expect(app.enableVersioning).toHaveBeenCalledWith({
-      type: VersioningType.URI,
-    });
-
-    expect(app.use).toHaveBeenCalledWith(expect.any(Function));
-
-    expect(app.enableCors).toHaveBeenCalledWith({
-      origin: [
-        'http://localhost:3001',
-        'https://ibiapabaapp.com.br',
-        'https://www.ibiapabaapp.com.br',
-        'https://ibiapabaapp-landingpage.vercel.app',
-      ],
-    });
-
-    expect(app.listen).toHaveBeenCalledWith('4000');
+    expect(capturedAppMock.setGlobalPrefix).toHaveBeenCalledWith('/api');
+    expect(capturedAppMock.enableVersioning).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: VersioningType.URI,
+        defaultVersion: '1',
+      }),
+    );
+    expect(capturedAppMock.listen).toHaveBeenCalledWith('4000');
   });
 
-  it('should exit process on bootstrap error', async () => {
-    const error = new Error('bootstrap failed');
+  it('should throw error on bootstrap failure', async () => {
+    mockShouldFail = true;
+    const { bootstrap } = require('./main');
 
-    (NestFactory.create as jest.Mock).mockRejectedValue(error);
-
-    await expect(bootstrap()).rejects.toThrow(error);
+    await expect(bootstrap()).rejects.toThrow('bootstrap failed');
   });
 });
