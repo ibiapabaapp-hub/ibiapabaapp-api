@@ -18,6 +18,10 @@ import { UsersService } from 'src/users/users.service';
 import { user_role } from '@prisma/client';
 import { UniqueUserField } from './dtos/unique-user-fields';
 import { extractBearerTokenFromString } from 'src/common/utils/extract-bearer-token';
+import {
+  AuthResponseDto,
+  CheckUniqueResponseDto,
+} from './dtos/auth-response.dto';
 
 @Injectable()
 export class AuthService {
@@ -28,11 +32,13 @@ export class AuthService {
     private readonly userService: UsersService,
   ) {}
 
-  private generateAuthResponse(user: Omit<User, 'password'>) {
+  private generateAuthResponse(user: Omit<User, 'password'>): AuthResponseDto {
     const payload = { id: user.id, role: user.role };
-
     return {
-      user,
+      user: {
+        ...user,
+        // Se houver algum campo que precise de conversão manual, faça aqui
+      },
       accessToken: this.jwtService.sign(payload, { expiresIn: '40m' }),
       refreshToken: this.jwtService.sign(payload, { expiresIn: '7d' }),
     };
@@ -157,7 +163,10 @@ export class AuthService {
     return this.generateAuthResponse(user);
   }
 
-  async isUniqueAvailable<K extends UniqueUserField>(field: K, value: User[K]) {
+  async isUniqueAvailable<K extends UniqueUserField>(
+    field: K,
+    value: User[K],
+  ): Promise<CheckUniqueResponseDto> {
     try {
       const count = await this.prismaService.users.count({
         where: {
