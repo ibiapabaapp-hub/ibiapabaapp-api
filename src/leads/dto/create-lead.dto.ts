@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
   IsIn,
@@ -10,17 +11,24 @@ import {
 } from 'class-validator';
 
 export class CreateLeadDto {
+  @ApiProperty({ example: 'Bruno Oliveira', minLength: 4, maxLength: 50 })
   @IsNotEmpty()
   @IsString()
   @MinLength(4)
   @MaxLength(50)
   name: string;
 
+  @ApiProperty({ example: 'bruno@email.com' })
   @IsNotEmpty()
   @IsEmail()
   @MaxLength(100)
   email: string;
 
+  @ApiProperty({
+    example: 'company',
+    enum: ['resident', 'tourist', 'company'],
+    description: 'Tipo de lead categorizado',
+  })
   @IsNotEmpty()
   @IsString()
   @IsIn(['resident', 'tourist', 'company'])
@@ -28,6 +36,11 @@ export class CreateLeadDto {
   @MaxLength(10)
   type: string;
 
+  @ApiProperty({
+    example: 'Tech Solutions Ltda',
+    required: false,
+    description: 'Obrigatório apenas se o type for "company"',
+  })
   @ValidateIf(
     (o: { type: 'resident' | 'tourist' | 'company' }) => o.type === 'company',
   )
@@ -37,6 +50,10 @@ export class CreateLeadDto {
   @MaxLength(50)
   company_name?: string;
 
+  @ApiProperty({
+    example: '(11) 9 9999-8888',
+    description: 'Formato brasileiro com máscara',
+  })
   @IsNotEmpty()
   @IsString()
   @Matches(/^\(\d{2}\)\s\d\s\d{4}-\d{4}$/)
