@@ -15,9 +15,9 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "test:unit": "jest",
-    "test:unit:watch": "jest --watch",
-    "test:unit:cov": "jest --coverage",
+    "test:unit": "dotenv -e .env.test -- sh -c 'jest'",
+    "test:unit:watch": "dotenv -e .env.test -- sh -c 'jest --watch'",
+    "test:unit:cov": "dotenv -e .env.test -- sh -c 'jest --coverage'",
     "test:e2e": "dotenv -e .env.test -- sh -c 'prisma generate && prisma migrate deploy && jest --config ./test/jest-e2e.json --runInBand'",
     "test:all": "pnpm test:unit && pnpm test:e2e"
   },
@@ -27,6 +27,7 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/swagger": "^11.2.6",
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
     "argon2": "^0.44.0",
@@ -36,6 +37,7 @@
     "jsonwebtoken": "^9.0.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
