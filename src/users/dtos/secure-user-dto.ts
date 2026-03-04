@@ -8,7 +8,7 @@ export class SecureUserDto {
   phone_number: string;
   name: string;
   birth_date: Date;
-  role: $Enums.user_role;
+  role: $Enums.UserRole;
   active: boolean;
   created_at: Date | null;
   updated_at: Date | null;

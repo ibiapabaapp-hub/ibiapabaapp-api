@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   INestApplication,
@@ -13,6 +14,7 @@ import { PasswordService } from 'src/common/password/password.service';
 import { UsersController } from 'src/users/users.controller';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from 'src/common/jwt/jwt.service';
+import { UserRole } from '@prisma/client';
 
 describe('Users (e2e)', () => {
   let app: INestApplication<App>;
@@ -41,7 +43,7 @@ describe('Users (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.users.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
@@ -53,7 +55,7 @@ describe('Users (e2e)', () => {
     email = 'user@test.com',
     role = 'superuser',
   ) => {
-    return prisma.users.create({
+    return prisma.user.create({
       data: {
         name: 'Test User',
         username: `user_${Math.random()}`,
@@ -61,7 +63,7 @@ describe('Users (e2e)', () => {
         password: await passwordService.hashPassword('password123'),
         birth_date: new Date('1990-01-01'),
         phone_number: `+55859${Math.floor(Math.random() * 90000000 + 10000000)}`,
-        role: role as any,
+        role: role as UserRole,
       },
     });
   };
@@ -131,7 +133,7 @@ describe('Users (e2e)', () => {
         .delete(`${BASE_PATH}/${user.id}`)
         .expect(200);
 
-      const check = await prisma.users.findUnique({ where: { id: user.id } });
+      const check = await prisma.user.findUnique({ where: { id: user.id } });
       expect(check).toBeNull();
     });
   });

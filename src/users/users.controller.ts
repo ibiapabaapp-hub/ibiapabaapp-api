@@ -10,7 +10,7 @@ import {
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { PaginationDto } from '../common/dtos/pagination.dto';
-import { user_role } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import { UserRoles } from 'src/common/decorators/user-roles.decorator';
 import {
   ApiBearerAuth,
@@ -28,7 +28,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Obtém todos os usuários' })
   @ApiResponse({ status: 200, type: SecureUserDto, isArray: true })
   @Get()
-  @UserRoles([user_role.superuser])
+  @UserRoles([UserRole.superuser])
   findAll(@Query() paginationDto: PaginationDto) {
     return this.usersService.findAll(paginationDto);
   }
@@ -39,7 +39,7 @@ export class UsersController {
   @ApiResponse({ status: 200, type: SecureUserDto })
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @Get(':id')
-  @UserRoles([user_role.superuser])
+  @UserRoles([UserRole.superuser])
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
@@ -58,7 +58,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Remover um usuário' })
   @ApiResponse({ status: 200, description: 'Mensagem de sucesso' })
   @Delete(':id')
-  @UserRoles([user_role.superuser])
+  @UserRoles([UserRole.superuser])
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
-import { user_role, users } from '@prisma/client';
+import { UserRole, users } from '@prisma/client';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { User } from './entities/user.entity';
 
@@ -58,13 +58,13 @@ describe('UsersController', () => {
     const dto = {
       name: 'Updated',
       password: '123456',
-      role: user_role.superuser,
+      role: UserRole.superuser,
     };
 
     const updatedUser = {
       id: '1',
       name: 'Updated',
-      role: user_role.superuser,
+      role: UserRole.superuser,
     };
 
     service.update.mockResolvedValue(updatedUser as User);

@@ -46,7 +46,8 @@ export class AuthService {
   }> {
     const { email, password } = loginDto;
 
-    const user = await this.prismaService.users.findUnique({
+    // TODO: refatorar para userService conter findByEmail
+    const user = await this.prismaService.user.findUnique({
       where: { email },
     });
 
@@ -113,7 +114,7 @@ export class AuthService {
     value: User[K],
   ): Promise<CheckUniqueResponseDto> {
     try {
-      const count = await this.prismaService.users.count({
+      const count = await this.prismaService.user.count({
         where: {
           [field]: value,
         },

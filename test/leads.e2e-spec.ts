@@ -41,7 +41,7 @@ describe('leads (e2e)', () => {
   });
 
   afterEach(async () => {
-    await prisma.leads.deleteMany();
+    await prisma.lead.deleteMany();
   });
 
   afterAll(async () => {
@@ -67,7 +67,7 @@ describe('leads (e2e)', () => {
   });
 
   it('GET /leads -> lists all leads', async () => {
-    await prisma.leads.create({
+    await prisma.lead.create({
       data: {
         name: 'Test Lead',
         email: 'test@example.com',
@@ -84,7 +84,7 @@ describe('leads (e2e)', () => {
   });
 
   it('GET /leads/:id -> list one lead', async () => {
-    const created = await prisma.leads.create({
+    const created = await prisma.lead.create({
       data: {
         name: 'Test Lead',
         email: 'test@example.com',
@@ -102,7 +102,7 @@ describe('leads (e2e)', () => {
   });
 
   it('PATCH /leads/:id -> updates the lead', async () => {
-    const created = await prisma.leads.create({
+    const created = await prisma.lead.create({
       data: {
         name: 'Test Lead',
         email: 'test@example.com',
@@ -121,7 +121,7 @@ describe('leads (e2e)', () => {
   });
 
   it('DELETE /leads/:id -> removes the lead', async () => {
-    const created = await prisma.leads.create({
+    const created = await prisma.lead.create({
       data: {
         name: 'Test Lead',
         email: 'test@example.com',

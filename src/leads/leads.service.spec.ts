@@ -39,11 +39,11 @@ describe('LeadsService', () => {
         phone_number: '(11) 9 9999-9999',
       };
 
-      prisma.leads.create.mockResolvedValue(dto as Lead);
+      prisma.lead.create.mockResolvedValue(dto as Lead);
 
       const result = await service.create(dto);
 
-      expect(prisma.leads.create).toHaveBeenCalledWith({ data: dto });
+      expect(prisma.lead.create).toHaveBeenCalledWith({ data: dto });
       expect(result).toEqual(dto);
     });
   });
@@ -51,11 +51,11 @@ describe('LeadsService', () => {
   describe('findAll', () => {
     it('should return all leads', async () => {
       const list = [{ id: '123' }];
-      prisma.leads.findMany.mockResolvedValue(list as Lead[]);
+      prisma.lead.findMany.mockResolvedValue(list as Lead[]);
 
       const result = await service.findAll();
 
-      expect(prisma.leads.findMany).toHaveBeenCalled();
+      expect(prisma.lead.findMany).toHaveBeenCalled();
       expect(result).toEqual(list);
     });
   });
@@ -63,18 +63,18 @@ describe('LeadsService', () => {
   describe('findOne', () => {
     it('should return a lead if found', async () => {
       const lead = { id: '123' };
-      prisma.leads.findFirst.mockResolvedValue(lead as Lead);
+      prisma.lead.findFirst.mockResolvedValue(lead as Lead);
 
       const result = await service.findOne('123');
 
-      expect(prisma.leads.findFirst).toHaveBeenCalledWith({
+      expect(prisma.lead.findFirst).toHaveBeenCalledWith({
         where: { id: '123' },
       });
       expect(result).toEqual(lead);
     });
 
     it('should throw NotFoundException if not found', async () => {
-      prisma.leads.findFirst.mockResolvedValue(null);
+      prisma.lead.findFirst.mockResolvedValue(null);
 
       await expect(service.findOne('123')).rejects.toThrow(NotFoundException);
     });
@@ -95,15 +95,15 @@ describe('LeadsService', () => {
         name: 'Updated',
       };
 
-      prisma.leads.findFirst.mockResolvedValue(existingLead as Lead);
-      prisma.leads.update.mockResolvedValue(updatedLead as Lead);
+      prisma.lead.findFirst.mockResolvedValue(existingLead as Lead);
+      prisma.lead.update.mockResolvedValue(updatedLead as Lead);
 
       const result = await service.update('123', { name: 'Updated' });
 
-      expect(prisma.leads.findFirst).toHaveBeenCalledWith({
+      expect(prisma.lead.findFirst).toHaveBeenCalledWith({
         where: { id: '123' },
       });
-      expect(prisma.leads.update).toHaveBeenCalledWith({
+      expect(prisma.lead.update).toHaveBeenCalledWith({
         where: { id: '123' },
         data: { name: 'Updated' },
       });
@@ -111,13 +111,13 @@ describe('LeadsService', () => {
     });
 
     it('should throw NotFoundException if lead does not exist', async () => {
-      prisma.leads.findFirst.mockResolvedValue(null);
+      prisma.lead.findFirst.mockResolvedValue(null);
 
       await expect(service.update('123', { name: 'Updated' })).rejects.toThrow(
         NotFoundException,
       );
 
-      expect(prisma.leads.update).not.toHaveBeenCalled();
+      expect(prisma.lead.update).not.toHaveBeenCalled();
     });
   });
 
@@ -131,26 +131,26 @@ describe('LeadsService', () => {
         phone_number: '(11) 9 9999-9999',
       };
 
-      prisma.leads.findFirst.mockResolvedValue(existingLead as Lead);
-      prisma.leads.delete.mockResolvedValue(existingLead as Lead);
+      prisma.lead.findFirst.mockResolvedValue(existingLead as Lead);
+      prisma.lead.delete.mockResolvedValue(existingLead as Lead);
 
       const result = await service.remove('123');
 
-      expect(prisma.leads.findFirst).toHaveBeenCalledWith({
+      expect(prisma.lead.findFirst).toHaveBeenCalledWith({
         where: { id: '123' },
       });
-      expect(prisma.leads.delete).toHaveBeenCalledWith({
+      expect(prisma.lead.delete).toHaveBeenCalledWith({
         where: { id: '123' },
       });
       expect(result).toEqual({ message: 'Lead deleted successfully' });
     });
 
     it('should throw NotFoundException if lead does not exist', async () => {
-      prisma.leads.findFirst.mockResolvedValue(null);
+      prisma.lead.findFirst.mockResolvedValue(null);
 
       await expect(service.remove('123')).rejects.toThrow(NotFoundException);
 
-      expect(prisma.leads.delete).not.toHaveBeenCalled();
+      expect(prisma.lead.delete).not.toHaveBeenCalled();
     });
   });
 });

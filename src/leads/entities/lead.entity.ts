@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 
-export type Lead = Prisma.leadsGetPayload<{
+export type Lead = Prisma.LeadGetPayload<{
   select: {
     id: true;
     name: true;

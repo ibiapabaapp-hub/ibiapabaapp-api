@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { user_role } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 
 export class UserResponse {
   @ApiProperty({ example: 'uuid-v4-a1b2' })
@@ -14,8 +14,8 @@ export class UserResponse {
   @ApiProperty({ example: 'joao@email.com' })
   email: string;
 
-  @ApiProperty({ example: 'user', enum: user_role })
-  role: user_role;
+  @ApiProperty({ example: 'user', enum: UserRole })
+  role: UserRole;
 
   @ApiProperty({
     description: 'Data de nascimento',

@@ -8,7 +8,7 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import { PrismaService } from 'src/common/prisma/prisma.service';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { PasswordService } from 'src/common/password/password.service';
-import { user_role } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { randomUUID } from 'crypto';
 import { User } from './entities/user.entity';
@@ -28,13 +28,13 @@ export class UsersService {
       });
     }
 
-    const user = await this.prismaService.users.create({
+    const user = await this.prismaService.user.create({
       data: {
         id: randomUUID(),
         name: userData.name.trim(),
         // cpf,
         birth_date: userData.birth_date,
-        role: userData.role as user_role,
+        role: userData.role as UserRole,
         email: userData.email.trim(),
         password: await this.passwordService.hashPassword(userData.password),
         username: userData.username.toLowerCase().trim(),
@@ -48,7 +48,7 @@ export class UsersService {
 
   async findAll(paginationDto: PaginationDto) {
     const { limit = 10, offset } = paginationDto;
-    return await this.prismaService.users.findMany({
+    return await this.prismaService.user.findMany({
       take: limit,
       skip: offset,
       omit: { password: true },
@@ -56,7 +56,7 @@ export class UsersService {
   }
 
   async findOne(id: string) {
-    const user = await this.prismaService.users.findFirst({
+    const user = await this.prismaService.user.findFirst({
       where: { id },
       omit: { password: true },
     });
@@ -69,7 +69,7 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    const userExists = await this.prismaService.users.findUnique({
+    const userExists = await this.prismaService.user.findUnique({
       where: { id },
     });
 
@@ -102,10 +102,10 @@ export class UsersService {
     }
 
     if (role) {
-      dataToUpdate.role = role as user_role;
+      dataToUpdate.role = role as UserRole;
     }
 
-    return this.prismaService.users.update({
+    return this.prismaService.user.update({
       where: { id },
       data: dataToUpdate,
       omit: { password: true },
@@ -113,7 +113,7 @@ export class UsersService {
   }
 
   async remove(id: string) {
-    const user = await this.prismaService.users.findFirst({
+    const user = await this.prismaService.user.findFirst({
       where: { id },
       omit: { password: true },
     });
@@ -122,7 +122,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    await this.prismaService.users.delete({ where: { id } });
+    await this.prismaService.user.delete({ where: { id } });
     return user;
   }
 }

@@ -14,7 +14,7 @@ export class LeadsService {
   async create(createLeadDto: CreateLeadDto) {
     const { name, email, phone_number, type, company_name } = createLeadDto;
 
-    const lead = await this.prismaService.leads.findFirst({
+    const lead = await this.prismaService.lead.findFirst({
       where: { email },
     });
 
@@ -22,7 +22,7 @@ export class LeadsService {
       throw new BadRequestException('Lead already exists');
     }
 
-    return await this.prismaService.leads.create({
+    return await this.prismaService.lead.create({
       data: {
         name,
         email,
@@ -34,11 +34,11 @@ export class LeadsService {
   }
 
   async findAll() {
-    return await this.prismaService.leads.findMany();
+    return await this.prismaService.lead.findMany();
   }
 
   async findOne(id: string) {
-    const lead = await this.prismaService.leads.findFirst({
+    const lead = await this.prismaService.lead.findFirst({
       where: { id },
     });
 
@@ -52,7 +52,7 @@ export class LeadsService {
   async update(id: string, updateLeadDto: UpdateLeadDto) {
     await this.findOne(id);
 
-    return await this.prismaService.leads.update({
+    return await this.prismaService.lead.update({
       where: { id },
       data: updateLeadDto,
     });
@@ -61,7 +61,7 @@ export class LeadsService {
   async remove(id: string) {
     await this.findOne(id);
 
-    await this.prismaService.leads.delete({
+    await this.prismaService.lead.delete({
       where: { id },
     });
 

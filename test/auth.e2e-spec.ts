@@ -37,7 +37,7 @@ describe('Auth (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.users.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   afterAll(async () => {
@@ -91,6 +91,7 @@ describe('Auth (e2e)', () => {
         .query({ field: 'email', value: testUser.email })
         .expect(200);
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       expect(res.body.available).toBe(false);
     });
   });

@@ -9,7 +9,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
-import { user_role, users } from '@prisma/client';
+import { UserRole, users } from '@prisma/client';
 import { User } from './entities/user.entity';
 import { UpdateUserDto } from './dtos/update-user.dto';
 
@@ -47,11 +47,11 @@ describe('UsersService', () => {
   describe('findAll', () => {
     it('should return users with pagination', async () => {
       const users = [{ id: '1' }];
-      prisma.users.findMany.mockResolvedValue(users as users[]);
+      prisma.user.findMany.mockResolvedValue(users as users[]);
 
       const result = await service.findAll({ limit: 10, offset: 0 });
 
-      expect(prisma.users.findMany).toHaveBeenCalledWith({
+      expect(prisma.user.findMany).toHaveBeenCalledWith({
         take: 10,
         skip: 0,
         omit: { password: true },
@@ -63,11 +63,11 @@ describe('UsersService', () => {
   describe('findOne', () => {
     it('should return a user if found', async () => {
       const user = { id: '1' };
-      prisma.users.findFirst.mockResolvedValue(user as User);
+      prisma.user.findFirst.mockResolvedValue(user as User);
 
       const result = await service.findOne('1');
 
-      expect(prisma.users.findFirst).toHaveBeenCalledWith({
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
         where: { id: '1' },
         omit: { password: true },
       });
@@ -75,7 +75,7 @@ describe('UsersService', () => {
     });
 
     it('should throw NotFoundException if user does not exist', async () => {
-      prisma.users.findFirst.mockResolvedValue(null);
+      prisma.user.findFirst.mockResolvedValue(null);
 
       await expect(service.findOne('1')).rejects.toThrow(NotFoundException);
     });
@@ -91,30 +91,30 @@ describe('UsersService', () => {
       const updatedUser = {
         id: '1',
         name: 'Updated',
-        role: user_role.superuser,
+        role: UserRole.superuser,
       };
 
-      prisma.users.findUnique.mockResolvedValue(existingUser as User);
+      prisma.user.findUnique.mockResolvedValue(existingUser as User);
       passwordService.verifyPassword.mockResolvedValue(true);
       passwordService.hashPassword.mockResolvedValue('new-hash');
-      prisma.users.update.mockResolvedValue(updatedUser as User);
+      prisma.user.update.mockResolvedValue(updatedUser as User);
 
       const result = await service.update('1', {
         name: 'Updated',
         password: '123456',
-        role: user_role.superuser,
+        role: UserRole.superuser,
       } as UpdateUserDto);
 
-      expect(prisma.users.findUnique).toHaveBeenCalledWith({
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: '1' },
       });
       expect(passwordService.verifyPassword).toHaveBeenCalled();
-      expect(prisma.users.update).toHaveBeenCalled();
+      expect(prisma.user.update).toHaveBeenCalled();
       expect(result).toEqual(updatedUser);
     });
 
     it('should throw UnauthorizedException if password is invalid', async () => {
-      prisma.users.findUnique.mockResolvedValue({
+      prisma.user.findUnique.mockResolvedValue({
         id: '1',
         password: 'hashed',
       } as User);
@@ -127,7 +127,7 @@ describe('UsersService', () => {
     });
 
     it('should throw NotFoundException if user does not exist', async () => {
-      prisma.users.findUnique.mockResolvedValue(null);
+      prisma.user.findUnique.mockResolvedValue(null);
 
       await expect(
         service.update('1', { password: '123' } as User),
@@ -135,7 +135,7 @@ describe('UsersService', () => {
     });
 
     it('should throw BadRequestException if password is missing in DTO', async () => {
-      prisma.users.findUnique.mockResolvedValue({ id: '1' } as User);
+      prisma.user.findUnique.mockResolvedValue({ id: '1' } as User);
 
       await expect(
         service.update('1', { name: 'New Name' } as User),
@@ -147,30 +147,30 @@ describe('UsersService', () => {
     it('should delete a user if it exists', async () => {
       const user = { id: '1' };
 
-      prisma.users.findFirst.mockResolvedValue(user as User);
-      prisma.users.delete.mockResolvedValue(user as User);
+      prisma.user.findFirst.mockResolvedValue(user as User);
+      prisma.user.delete.mockResolvedValue(user as User);
 
       const result = await service.remove('1');
 
-      expect(prisma.users.findFirst).toHaveBeenCalledWith({
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
         where: { id: '1' },
         omit: { password: true },
       });
-      expect(prisma.users.delete).toHaveBeenCalledWith({
+      expect(prisma.user.delete).toHaveBeenCalledWith({
         where: { id: '1' },
       });
       expect(result).toEqual(user);
     });
 
     it('should throw NotFoundException if user does not exist', async () => {
-      prisma.users.findFirst.mockResolvedValue(null);
+      prisma.user.findFirst.mockResolvedValue(null);
 
       await expect(service.remove('1')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw InternalServerErrorException on database failure', async () => {
-      prisma.users.findFirst.mockResolvedValue({ id: '1' } as User);
-      prisma.users.delete.mockRejectedValue(
+      prisma.user.findFirst.mockResolvedValue({ id: '1' } as User);
+      prisma.user.delete.mockRejectedValue(
         new InternalServerErrorException('Delete failed'),
       );
 

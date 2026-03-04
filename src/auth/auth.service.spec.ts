@@ -10,7 +10,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
-import { user_role } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import { User } from 'src/users/entities/user.entity';
 import { RegisterDto } from './dtos/register.dto';
 
@@ -51,10 +51,10 @@ describe('AuthService', () => {
         id: '1',
         email: 'test@test.com',
         password: 'hashed',
-        role: user_role.superuser,
+        role: UserRole.superuser,
       };
 
-      prisma.users.findUnique.mockResolvedValue(user as User);
+      prisma.user.findUnique.mockResolvedValue(user as User);
       passwordService.verifyPassword.mockResolvedValue(true);
       jwtService.sign.mockReturnValue('token');
 
@@ -70,7 +70,7 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException if password is invalid', async () => {
-      prisma.users.findUnique.mockResolvedValue({
+      prisma.user.findUnique.mockResolvedValue({
         id: '1',
         password: 'hashed',
       } as User);
@@ -96,7 +96,7 @@ describe('AuthService', () => {
     it('should register a user successfully', async () => {
       const mockCreatedUser = {
         id: '1',
-        role: user_role.superuser,
+        role: UserRole.superuser,
         name: 'John',
       } as User;
 
@@ -108,7 +108,7 @@ describe('AuthService', () => {
         username: 'john_doe',
         email: 'test@test.com',
         birth_date: new Date(),
-        role: user_role.superuser,
+        role: UserRole.superuser,
         password: '123',
         password_confirm: '123',
       } as RegisterDto);
@@ -121,10 +121,10 @@ describe('AuthService', () => {
 
   describe('refreshTokens', () => {
     it('should refresh tokens successfully', async () => {
-      jwtService.verify.mockReturnValue({ id: '1', role: user_role.superuser });
+      jwtService.verify.mockReturnValue({ id: '1', role: UserRole.superuser });
       usersService.findOne.mockResolvedValue({
         id: '1',
-        role: user_role.superuser,
+        role: UserRole.superuser,
       } as User);
       jwtService.sign.mockReturnValue('token');
 
@@ -148,11 +148,11 @@ describe('AuthService', () => {
 
   describe('isUniqueAvailable', () => {
     it('should return available true when no user exists', async () => {
-      prisma.users.count.mockResolvedValue(0);
+      prisma.user.count.mockResolvedValue(0);
 
       const result = await service.isUniqueAvailable('email', 'test@test.com');
 
-      expect(prisma.users.count).toHaveBeenCalledWith({
+      expect(prisma.user.count).toHaveBeenCalledWith({
         where: { email: 'test@test.com' },
       });
 
@@ -164,11 +164,11 @@ describe('AuthService', () => {
     });
 
     it('should return available false when user already exists', async () => {
-      prisma.users.count.mockResolvedValue(1);
+      prisma.user.count.mockResolvedValue(1);
 
       const result = await service.isUniqueAvailable('username', 'john');
 
-      expect(prisma.users.count).toHaveBeenCalledWith({
+      expect(prisma.user.count).toHaveBeenCalledWith({
         where: { username: 'john' },
       });
 
@@ -180,7 +180,7 @@ describe('AuthService', () => {
     });
 
     it('should throw InternalServerErrorException on prisma error', async () => {
-      prisma.users.count.mockRejectedValue(new Error('DB error'));
+      prisma.user.count.mockRejectedValue(new Error('DB error'));
 
       await expect(
         service.isUniqueAvailable('email', 'test@test.com'),

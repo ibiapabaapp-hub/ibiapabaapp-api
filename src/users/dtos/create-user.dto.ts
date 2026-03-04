@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { user_role } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsDate,
@@ -44,8 +44,8 @@ export class CreateUserDto {
   @Type(() => Date)
   birth_date: Date;
 
-  @ApiProperty({ enum: user_role, example: 'USER' })
-  @IsEnum(user_role)
+  @ApiProperty({ enum: UserRole, example: 'USER' })
+  @IsEnum(UserRole)
   role: string;
 
   @ApiProperty({ example: 'Senha@123', minLength: 8 })
