@@ -5,6 +5,8 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
 import { Request, Response } from 'express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { printLogoFromFile } from './common/utils/print-logo-from-file';
+import pc from 'picocolors';
 
 let app: NestExpressApplication;
 
@@ -44,7 +46,7 @@ export async function bootstrap() {
     });
 
     const config = new DocumentBuilder()
-      .setTitle('IbiapabaApp API')
+      .setTitle('IbiapabaAppAPI')
       .setDescription(
         'Ponte entre o IbiapabaApp mobile e web para a persistência de dados',
       )
@@ -67,6 +69,16 @@ if (process.env.NODE_ENV !== 'test') {
     console.error(err);
     process.exit(1);
   });
+}
+
+if (process.env.NODE_ENV === 'development') {
+  printLogoFromFile('logo-ascii.txt');
+  console.log(
+    `🚀 API running on ${pc.greenBright('http://localhost:' + process.env.PORT)}`,
+  );
+  console.log(
+    `📃 Docs on ${pc.greenBright('http://localhost:' + process.env.PORT + '/docs')}`,
+  );
 }
 
 export default async (req: Request, res: Response) => {
