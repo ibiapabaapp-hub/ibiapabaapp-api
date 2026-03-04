@@ -6,9 +6,10 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './common/guards/auth.guard';
 import { JwtModule } from './common/jwt/jwt.module';
+import { GlobalExceptionsFilter } from './common/filters/global-exceptions.filter';
 
 @Module({
   imports: [
@@ -28,6 +29,10 @@ import { JwtModule } from './common/jwt/jwt.module';
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionsFilter,
     },
   ],
 })
