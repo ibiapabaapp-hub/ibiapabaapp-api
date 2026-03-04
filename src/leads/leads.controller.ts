@@ -37,7 +37,7 @@ export class LeadsController {
 
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Listar todos os leads' })
-  @ApiResponse({ status: 200, type: [LeadResponseDto] })
+  @ApiResponse({ status: 200, type: LeadResponseDto, isArray: true })
   @Get()
   findAll() {
     return this.leadsService.findAll();
