@@ -1,12 +1,14 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [postgis]
 }
 
-model leads {
+model Lead {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name         String    @db.VarChar(50)
   email        String    @unique @db.VarChar(100)
@@ -16,67 +18,120 @@ model leads {
   created_at   DateTime? @default(now()) @db.Timestamp(6)
   updated_at   DateTime? @default(now()) @db.Timestamp(6)
 
-  @@index([id], map: "idx_lead")
+  @@map("Lead")
 }
 
-enum user_role {
+model CityCategory {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cityId     String @db.Uuid
+  categoryId String @db.Uuid
+
+  city     City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([cityId, categoryId])
+  @@index([cityId])
+  @@index([categoryId])
+  @@map("CityCategory")
+}
+
+model Category {
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parentId String? @db.Uuid
+  name     String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children Category[] @relation("CategoryTree")
+
+  City CityCategory[]
+
+  @@index([parentId])
+  @@index([name])
+  @@map("Category")
+}
+
+model City {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug        String  @unique
+  name        String
+  description String?
+
+  // PostGIS
+  location Unsupported("geometry(Point, 4326)")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // N-N
+  Category CityCategory[]
+
+  @@index([createdAt(sort: Desc)])
+  @@index([location], type: Gist)
+  @@map("City")
+}
+
+enum UserRole {
   user
   superuser
 }
 
-model users {
-  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name               String               @db.VarChar(100)
+model User {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String    @db.VarChar(100)
   // cpf                String               @unique @db.VarChar(20)
-  birth_date         DateTime             @db.Date
-  username           String               @unique @db.VarChar(50)
-  email              String               @unique @db.VarChar(255)
-  phone_number       String               @unique @db.VarChar(200)
-  password           String               @db.VarChar(255)
-  role               user_role            @default(user)
-  active             Boolean              @default(true)
-  created_at         DateTime?            @default(now()) @db.Timestamp(6)
-  updated_at         DateTime?            @default(now()) @db.Timestamp(6)
+  birth_date   DateTime  @db.Date
+  username     String    @unique @db.VarChar(50)
+  email        String    @unique @db.VarChar(255)
+  phone_number String    @unique @db.VarChar(200)
+  password     String    @db.VarChar(255)
+  role         UserRole  @default(user)
+  active       Boolean   @default(true)
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  updated_at   DateTime? @default(now()) @db.Timestamp(6)
 
-  companies      user_companies[]
+  Company UserCompany[]
 
-  @@index([id], map: "idx_user")
+  @@map("User")
 }
 
-model companies {
-  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug           String            @unique @db.VarChar(100)
-  name           String            @db.VarChar(150)
-  cnpj           String?           @db.VarChar(20)
-  description    String?
-  active         Boolean           @default(true)
-  created_at     DateTime          @default(now()) @db.Timestamp(6)
-  updated_at     DateTime          @updatedAt @db.Timestamp(6)
+model Company {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug        String   @unique @db.VarChar(100)
+  name        String   @db.VarChar(150)
+  cnpj        String?  @db.VarChar(20)
+  description String?
+  active      Boolean  @default(true)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @updatedAt @db.Timestamp(6)
 
-  users          user_companies[]
+  User UserCompany[]
 
-  @@index([id], map: "idx_company")
+  @@map("Company")
 }
 
-enum company_role {
+enum CompanyRole {
   owner
   admin
   editor
   viewer
 }
 
-model user_companies {
-  id           String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id      String            @db.Uuid
-  company_id   String            @db.Uuid
-  role         company_role
-  created_at   DateTime          @default(now()) @db.Timestamp(6)
-  updated_at   DateTime          @updatedAt @db.Timestamp(6)
+model UserCompany {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String      @db.Uuid
+  company_id String      @db.Uuid
+  role       CompanyRole
+  created_at DateTime    @default(now()) @db.Timestamp(6)
+  updated_at DateTime    @updatedAt @db.Timestamp(6)
 
-  user         users             @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  company      companies         @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
 
-  @@unique([user_id, company_id], map: "uniq_user_company")
-  @@index([user_id], map: "idx_user_companies_user")
-  @@index([company_id], map: "idx_user_companies_company")
+  @@unique([user_id, company_id], map: "uniq_UserCompany")
+  @@index([user_id], map: "idx_UserCompany_user")
+  @@index([company_id], map: "idx_UserCompany_company")
+  @@map("UserCompany")
 }
