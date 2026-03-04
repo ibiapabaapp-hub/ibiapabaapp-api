@@ -135,10 +135,10 @@ describe('UsersService', () => {
     });
 
     it('should throw BadRequestException if password is missing in DTO', async () => {
-      prisma.users.findUnique.mockResolvedValue({ id: '1' } as any);
+      prisma.users.findUnique.mockResolvedValue({ id: '1' } as User);
 
       await expect(
-        service.update('1', { name: 'New Name' } as any),
+        service.update('1', { name: 'New Name' } as User),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -169,8 +169,10 @@ describe('UsersService', () => {
     });
 
     it('should throw InternalServerErrorException on database failure', async () => {
-      prisma.users.findFirst.mockResolvedValue({ id: '1' } as any);
-      prisma.users.delete.mockRejectedValue(new Error('Delete failed'));
+      prisma.users.findFirst.mockResolvedValue({ id: '1' } as User);
+      prisma.users.delete.mockRejectedValue(
+        new InternalServerErrorException('Delete failed'),
+      );
 
       await expect(service.remove('1')).rejects.toThrow(
         InternalServerErrorException,

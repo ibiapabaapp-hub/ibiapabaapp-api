@@ -94,18 +94,18 @@ describe('AuthService', () => {
     });
 
     it('should register a user successfully', async () => {
-      prisma.users.create.mockResolvedValue({
+      const mockCreatedUser = {
         id: '1',
         role: user_role.superuser,
-      } as User);
+        name: 'John',
+      } as User;
 
-      passwordService.hashPassword.mockResolvedValue('hashed');
+      usersService.create.mockResolvedValue(mockCreatedUser);
       jwtService.sign.mockReturnValue('token');
 
       const result = await service.register({
         name: 'John',
         username: 'john_doe',
-        // cpf: '123',
         email: 'test@test.com',
         birth_date: new Date(),
         role: user_role.superuser,
@@ -113,7 +113,7 @@ describe('AuthService', () => {
         password_confirm: '123',
       } as RegisterDto);
 
-      expect(prisma.users.create).toHaveBeenCalled();
+      expect(usersService.create).toHaveBeenCalled();
       expect(jwtService.sign).toHaveBeenCalledTimes(2);
       expect(result?.accessToken).toBe('token');
     });
