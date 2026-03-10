@@ -59,7 +59,7 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-    "email": "admin@teste.co",
+    "email": "admin@teste.com",
     "password": "12345678"
 }
 ###
@@ -71,11 +71,10 @@ Content-Type: application/json
 {
     "name": "Administrador",
     "username": "admin-user",
-    "cpf": "000.000.000-01",
     "birth_date": "01/05/2004",
-    "email": "admin@teste.co",
+    "email": "admin@teste.com",
     "phone_number": "+558999999999",
-    "role": "user",
+    "role": "superuser",
     "password": "12345678",
     "password_confirm": "12345678"
 }
@@ -118,4 +117,40 @@ Content-Type: application/json
 DELETE {{baseUrl}}/users/{{userUUID}}
 Authorization: {{authToken}}
 Content-Type: application/json
+###
+
+// =====================================
+// Cities
+// =====================================
+# @name GetCities
+GET {{baseUrl}}/cities
+Authorization: {{authToken}}
+###
+
+# @name GetCityById
+GET {{baseUrl}}/cities/dd28534d-8a43-47c1-beca-896763616403
+Authorization: {{authToken}}
+###
+
+# @name GetCityMedia
+GET {{baseUrl}}/cities/3f9fc94a-143c-4ed9-a45f-bd21b88d315b
+Authorization: {{authToken}}
+###
+
+// =====================================
+// Companies
+// =====================================
+# @name GetCompanies
+GET {{baseUrl}}/companies
+Authorization: {{authToken}}
+###
+
+# @name GetCompanyById
+GET {{baseUrl}}/companies/dd28534d-8a43-47c1-beca-896763616403
+Authorization: {{authToken}}
+###
+
+# @name GetCompanyMedia
+GET {{baseUrl}}/companies/3f9fc94a-143c-4ed9-a45f-bd21b88d315b/media
+Authorization: {{authToken}}
 ###
