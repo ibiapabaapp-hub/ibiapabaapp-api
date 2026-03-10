@@ -10,6 +10,9 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './common/guards/auth.guard';
 import { JwtModule } from './common/jwt/jwt.module';
 import { GlobalExceptionsFilter } from './common/filters/global-exceptions.filter';
+import { CitiesModule } from './cities/cities.module';
+import { MediasModule } from './medias/medias.module';
+import { CompaniesModule } from './companies/companies.module';
 
 @Module({
   imports: [
@@ -22,6 +25,9 @@ import { GlobalExceptionsFilter } from './common/filters/global-exceptions.filte
     LeadsModule,
     UsersModule,
     JwtModule,
+    CitiesModule,
+    MediasModule,
+    CompaniesModule,
   ],
   controllers: [AppController],
   providers: [
