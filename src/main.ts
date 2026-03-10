@@ -41,6 +41,14 @@ export async function bootstrap() {
         'https://www.ibiapabaapp.com.br',
         'https://ibiapabaapp-landingpage.vercel.app',
       ],
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+      credentials: true,
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'x-refresh-token',
+        'ngrok-skip-browser-warning',
+      ],
       // credentials: true,
       // cookies no CORS
     });
