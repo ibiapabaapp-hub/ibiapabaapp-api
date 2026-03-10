@@ -9,8 +9,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
-import { UserRole, users } from '@prisma/client';
-import { User } from './entities/user.entity';
+import { UserRole, User as UserPrisma } from '@prisma/client';
+import { User as UserEntity } from './entities/user.entity';
 import { UpdateUserDto } from './dtos/update-user.dto';
 
 describe('UsersService', () => {
@@ -47,7 +47,7 @@ describe('UsersService', () => {
   describe('findAll', () => {
     it('should return users with pagination', async () => {
       const users = [{ id: '1' }];
-      prisma.user.findMany.mockResolvedValue(users as users[]);
+      prisma.user.findMany.mockResolvedValue(users as UserPrisma[]);
 
       const result = await service.findAll({ limit: 10, offset: 0 });
 
@@ -60,12 +60,12 @@ describe('UsersService', () => {
     });
   });
 
-  describe('findOne', () => {
+  describe('findOneById', () => {
     it('should return a user if found', async () => {
       const user = { id: '1' };
-      prisma.user.findFirst.mockResolvedValue(user as User);
+      prisma.user.findFirst.mockResolvedValue(user as UserEntity);
 
-      const result = await service.findOne('1');
+      const result = await service.findOneById('1');
 
       expect(prisma.user.findFirst).toHaveBeenCalledWith({
         where: { id: '1' },
@@ -77,7 +77,56 @@ describe('UsersService', () => {
     it('should throw NotFoundException if user does not exist', async () => {
       prisma.user.findFirst.mockResolvedValue(null);
 
-      await expect(service.findOne('1')).rejects.toThrow(NotFoundException);
+      await expect(service.findOneById('1')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('findOneByEmail', () => {
+    const mockUser = {
+      id: '1',
+      email: 'test@example.com',
+      password: 'hashed-password',
+      name: 'Test User',
+    };
+
+    it('should return a user without password by default', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...userWithoutPassword } = mockUser;
+      prisma.user.findFirst.mockResolvedValue(
+        userWithoutPassword as UserPrisma,
+      );
+
+      const result = await service.findOneByEmail('test@example.com');
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: { email: 'test@example.com' },
+        omit: { password: true },
+      });
+      expect(result).not.toHaveProperty('password');
+      expect(result).toEqual(userWithoutPassword);
+    });
+
+    it('should return a user with password when getPassword is true', async () => {
+      prisma.user.findFirst.mockResolvedValue(mockUser as UserPrisma);
+
+      const result = await service.findOneByEmail('test@example.com', true);
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+        where: { email: 'test@example.com' },
+        omit: { password: false },
+      });
+      expect(result).toHaveProperty('password');
+      expect(result.password).toBe('hashed-password');
+    });
+
+    it('should throw NotFoundException if user email is not found', async () => {
+      prisma.user.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.findOneByEmail('nonexistent@example.com'),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(prisma.user.findFirst).toHaveBeenCalled();
     });
   });
 
@@ -94,10 +143,10 @@ describe('UsersService', () => {
         role: UserRole.superuser,
       };
 
-      prisma.user.findUnique.mockResolvedValue(existingUser as User);
+      prisma.user.findUnique.mockResolvedValue(existingUser as UserEntity);
       passwordService.verifyPassword.mockResolvedValue(true);
       passwordService.hashPassword.mockResolvedValue('new-hash');
-      prisma.user.update.mockResolvedValue(updatedUser as User);
+      prisma.user.update.mockResolvedValue(updatedUser as UserEntity);
 
       const result = await service.update('1', {
         name: 'Updated',
@@ -117,12 +166,12 @@ describe('UsersService', () => {
       prisma.user.findUnique.mockResolvedValue({
         id: '1',
         password: 'hashed',
-      } as User);
+      } as UserEntity);
 
       passwordService.verifyPassword.mockResolvedValue(false);
 
       await expect(
-        service.update('1', { password: 'wrong' } as User),
+        service.update('1', { password: 'wrong' } as UserEntity),
       ).rejects.toThrow(UnauthorizedException);
     });
 
@@ -130,15 +179,15 @@ describe('UsersService', () => {
       prisma.user.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.update('1', { password: '123' } as User),
+        service.update('1', { password: '123' } as UserEntity),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if password is missing in DTO', async () => {
-      prisma.user.findUnique.mockResolvedValue({ id: '1' } as User);
+      prisma.user.findUnique.mockResolvedValue({ id: '1' } as UserEntity);
 
       await expect(
-        service.update('1', { name: 'New Name' } as User),
+        service.update('1', { name: 'New Name' } as UserEntity),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -147,8 +196,8 @@ describe('UsersService', () => {
     it('should delete a user if it exists', async () => {
       const user = { id: '1' };
 
-      prisma.user.findFirst.mockResolvedValue(user as User);
-      prisma.user.delete.mockResolvedValue(user as User);
+      prisma.user.findFirst.mockResolvedValue(user as UserEntity);
+      prisma.user.delete.mockResolvedValue(user as UserEntity);
 
       const result = await service.remove('1');
 
@@ -169,7 +218,7 @@ describe('UsersService', () => {
     });
 
     it('should throw InternalServerErrorException on database failure', async () => {
-      prisma.user.findFirst.mockResolvedValue({ id: '1' } as User);
+      prisma.user.findFirst.mockResolvedValue({ id: '1' } as UserEntity);
       prisma.user.delete.mockRejectedValue(
         new InternalServerErrorException('Delete failed'),
       );

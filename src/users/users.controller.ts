@@ -41,7 +41,7 @@ export class UsersController {
   @Get(':id')
   @UserRoles([UserRole.superuser])
   findOne(@Param('id') id: string) {
-    return this.usersService.findOne(id);
+    return this.usersService.findOneById(id);
   }
 
   @ApiBearerAuth()

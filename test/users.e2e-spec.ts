@@ -52,7 +52,7 @@ describe('Users (e2e)', () => {
   });
 
   const createMockUser = async (
-    email = 'user@test.com',
+    email = `user_${Math.random()}@test.com`,
     role = 'superuser',
   ) => {
     return prisma.user.create({
@@ -69,24 +69,31 @@ describe('Users (e2e)', () => {
   };
 
   describe('GET /users', () => {
-    it('should return a list of users', async () => {
+    it('should return a list of users without passwords', async () => {
       await createMockUser();
       const res = await request(app.getHttpServer()).get(BASE_PATH).expect(200);
 
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body.length).toBeGreaterThan(0);
-      expect(res.body[0]).not.toHaveProperty('password');
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      res.body.forEach((user: any) => {
+        expect(user.password).toBeUndefined();
+        expect(user).not.toHaveProperty('password');
+      });
     });
   });
 
   describe('GET /users/:id', () => {
-    it('should return a single user', async () => {
+    it('should return a single user without password', async () => {
       const user = await createMockUser();
       const res = await request(app.getHttpServer())
         .get(`${BASE_PATH}/${user.id}`)
         .expect(200);
 
       expect(res.body.id).toBe(user.id);
+      expect(res.body.password).toBeUndefined();
+      expect(res.body).not.toHaveProperty('password');
     });
 
     it('should return 404 for non-existing user', async () => {
@@ -98,7 +105,7 @@ describe('Users (e2e)', () => {
   });
 
   describe('PATCH /users/:id', () => {
-    it('should update user successfully', async () => {
+    it('should update user successfully and not return password', async () => {
       const user = await createMockUser('update@test.com');
 
       const res = await request(app.getHttpServer())
@@ -111,6 +118,8 @@ describe('Users (e2e)', () => {
         .expect(200);
 
       expect(res.body.name).toBe('Novo Nome');
+      expect(res.body.password).toBeUndefined();
+      expect(res.body).not.toHaveProperty('password');
     });
 
     it('should return 401 if current password is wrong', async () => {
@@ -127,11 +136,13 @@ describe('Users (e2e)', () => {
   });
 
   describe('DELETE /users/:id', () => {
-    it('should remove a user', async () => {
+    it('should remove a user and return deleted user data without password', async () => {
       const user = await createMockUser();
-      await request(app.getHttpServer())
+      const res = await request(app.getHttpServer())
         .delete(`${BASE_PATH}/${user.id}`)
         .expect(200);
+
+      expect(res.body.password).toBeUndefined();
 
       const check = await prisma.user.findUnique({ where: { id: user.id } });
       expect(check).toBeNull();

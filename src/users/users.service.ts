@@ -55,10 +55,23 @@ export class UsersService {
     });
   }
 
-  async findOne(id: string) {
+  async findOneById(id: string) {
     const user = await this.prismaService.user.findFirst({
       where: { id },
       omit: { password: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
+
+  async findOneByEmail(email: string, getPassword: boolean = false) {
+    const user = await this.prismaService.user.findFirst({
+      where: { email },
+      omit: { password: !getPassword },
     });
 
     if (!user) {
