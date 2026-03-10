@@ -47,30 +47,48 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should login successfully', async () => {
-      const user = {
+      const passwordInDb = 'hashed_password';
+      const rawPassword = '123';
+
+      const mockUser: User = {
         id: '1',
         email: 'test@test.com',
-        password: 'hashed',
+        password: passwordInDb,
         role: UserRole.superuser,
+        name: 'Test',
+        username: 'test',
+        phone_number: '123',
+        active: true,
+        birth_date: new Date(),
+        created_at: new Date(),
+        updated_at: new Date(),
       };
 
-      prisma.user.findUnique.mockResolvedValue(user as User);
+      usersService.findOneByEmail.mockResolvedValue(mockUser);
       passwordService.verifyPassword.mockResolvedValue(true);
       jwtService.sign.mockReturnValue('token');
 
       const result = await service.login({
         email: 'test@test.com',
-        password: '123',
+        password: rawPassword,
       });
 
-      expect(passwordService.verifyPassword).toHaveBeenCalled();
+      expect(usersService.findOneByEmail).toHaveBeenCalledWith(
+        'test@test.com',
+        true,
+      );
+      expect(passwordService.verifyPassword).toHaveBeenCalledWith(
+        passwordInDb,
+        rawPassword,
+      );
       expect(jwtService.sign).toHaveBeenCalledTimes(2);
+      expect(result.user).not.toHaveProperty('password');
       expect(result.accessToken).toBe('token');
       expect(result.refreshToken).toBe('token');
     });
 
     it('should throw UnauthorizedException if password is invalid', async () => {
-      prisma.user.findUnique.mockResolvedValue({
+      usersService.findOneByEmail.mockResolvedValue({
         id: '1',
         password: 'hashed',
       } as User);
@@ -113,6 +131,7 @@ describe('AuthService', () => {
         password_confirm: '123',
       } as RegisterDto);
 
+      expect(result?.user).not.toHaveProperty('password');
       expect(usersService.create).toHaveBeenCalled();
       expect(jwtService.sign).toHaveBeenCalledTimes(2);
       expect(result?.accessToken).toBe('token');
@@ -122,7 +141,7 @@ describe('AuthService', () => {
   describe('refreshTokens', () => {
     it('should refresh tokens successfully', async () => {
       jwtService.verify.mockReturnValue({ id: '1', role: UserRole.superuser });
-      usersService.findOne.mockResolvedValue({
+      usersService.findOneById.mockResolvedValue({
         id: '1',
         role: UserRole.superuser,
       } as User);
@@ -138,7 +157,7 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException if user not found', async () => {
       jwtService.verify.mockReturnValue({ id: '1', role: 1 });
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      usersService.findOne.mockResolvedValue(null as any);
+      usersService.findOneByEmail.mockResolvedValue(null as any);
 
       await expect(service.refreshTokens('refresh')).rejects.toThrow(
         UnauthorizedException,

@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/common/prisma/prisma.service';
@@ -30,10 +29,13 @@ export class AuthService {
     private readonly userService: UsersService,
   ) {}
 
-  private generateAuthResponse(user: SecureUserDto): AuthResponseDto {
+  private generateAuthResponse(user: User | SecureUserDto): AuthResponseDto {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...userWithoutPassword } = user as User;
     const payload = { id: user.id, role: user.role };
+
     return {
-      user,
+      user: userWithoutPassword as SecureUserDto,
       accessToken: this.jwtService.sign(payload, { expiresIn: '40m' }),
       refreshToken: this.jwtService.sign(payload, { expiresIn: '7d' }),
     };
@@ -46,18 +48,7 @@ export class AuthService {
   }> {
     const { email, password } = loginDto;
 
-    // TODO: refatorar para userService conter findByEmail
-    const user = await this.prismaService.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      throw new NotFoundException({
-        message: 'User not found',
-        code: 'user_not_found',
-      });
-    }
-
+    const user = await this.userService.findOneByEmail(email, true);
     const isPasswordValid = await this.passwordService.verifyPassword(
       user.password,
       password,
@@ -98,7 +89,7 @@ export class AuthService {
       role: number;
     }>(refreshToken);
 
-    const user = await this.userService.findOne(decodedTokenData.id);
+    const user = await this.userService.findOneById(decodedTokenData.id);
     if (!user) {
       throw new UnauthorizedException({
         message: 'Expired or invalid token',
@@ -136,6 +127,6 @@ export class AuthService {
   async getMe(authorization: string) {
     const token = extractBearerTokenFromString(authorization);
     const { id } = this.jwtService.verify<{ id: string; role: string }>(token);
-    return this.userService.findOne(id);
+    return this.userService.findOneById(id);
   }
 }
