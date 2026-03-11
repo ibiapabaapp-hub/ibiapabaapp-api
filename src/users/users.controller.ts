@@ -40,7 +40,7 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @Get(':id')
   @UserRoles([UserRole.superuser])
-  findOne(@Param('id') id: string) {
+  findOneById(@Param('id') id: string) {
     return this.usersService.findOneById(id);
   }
 

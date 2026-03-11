@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
-import { UserRole, users } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { User } from './entities/user.entity';
 
@@ -35,7 +35,7 @@ describe('UsersController', () => {
     const pagination = { limit: 10, offset: 0 };
     const users = [{ id: '1' }];
 
-    service.findAll.mockResolvedValue(users as users[]);
+    service.findAll.mockResolvedValue(users as User[]);
 
     const result = await controller.findAll(pagination);
 
@@ -43,14 +43,14 @@ describe('UsersController', () => {
     expect(result).toEqual(users);
   });
 
-  it('should call service.findOne on findOne()', async () => {
+  it('should call service.findOneById on findOneById()', async () => {
     const user = { id: '1' };
 
-    service.findOne.mockResolvedValue(user as User);
+    service.findOneById.mockResolvedValue(user as User);
 
-    const result = await controller.findOne('1');
+    const result = await controller.findOneById('1');
 
-    expect(service.findOne).toHaveBeenCalledWith('1');
+    expect(service.findOneById).toHaveBeenCalledWith('1');
     expect(result).toEqual(user);
   });
 
