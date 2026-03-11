@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { CitiesService } from './cities.service';
 import { CitiesController } from './cities.controller';
-import { PrismaService } from 'src/common/prisma/prisma.service';
-import { MediasService } from 'src/medias/medias.service';
+import { PrismaModule } from 'src/common/prisma/prisma.module';
+import { MediasModule } from 'src/medias/medias.module';
 
 @Module({
+  imports: [PrismaModule, MediasModule],
   controllers: [CitiesController],
-  providers: [CitiesService, PrismaService, MediasService],
+  providers: [CitiesService],
 })
 export class CitiesModule {}
