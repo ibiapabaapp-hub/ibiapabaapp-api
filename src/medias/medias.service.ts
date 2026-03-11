@@ -8,6 +8,7 @@ import { randomUUID } from 'crypto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PrismaService } from 'src/common/prisma/prisma.service';
 import { EntityType } from '@prisma/client';
+import { Media } from './entities/media.entity';
 
 @UseInterceptors(
   FileInterceptor('file', {
@@ -74,7 +75,7 @@ export class MediasService {
     return `${process.env.R2_PUBLIC_URL}/${key}`;
   }
 
-  async getMediaByCity(cityId: string) {
+  async getMediaByCity(cityId: string): Promise<Media[]> {
     return this.prismaService.media.findMany({
       where: { entity_type: EntityType.city, entity_id: cityId },
       orderBy: [{ is_cover: 'desc' }, { position: 'asc' }],

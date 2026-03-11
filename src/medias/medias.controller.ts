@@ -10,6 +10,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { MediasService } from './medias.service';
 
 @Controller('media')
+// TODO: documentar MediasController
 export class MediasController {
   constructor(private readonly mediaService: MediasService) {}
 
