@@ -1,11 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/common/prisma/prisma.service';
+import { City } from './entities/city.entity';
 
 @Injectable()
 export class CitiesService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async findAll() {
+  async findAll(): Promise<City[]> {
     return this.prismaService.$queryRaw`
       SELECT 
         c.id, 
@@ -25,8 +26,8 @@ export class CitiesService {
     `;
   }
 
-  async findOne(id: string) {
-    const cities = await this.prismaService.$queryRaw`
+  async findOne(id: string): Promise<City> {
+    const cities: City[] = await this.prismaService.$queryRaw`
       SELECT 
         id, 
         name, 
@@ -39,7 +40,10 @@ export class CitiesService {
       LIMIT 1
     `;
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return Array.isArray(cities) ? cities[0] : null;
+    if (Array.isArray(cities) && cities.length > 0) {
+      return cities[0];
+    }
+
+    throw new NotFoundException('City not found');
   }
 }
