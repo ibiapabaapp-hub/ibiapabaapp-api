@@ -47,7 +47,7 @@ describe('Cities (e2e)', () => {
   });
 
   afterEach(async () => {
-    await prisma.$executeRaw`TRUNCATE TABLE "City" RESTART IDENTITY CASCADE`;
+    await prisma.$executeRaw`TRUNCATE TABLE "city" RESTART IDENTITY CASCADE`;
   });
 
   afterAll(async () => {
@@ -57,7 +57,7 @@ describe('Cities (e2e)', () => {
 
   it('GET /cities -> lists all cities with geography data', async () => {
     await prisma.$executeRaw`
-      INSERT INTO "City" (id, name, slug, description, location, created_at, updated_at) 
+      INSERT INTO "city" (id, name, slug, description, location, created_at, updated_at) 
       VALUES (
         gen_random_uuid(), 
         'Tianguá', 
@@ -92,7 +92,7 @@ describe('Cities (e2e)', () => {
     const cityId = '550e8400-e29b-41d4-a716-446655440000';
 
     await prisma.$executeRaw`
-      INSERT INTO "City" (id, name, slug, description, location, created_at, updated_at) 
+      INSERT INTO "city" (id, name, slug, description, location, created_at, updated_at) 
       VALUES (
         ${cityId}::uuid, 
         'Ubajara', 
@@ -117,7 +117,7 @@ describe('Cities (e2e)', () => {
     const cityId = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
     await prisma.$executeRaw`
-      INSERT INTO "City" (id, name, slug, description, location, created_at, updated_at) 
+      INSERT INTO "city" (id, name, slug, description, location, created_at, updated_at) 
       VALUES (${cityId}::uuid, 'Viçosa', 'vicosa', 'Desc', ST_SetSRID(ST_MakePoint(0,0), 4326), NOW(), NOW())
     `;
 
