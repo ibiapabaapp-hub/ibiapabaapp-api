@@ -14,7 +14,8 @@ import { PasswordService } from 'src/common/password/password.service';
 import { UsersController } from 'src/users/users.controller';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from 'src/common/jwt/jwt.service';
-import { UserRole } from '@prisma/client';
+import { user_role } from '@prisma/client';
+import { InterestsService } from 'src/users/interests.service';
 
 describe('Users (e2e)', () => {
   let app: INestApplication<App>;
@@ -26,7 +27,7 @@ describe('Users (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule],
       controllers: [UsersController],
-      providers: [UsersService, PasswordService, JwtService],
+      providers: [UsersService, InterestsService, PasswordService, JwtService],
     }).compile();
 
     app = moduleFixture.createNestApplication();
@@ -63,7 +64,7 @@ describe('Users (e2e)', () => {
         password: await passwordService.hashPassword('password123'),
         birth_date: new Date('1990-01-01'),
         phone_number: `+55859${Math.floor(Math.random() * 90000000 + 10000000)}`,
-        role: role as UserRole,
+        role: role as user_role,
       },
     });
   };
