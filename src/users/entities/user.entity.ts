@@ -1,5 +1,6 @@
-import { $Enums, User as UserPrisma } from '@prisma/client';
-export class User implements UserPrisma {
+import { $Enums, user } from '@prisma/client';
+
+export class User implements user {
   name: string;
   id: string;
   birth_date: Date;
@@ -7,7 +8,7 @@ export class User implements UserPrisma {
   email: string;
   phone_number: string;
   password: string;
-  role: $Enums.UserRole;
+  role: $Enums.user_role;
   active: boolean;
   created_at: Date | null;
   updated_at: Date | null;
