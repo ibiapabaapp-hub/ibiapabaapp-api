@@ -1,4 +1,4 @@
-import { UserRole } from '@prisma/client';
+import { user_role } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsString,
@@ -22,7 +22,7 @@ export class UpdateUserDto {
   @IsOptional()
   birth_date?: Date;
 
-  @IsEnum(UserRole)
+  @IsEnum(user_role)
   @IsOptional()
   role?: string;
 

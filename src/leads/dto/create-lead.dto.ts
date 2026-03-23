@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { lead_type } from '@prisma/client';
 import {
   IsEmail,
   IsIn,
@@ -34,7 +35,7 @@ export class CreateLeadDto {
   @IsIn(['resident', 'tourist', 'company'])
   @MinLength(4)
   @MaxLength(10)
-  type: string;
+  type: lead_type;
 
   @ApiProperty({
     example: 'Tech Solutions Ltda',

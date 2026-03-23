@@ -8,7 +8,7 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import { PrismaService } from 'src/common/prisma/prisma.service';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { PasswordService } from 'src/common/password/password.service';
-import { UserRole } from '@prisma/client';
+import { user_role } from '@prisma/client';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { randomUUID } from 'crypto';
 import { User } from './entities/user.entity';
@@ -34,7 +34,7 @@ export class UsersService {
         name: userData.name.trim(),
         // cpf,
         birth_date: userData.birth_date,
-        role: userData.role as UserRole,
+        role: userData.role as user_role,
         email: userData.email.trim(),
         password: await this.passwordService.hashPassword(userData.password),
         username: userData.username.toLowerCase().trim(),
@@ -115,7 +115,7 @@ export class UsersService {
     }
 
     if (role) {
-      dataToUpdate.role = role as UserRole;
+      dataToUpdate.role = role as user_role;
     }
 
     return this.prismaService.user.update({

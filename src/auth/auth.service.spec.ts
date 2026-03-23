@@ -10,7 +10,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
-import { UserRole } from '@prisma/client';
+import { user_role } from '@prisma/client';
 import { User } from 'src/users/entities/user.entity';
 import { RegisterDto } from './dtos/register.dto';
 
@@ -54,7 +54,7 @@ describe('AuthService', () => {
         id: '1',
         email: 'test@test.com',
         password: passwordInDb,
-        role: UserRole.superuser,
+        role: user_role.superuser,
         name: 'Test',
         username: 'test',
         phone_number: '123',
@@ -114,7 +114,7 @@ describe('AuthService', () => {
     it('should register a user successfully', async () => {
       const mockCreatedUser = {
         id: '1',
-        role: UserRole.superuser,
+        role: user_role.superuser,
         name: 'John',
       } as User;
 
@@ -126,7 +126,7 @@ describe('AuthService', () => {
         username: 'john_doe',
         email: 'test@test.com',
         birth_date: new Date(),
-        role: UserRole.superuser,
+        role: user_role.superuser,
         password: '123',
         password_confirm: '123',
       } as RegisterDto);
@@ -140,10 +140,10 @@ describe('AuthService', () => {
 
   describe('refreshTokens', () => {
     it('should refresh tokens successfully', async () => {
-      jwtService.verify.mockReturnValue({ id: '1', role: UserRole.superuser });
+      jwtService.verify.mockReturnValue({ id: '1', role: user_role.superuser });
       usersService.findOneById.mockResolvedValue({
         id: '1',
-        role: UserRole.superuser,
+        role: user_role.superuser,
       } as User);
       jwtService.sign.mockReturnValue('token');
 

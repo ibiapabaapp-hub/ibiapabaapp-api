@@ -17,11 +17,11 @@ export class CitiesService {
         ST_AsGeoJSON(c.location)::json as location,
         (
           SELECT json_agg(cat.name)
-          FROM "CityCategory" cc
-          JOIN "Category" cat ON cat.id = cc."category_id"
+          FROM city_category cc
+          JOIN category cat ON cat.id = cc."category_id"
           WHERE cc."city_id" = c.id
         ) as categories
-      FROM "City" c
+      FROM city c
       ORDER BY c.name ASC
     `;
   }
@@ -35,7 +35,7 @@ export class CitiesService {
         description,
         "cover_img_url",
         ST_AsGeoJSON(location)::json as location
-      FROM "City"
+      FROM city
       WHERE id = ${id}::uuid
       LIMIT 1
     `;

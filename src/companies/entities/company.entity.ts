@@ -1,6 +1,7 @@
-import { Company as CompanyPrisma } from '@prisma/client';
+import { $Enums, company } from '@prisma/client';
 
-export class Company implements CompanyPrisma {
+export class Company implements company {
+  max_reach_level: $Enums.reach_level;
   name: string;
   id: string;
   slug: string;

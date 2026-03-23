@@ -7,7 +7,6 @@ import {
 import { randomUUID } from 'crypto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PrismaService } from 'src/common/prisma/prisma.service';
-import { EntityType } from '@prisma/client';
 import { Media } from './entities/media.entity';
 
 @UseInterceptors(
@@ -27,6 +26,7 @@ import { Media } from './entities/media.entity';
     },
   }),
 )
+// TODO: testar MediasService
 @Injectable()
 export class MediasService {
   private s3: S3Client;
@@ -77,14 +77,14 @@ export class MediasService {
 
   async getMediaByCity(cityId: string): Promise<Media[]> {
     return this.prismaService.media.findMany({
-      where: { entity_type: EntityType.city, entity_id: cityId },
+      where: { city_id: cityId },
       orderBy: [{ is_cover: 'desc' }, { position: 'asc' }],
     });
   }
 
   async getMediaByCompany(companyId: string) {
     return this.prismaService.media.findMany({
-      where: { entity_type: EntityType.company, entity_id: companyId },
+      where: { company_id: companyId },
       orderBy: [{ is_cover: 'desc' }, { position: 'asc' }],
     });
   }

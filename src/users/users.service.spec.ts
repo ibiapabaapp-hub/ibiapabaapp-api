@@ -9,7 +9,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
-import { UserRole, User as UserPrisma } from '@prisma/client';
+import { user as UserPrisma } from '@prisma/client';
 import { User as UserEntity } from './entities/user.entity';
 import { UpdateUserDto } from './dtos/update-user.dto';
 
@@ -140,7 +140,7 @@ describe('UsersService', () => {
       const updatedUser = {
         id: '1',
         name: 'Updated',
-        role: UserRole.superuser,
+        role: 'superuser',
       };
 
       prisma.user.findUnique.mockResolvedValue(existingUser as UserEntity);
@@ -151,7 +151,7 @@ describe('UsersService', () => {
       const result = await service.update('1', {
         name: 'Updated',
         password: '123456',
-        role: UserRole.superuser,
+        role: 'superuser',
       } as UpdateUserDto);
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith({

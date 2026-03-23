@@ -1,14 +1,12 @@
-import { Prisma } from '@prisma/client';
+import { $Enums, lead } from '@prisma/client';
 
-export type Lead = Prisma.LeadGetPayload<{
-  select: {
-    id: true;
-    name: true;
-    email: true;
-    type: true;
-    company_name?: true;
-    phone_number: true;
-    created_at: true;
-    updated_at: true;
-  };
-}>;
+export class Lead implements lead {
+  name: string;
+  id: string;
+  email: string;
+  phone_number: string;
+  type: $Enums.lead_type;
+  company_name: string | null;
+  created_at: Date | null;
+  updated_at: Date | null;
+}

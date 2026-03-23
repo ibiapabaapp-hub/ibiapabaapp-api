@@ -63,8 +63,11 @@ export class CompaniesService {
     return await this.prismaService.company.update({
       data: {
         name: updateCompanyDto.name,
+        slug: updateCompanyDto.slug,
         cnpj: updateCompanyDto.cnpj,
         description: updateCompanyDto.description,
+        active: updateCompanyDto.active,
+        cover_img_url: updateCompanyDto.cover_img_url,
       },
       where: { id },
     });

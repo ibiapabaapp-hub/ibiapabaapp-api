@@ -1,5 +1,6 @@
-import { City as CityPrisma } from '@prisma/client';
-export class City implements CityPrisma {
+import { city } from '@prisma/client';
+
+export class City implements city {
   name: string;
   id: string;
   slug: string;
