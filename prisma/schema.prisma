@@ -8,34 +8,39 @@ datasource db {
   extensions = [postgis]
 }
 
-model Lead {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name         String    @db.VarChar(50)
-  email        String    @unique @db.VarChar(100)
-  type         String    @db.VarChar(10)
-  company_name String?   @db.VarChar(50)
-  phone_number String    @db.VarChar(20)
-  created_at   DateTime? @default(now()) @db.Timestamp(6)
-  updated_at   DateTime? @default(now()) @db.Timestamp(6)
-
-  @@map("Lead")
+enum lead_type {
+  resident
+  tourist
+  company
 }
 
-model CityCategory {
+model lead {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String @db.VarChar(50)
+  email        String @unique @db.VarChar(100)
+  phone_number String @unique @db.VarChar(20)
+
+  type         lead_type
+  company_name String?   @db.VarChar(50)
+
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  updated_at DateTime? @updatedAt @db.Timestamp(6)
+}
+
+model city_category {
   id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   city_id     String @db.Uuid
   category_id String @db.Uuid
 
-  city     City     @relation(fields: [city_id], references: [id], onDelete: Cascade)
-  category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  city     city     @relation(fields: [city_id], references: [id], onDelete: Cascade)
+  category category @relation(fields: [category_id], references: [id], onDelete: Cascade)
 
   @@unique([city_id, category_id])
   @@index([city_id])
   @@index([category_id])
-  @@map("CityCategory")
 }
 
-model Category {
+model category {
   id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   parent_id String? @db.Uuid
   name      String  @unique
@@ -43,18 +48,19 @@ model Category {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  parent   Category?  @relation("CategoryTree", fields: [parent_id], references: [id], onDelete: Cascade)
-  children Category[] @relation("CategoryTree")
+  parent   category?  @relation("category_tree", fields: [parent_id], references: [id], onDelete: Cascade)
+  children category[] @relation("category_tree")
 
-  City              CityCategory[]
-  companyCategories CompanyCategory[]
+  city             city_category[]
+  company_category company_category[]
+  event_category   event_category[]
+  userInterests    user_interest[]
 
   @@index([parent_id])
   @@index([name])
-  @@map("Category")
 }
 
-model City {
+model city {
   id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   slug        String  @unique
   name        String
@@ -69,126 +75,217 @@ model City {
   updated_at DateTime @updatedAt
 
   // N-N
-  categories CityCategory[]
+  category     city_category[]
+  event_city   event_city[]
+  company_city company_city[]
+  medias       media[]
 
   @@index([created_at(sort: Desc)])
   @@index([location], type: Gist)
-  @@map("City")
 }
 
-enum UserRole {
+enum user_role {
   user
   superuser
 }
 
-model User {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name         String    @db.VarChar(100)
-  // cpf                String               @unique @db.VarChar(20)
-  birth_date   DateTime  @db.Date
-  username     String    @unique @db.VarChar(50)
-  email        String    @unique @db.VarChar(255)
-  phone_number String    @unique @db.VarChar(200)
-  password     String    @db.VarChar(255)
-  role         UserRole  @default(user)
-  active       Boolean   @default(true)
-  created_at   DateTime? @default(now()) @db.Timestamp(6)
-  updated_at   DateTime? @default(now()) @db.Timestamp(6)
+model user_company {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String       @db.Uuid
+  company_id String       @db.Uuid
+  role       company_role
+  created_at DateTime     @default(now()) @db.Timestamp(6)
+  updated_at DateTime     @updatedAt @db.Timestamp(6)
 
-  Company UserCompany[]
+  user    user    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  company company @relation(fields: [company_id], references: [id], onDelete: Cascade)
 
-  @@map("User")
+  @@unique([user_id, company_id], map: "uniq_user_company")
+  @@index([user_id], map: "idx_user_company_user")
+  @@index([company_id], map: "idx_user_company_company")
 }
 
-model CompanyCategory {
+model user_interest {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String   @db.Uuid
+  category_id String   @db.Uuid
+  created_at  DateTime @default(now())
+
+  user     user     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  category category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, category_id])
+  @@index([user_id])
+  @@index([category_id])
+}
+
+model user {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String @db.VarChar(100)
+  // cpf                String               @unique @db.VarChar(20)
+  username     String @unique @db.VarChar(50)
+  email        String @unique @db.VarChar(255)
+  phone_number String @unique @db.VarChar(200)
+
+  password String @db.VarChar(255)
+
+  birth_date DateTime  @db.Date
+  active     Boolean   @default(true)
+  role       user_role @default(user)
+
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  updated_at DateTime? @updatedAt @db.Timestamp(6)
+
+  companies     user_company[]
+  events        event[]
+  userInterests user_interest[]
+}
+
+model company_category {
   id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   company_id  String @db.Uuid
   category_id String @db.Uuid
 
-  company  Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  company  company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  category category @relation(fields: [category_id], references: [id], onDelete: Cascade)
 
   @@unique([company_id, category_id])
   @@index([company_id])
   @@index([category_id])
-  @@map("CompanyCategory")
 }
 
-model Company {
-  id   String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug String  @unique @db.VarChar(100)
-  name String  @db.VarChar(150)
-  cnpj String? @db.VarChar(20)
-
-  description   String?
-  cover_img_url String?
-
-  active     Boolean  @default(true)
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt @db.Timestamp(6)
-
-  User       UserCompany[]
-  categories CompanyCategory[]
-
-  @@map("Company")
+enum reach_level {
+  local
+  regional
 }
 
-enum CompanyRole {
+enum company_role {
   owner
   admin
   editor
   viewer
 }
 
-model UserCompany {
-  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id    String      @db.Uuid
-  company_id String      @db.Uuid
-  role       CompanyRole
-  created_at DateTime    @default(now()) @db.Timestamp(6)
-  updated_at DateTime    @updatedAt @db.Timestamp(6)
+model company_city {
+  id              String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  company_id      String  @db.Uuid
+  city_id         String  @db.Uuid
+  is_headquarter  Boolean @default(false)
+  adress_specific String? @db.VarChar
 
-  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
-
-  @@unique([user_id, company_id], map: "uniq_UserCompany")
-  @@index([user_id], map: "idx_UserCompany_user")
-  @@index([company_id], map: "idx_UserCompany_company")
-  @@map("UserCompany")
+  company company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  city    city    @relation(fields: [city_id], references: [id], onDelete: Cascade)
 }
 
-model Media {
-  id String @id @default(uuid()) @db.Uuid
+model company {
+  id   String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug String  @unique @db.VarChar(100)
+  cnpj String? @db.VarChar(20)
 
-  entity_type EntityType
-  entity_id   String     @db.Uuid
+  name          String  @db.VarChar(150)
+  description   String?
+  cover_img_url String?
 
-  media_type MediaType
+  max_reach_level reach_level
+  active          Boolean     @default(true)
 
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt @db.Timestamp(6)
+
+  user       user_company[]
+  categories company_category[]
+  cities     company_city[]
+  events     event[]
+  medias     media[]
+}
+
+enum event_type {
+  simple
+  featured
+}
+
+model event_category {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_id    String @db.Uuid
+  category_id String @db.Uuid
+
+  category category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  event    event    @relation(fields: [event_id], references: [id])
+
+  @@unique([event_id, category_id])
+  @@index([event_id])
+  @@index([category_id])
+}
+
+model event_city {
+  id              String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_id        String  @db.Uuid
+  city_id         String  @db.Uuid
+  adress_specific String? @db.VarChar
+
+  event event @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  city  city  @relation(fields: [city_id], references: [id], onDelete: Cascade)
+}
+
+model event {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug       String  @unique @db.VarChar(100)
+  company_id String? @db.Uuid
+  user_id    String? @db.Uuid
+
+  name          String  @db.VarChar(200)
+  description   String?
+  cover_img_url String?
+
+  reach_level reach_level
+  type        event_type
+
+  start_date DateTime
+  end_date   DateTime
+  active     Boolean  @default(true)
+
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt @db.Timestamp(6)
+
+  user       user?            @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  company    company?         @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  categories event_category[]
+  cities     event_city[]
+  medias     media[]
+
+  @@index([user_id])
+  @@index([company_id])
+}
+
+enum media_type {
+  image
+  video
+}
+
+model media {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  city_id    String? @db.Uuid
+  event_id   String? @db.Uuid
+  company_id String? @db.Uuid
+
+  media_type    media_type
   url           String
   thumbnail_url String?
 
   alt_text String?
   credits  String?
   license  String?
-
+  metadata Json?
   is_cover Boolean @default(false)
   position Int     @default(0)
 
-  metadata Json?
-
   created_at DateTime @default(now())
 
-  @@index([entity_type, entity_id])
-}
+  city    city?    @relation(fields: [city_id], references: [id], onDelete: Cascade)
+  event   event?   @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  company company? @relation(fields: [company_id], references: [id], onDelete: Cascade)
 
-enum EntityType {
-  city
-  event
-  company
-}
-
-enum MediaType {
-  image
-  video
+  @@index([city_id])
+  @@index([event_id])
+  @@index([company_id])
 }
