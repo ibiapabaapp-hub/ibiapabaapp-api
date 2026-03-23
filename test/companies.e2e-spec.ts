@@ -10,6 +10,7 @@ import { PrismaService } from 'src/common/prisma/prisma.service';
 import { CompaniesModule } from 'src/companies/companies.module';
 import { PrismaModule } from 'src/common/prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
+import { reach_level } from '@prisma/client';
 
 describe('Companies (e2e)', () => {
   let app: INestApplication;
@@ -39,8 +40,8 @@ describe('Companies (e2e)', () => {
   afterEach(async () => {
     // A ordem aqui é importante se não usar CASCADE,
     // mas o TRUNCATE com CASCADE limpa as tabelas N-N automaticamente.
-    await prisma.$executeRaw`TRUNCATE TABLE "Company" RESTART IDENTITY CASCADE`;
-    await prisma.$executeRaw`TRUNCATE TABLE "Category" RESTART IDENTITY CASCADE`;
+    await prisma.$executeRaw`TRUNCATE TABLE "company" RESTART IDENTITY CASCADE`;
+    await prisma.$executeRaw`TRUNCATE TABLE "category" RESTART IDENTITY CASCADE`;
   });
 
   afterAll(async () => {
@@ -60,11 +61,12 @@ describe('Companies (e2e)', () => {
         name: 'Restaurante Serra',
         slug: 'restaurante-serra',
         active: true,
+        max_reach_level: reach_level.local,
       },
     });
 
     // 3. Criar Vínculo na tabela intermediária (CompanyCategory)
-    await prisma.companyCategory.create({
+    await prisma.company_category.create({
       data: {
         company_id: company.id,
         category_id: category.id,
@@ -87,9 +89,13 @@ describe('Companies (e2e)', () => {
       data: { name: 'Hotelaria' },
     });
     const company = await prisma.company.create({
-      data: { name: 'Pousada Flor', slug: 'pousada-flor' },
+      data: {
+        name: 'Pousada Flor',
+        slug: 'pousada-flor',
+        max_reach_level: reach_level.local,
+      },
     });
-    await prisma.companyCategory.create({
+    await prisma.company_category.create({
       data: { company_id: company.id, category_id: category.id },
     });
 
