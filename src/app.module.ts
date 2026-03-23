@@ -13,6 +13,8 @@ import { GlobalExceptionsFilter } from './common/filters/global-exceptions.filte
 import { CitiesModule } from './cities/cities.module';
 import { MediasModule } from './medias/medias.module';
 import { CompaniesModule } from './companies/companies.module';
+import { EventsModule } from './events/events.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { CompaniesModule } from './companies/companies.module';
     CitiesModule,
     MediasModule,
     CompaniesModule,
+    EventsModule,
+    CategoriesModule,
   ],
   controllers: [AppController],
   providers: [
