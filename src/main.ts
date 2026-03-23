@@ -1,12 +1,11 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import cookieParser from 'cookie-parser';
-import { Request, Response } from 'express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { printLogoFromFile } from './common/utils/print-logo-from-file';
+import cookieParser from 'cookie-parser';
+import { NextFunction, Request, Response } from 'express';
 import pc from 'picocolors';
+import { AppModule } from './app.module';
 
 let app: NestExpressApplication;
 
@@ -66,8 +65,19 @@ export async function bootstrap() {
       SwaggerModule.setup('docs', app, document);
     }
 
+    if (process.env.NODE_ENV === 'development') {
+      app.use((_, res: Response, next: NextFunction) => {
+        res.setHeader('ngrok-skip-browser-warning', 'true');
+        next();
+      });
+    }
+
     await app.listen(process.env.PORT ?? 3000);
     await app.init();
+
+    if (process.env.NODE_ENV === 'development') {
+      showBootstrapLogs();
+    }
   }
   return app.getHttpAdapter().getInstance();
 }
@@ -79,13 +89,13 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
-if (process.env.NODE_ENV === 'development') {
-  printLogoFromFile('logo-ascii.txt');
+function showBootstrapLogs() {
+  console.log(pc.bold('IbiapabaApp API'));
   console.log(
-    `🚀 API running on ${pc.greenBright('http://localhost:' + process.env.PORT)}`,
+    `  🚀 Running on ${pc.greenBright('http://localhost:' + process.env.PORT)}`,
   );
   console.log(
-    `📃 Docs on ${pc.greenBright('http://localhost:' + process.env.PORT + '/docs')}`,
+    `  📃 Docs on ${pc.cyanBright('http://localhost:' + process.env.PORT + '/docs')}`,
   );
 }
 
