@@ -1,0 +1,219 @@
+{
+  "categories": [
+    { "name": "Turismo", "parent": null },
+    { "name": "Natureza", "parent": null },
+    { "name": "Serra", "parent": null },
+    { "name": "Restaurante", "parent": null },
+    { "name": "Bar", "parent": null },
+    { "name": "Música", "parent": null },
+    { "name": "Noturno", "parent": null },
+    { "name": "Hotel", "parent": null },
+    { "name": "Pousada", "parent": null },
+    { "name": "Cultura", "parent": null },
+    { "name": "Histórico", "parent": null },
+    { "name": "Comércio", "parent": null },
+    { "name": "Fino", "parent": "Restaurante" },
+    { "name": "Fast Food", "parent": "Restaurante" }
+  ],
+  "cities": [
+    {
+      "name": "Ubajara",
+      "slug": "ubajara",
+      "description": "Conheça Ubajara",
+      "lat": -3.8321,
+      "lng": -40.9224,
+      "cover_img_url": "https://cdn.ibiapabaapp.com.br/cities/ubajara.png",
+      "categories": ["Turismo", "Serra", "Natureza"]
+    },
+    {
+      "name": "Tianguá",
+      "slug": "tiangua",
+      "description": "Conheça Tianguá",
+      "lat": -3.7314,
+      "lng": -40.9917,
+      "cover_img_url": "https://cdn.ibiapabaapp.com.br/cities/tiangua.png",
+      "categories": ["Comércio", "Serra"]
+    },
+    {
+      "name": "Viçosa do Ceará",
+      "slug": "vicosa-do-ceara",
+      "description": "Conheça Viçosa do Ceará",
+      "lat": -3.5622,
+      "lng": -41.0911,
+      "cover_img_url": "https://cdn.ibiapabaapp.com.br/cities/vicosa-do-ceara.png",
+      "categories": ["Histórico", "Serra", "Cultura"]
+    }
+  ],
+  "users": [
+    {
+      "name": "Administrador",
+      "username": "admin-user",
+      "email": "admin@teste.com",
+      "phone_number": "+5588990000000",
+      "password": "12345678",
+      "birth_date": "1990-01-01",
+      "role": "superuser",
+      "interests": ["Turismo", "Cultura"]
+    },
+    {
+      "name": "Usuário Teste",
+      "username": "user-teste",
+      "email": "user@teste.com",
+      "phone_number": "+5588990000001",
+      "password": "12345678",
+      "birth_date": "1995-05-15",
+      "role": "user",
+      "interests": ["Natureza", "Música"]
+    }
+  ],
+  "companies": [
+    {
+      "name": "Manacá da Serra",
+      "slug": "manaca-da-serra",
+      "description": "Restaurante Manacá da Serra",
+      "cnpj": "12.345.678/0001-90",
+      "max_reach_level": "local",
+      "active": true,
+      "cover_img_url": "https://cdn.ibiapabaapp.com.br/companies/manaca.png",
+      "categories": ["Restaurante", "Fino"],
+      "cities": [
+        {
+          "slug": "ubajara",
+          "is_headquarter": true,
+          "adress_specific": "Centro, Ubajara - CE"
+        }
+      ],
+      "users": [
+        {
+          "email": "admin@teste.com",
+          "role": "owner"
+        }
+      ],
+      "medias": [
+        {
+          "media_type": "image",
+          "url": "https://cdn.ibiapabaapp.com.br/companies/manaca.png",
+          "is_cover": true,
+          "alt_text": "Imagem do Manacá da Serra"
+        }
+      ]
+    },
+    {
+      "name": "Serra Viva Music Bar",
+      "slug": "serra-viva-music-bar",
+      "description": "Serra Viva Music Bar",
+      "cnpj": "98.765.432/0001-10",
+      "max_reach_level": "regional",
+      "active": true,
+      "cover_img_url": "https://cdn.ibiapabaapp.com.br/companies/serraviva.png",
+      "categories": ["Bar", "Música", "Noturno"],
+      "cities": [
+        {
+          "slug": "ubajara",
+          "is_headquarter": true,
+          "adress_specific": "Praça Central, Ubajara - CE"
+        },
+        {
+          "slug": "tiangua",
+          "is_headquarter": false,
+          "adress_specific": "Avenida Principal, Tianguá - CE"
+        }
+      ],
+      "users": [
+        {
+          "email": "admin@teste.com",
+          "role": "admin"
+        }
+      ],
+      "medias": [
+        {
+          "media_type": "image",
+          "url": "https://cdn.ibiapabaapp.com.br/companies/serraviva.png",
+          "is_cover": true,
+          "alt_text": "Imagem do Serra Viva"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "Festival de Inverno de Ubajara",
+      "slug": "festival-inverno-ubajara",
+      "description": "O maior festival de inverno do Ceará",
+      "cover_img_url": "https://cdn.ibiapabaapp.com.br/events/festival-inverno.png",
+      "reach_level": "regional",
+      "type": "featured",
+      "start_date": "2025-06-15T19:00:00Z",
+      "end_date": "2025-06-22T23:00:00Z",
+      "active": true,
+      "company_slug": null,
+      "user_email": "admin@teste.com",
+      "categories": ["Cultura", "Música", "Turismo"],
+      "cities": [
+        {
+          "slug": "ubajara",
+          "adress_specific": "Parque Nacional de Ubajara"
+        }
+      ],
+      "medias": [
+        {
+          "media_type": "image",
+          "url": "https://cdn.ibiapabaapp.com.br/events/festival-inverno.png",
+          "is_cover": true,
+          "alt_text": "Festival de Inverno"
+        }
+      ]
+    },
+    {
+      "name": "Noite do Forró",
+      "slug": "noite-do-forro",
+      "description": "Forró tradicional no centro de Tianguá",
+      "cover_img_url": "https://cdn.ibiapabaapp.com.br/events/noite-forro.png",
+      "reach_level": "local",
+      "type": "simple",
+      "start_date": "2025-07-05T21:00:00Z",
+      "end_date": "2025-07-05T23:59:00Z",
+      "active": true,
+      "company_slug": "serra-viva-music-bar",
+      "user_email": null,
+      "categories": ["Música", "Noturno"],
+      "cities": [
+        {
+          "slug": "tiangua",
+          "adress_specific": "Serra Viva Music Bar"
+        }
+      ],
+      "medias": [
+        {
+          "media_type": "image",
+          "url": "https://cdn.ibiapabaapp.com.br/events/noite-forro.png",
+          "is_cover": true,
+          "alt_text": "Noite do Forró"
+        }
+      ]
+    }
+  ],
+  "leads": [
+    {
+      "name": "João Silva",
+      "email": "joao@email.com",
+      "phone_number": "+5588991111222",
+      "type": "resident",
+      "company_name": null
+    },
+    {
+      "name": "Maria Turismo",
+      "email": "maria@travel.com",
+      "phone_number": "+5588993333444",
+      "type": "tourist",
+      "company_name": null
+    },
+    {
+      "name": "Empresa Teste Ltda",
+      "email": "contato@empresateste.com",
+      "phone_number": "+5588995555666",
+      "type": "company",
+      "company_name": "Empresa Teste Ltda"
+    }
+  ]
+}

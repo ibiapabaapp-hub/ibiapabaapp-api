@@ -1,14 +1,10 @@
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
-import {
-  PrismaClient,
-  UserRole,
-  EntityType,
-  MediaType,
-  CompanyRole,
-} from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import * as argon2 from 'argon2';
 import * as dotenv from 'dotenv';
+import * as fs from 'fs';
+import * as path from 'path';
 
 dotenv.config();
 
@@ -17,205 +13,427 @@ const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-// --- DATA MOCKS ---
+interface SeedData {
+  categories: { name: string; parent: string | null }[];
+  cities: {
+    name: string;
+    slug: string;
+    description: string;
+    lat: number;
+    lng: number;
+    cover_img_url: string;
+    categories: string[];
+  }[];
+  users: {
+    name: string;
+    username: string;
+    email: string;
+    phone_number: string;
+    password: string;
+    birth_date: string;
+    role: string;
+    interests: string[];
+  }[];
+  companies: {
+    name: string;
+    slug: string;
+    description: string;
+    cnpj: string;
+    max_reach_level: string;
+    active: boolean;
+    cover_img_url: string;
+    categories: string[];
+    cities: {
+      slug: string;
+      is_headquarter: boolean;
+      adress_specific: string;
+    }[];
+    users: { email: string; role: string }[];
+    medias: {
+      media_type: string;
+      url: string;
+      is_cover: boolean;
+      alt_text: string;
+    }[];
+  }[];
+  events: {
+    name: string;
+    slug: string;
+    description: string;
+    cover_img_url: string;
+    reach_level: string;
+    type: string;
+    start_date: string;
+    end_date: string;
+    active: boolean;
+    company_slug: string | null;
+    user_email: string | null;
+    categories: string[];
+    cities: { slug: string; adress_specific: string }[];
+    medias: {
+      media_type: string;
+      url: string;
+      is_cover: boolean;
+      alt_text: string;
+    }[];
+  }[];
+  leads: {
+    name: string;
+    email: string;
+    phone_number: string;
+    type: string;
+    company_name: string | null;
+  }[];
+}
 
-const CITIES_TO_SEED = [
-  {
-    name: 'Ubajara',
-    slug: 'ubajara',
-    lat: -3.8321,
-    lng: -40.9224,
-    categories: ['Turismo', 'Serra', 'Natureza'],
-  },
-  {
-    name: 'Tianguá',
-    slug: 'tiangua',
-    lat: -3.7314,
-    lng: -40.9917,
-    categories: ['Comércio', 'Serra'],
-  },
-  {
-    name: 'Viçosa do Ceará',
-    slug: 'vicosa-do-ceara',
-    lat: -3.5622,
-    lng: -41.0911,
-    categories: ['Histórico', 'Serra', 'Cultura'],
-  },
-];
+function loadSeedData(): SeedData {
+  const seedDataPath = path.join(__dirname, 'seed-data.json');
+  const data = fs.readFileSync(seedDataPath, 'utf-8');
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return JSON.parse(data);
+}
 
-const COMPANIES_TO_SEED = [
-  {
-    name: 'Manacá da Serra',
-    slug: 'manaca-da-serra',
-    description:
-      'Restaurante Manacá da Serra - Perfil: https://www.instagram.com/manaca.restaurante/',
-    categories: ['Restaurante', 'Fino'],
-    imageUrl:
-      'https://instagram.fjdo10-1.fna.fbcdn.net/v/t51.82787-15/622305876_18106746379666774_7620286892604955622_n.webp?_nc_cat=111&ig_cache_key=MzE5MDI0ODAwMjg4Mjc0NzU3MQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6InhwaWRzLjEwODB4MTM1MC5zZHIuQzMifQ%3D%3D&_nc_ohc=ZebKabuUSlgQ7kNvwF4-AiG&_nc_oc=AdloZs836EU8qhcfkwYdWN9ZB1JyGDGiKDL7iintKGIuf_wItej7ioyPGGK3RwHTQ0A&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=instagram.fjdo10-1.fna&_nc_gid=AfVi38OLBo-H0VzSby8G4g&_nc_ss=8&oh=00_AfwRoOK0UZ4RwW_eE5qgmISgDpta7SjSvk5qO7SY2XrEJQ&oe=69B56C3E',
-  },
-  {
-    name: 'Serra Viva Music Bar',
-    slug: 'serra-viva-music-bar',
-    description:
-      'Serra Viva Music Bar - Perfil: https://www.instagram.com/serravivamusicbar/',
-    categories: ['Bar', 'Música', 'Noturno'],
-    imageUrl:
-      'https://instagram.fjdo1-1.fna.fbcdn.net/v/t51.82787-15/581636686_17866802673483622_4858679698788447758_n.jpg?stp=dst-jpg_e35_tt6&_nc_cat=104&ig_cache_key=Mzc2Nzk4ODYwNzM3MDk5NjYwNg%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6InhwaWRzLjEwMjR4MTAyNC5zZHIuQzMifQ%3D%3D&_nc_ohc=mHQZdAJN3AAQ7kNvwFx7MM7&_nc_oc=Adkr6l00Vh-3X5qBI51ptD7vU1YHPH2XcrcAStOwXPTtgrLQZQn4ga8jJEjvEf-WmhY&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=instagram.fjdo1-1.fna&_nc_gid=R3ZKvgMFh3gca73WX5kwqQ&_nc_ss=8&oh=00_Afwh0baElNVQUF5qEc76S4gwGR5AHjzUpmx-S07vkBetyg&oe=69B55102',
-  },
-];
+async function hashPassword(password: string): Promise<string> {
+  return argon2.hash(password);
+}
 
 async function main() {
-  console.log('🌱 Iniciando seeding seguro...');
+  console.log('🌱 Loading seed data...');
+  const data = loadSeedData();
+  console.log('✅ Seed data loaded.');
 
   await prisma.$transaction(
-    async (tx) => {
-      // 1. Usuário Admin
-      const hashedPassword = await argon2.hash('12345678');
-      const admin = await tx.user.upsert({
-        where: { email: 'admin@teste.com' },
-        update: { password: hashedPassword },
-        create: {
-          name: 'Administrador',
-          birth_date: new Date(),
-          phone_number: '+5588990000000',
-          username: 'admin-user',
-          email: 'admin@teste.com',
-          role: UserRole.superuser,
-          password: hashedPassword,
-          active: true,
-        },
-      });
-      console.log('✅ Admin verificado.');
+    async (tx: Prisma.TransactionClient) => {
+      console.log('\n📦 Seeding categories...');
+      const categoryMap = new Map<string, string>();
 
-      // 2. Processar Cidades
-      for (const item of CITIES_TO_SEED) {
-        const imageUrl = `https://cdn.ibiapabaapp.com.br/cities/${item.slug}.png`;
-        let city = await tx.city.findUnique({ where: { slug: item.slug } });
-
-        if (!city) {
-          await tx.$executeRaw`
-          INSERT INTO "City" (id, name, slug, description, cover_img_url, location, updated_at, created_at)
-          VALUES (
-            gen_random_uuid(), 
-            ${item.name}, 
-            ${item.slug}, 
-            ${`Conheça ${item.name}`}, 
-            ${imageUrl}, 
-            ST_SetSRID(ST_MakePoint(${item.lng}, ${item.lat}), 4326), 
-            NOW(), 
-            NOW()
-          )
-        `;
-          city = await tx.city.findUnique({ where: { slug: item.slug } });
-        } else {
-          await tx.city.update({
-            where: { id: city.id },
-            data: { cover_img_url: imageUrl },
-          });
+      for (const cat of data.categories) {
+        let parentId: string | null = null;
+        if (cat.parent) {
+          parentId = categoryMap.get(cat.parent) || null;
         }
 
-        if (city) {
-          // Mídia da Cidade
-          await tx.media.upsert({
-            where: { id: city.id },
-            update: { url: imageUrl },
-            create: {
-              entity_type: EntityType.city,
-              entity_id: city.id,
-              media_type: MediaType.image,
-              url: imageUrl,
-              is_cover: true,
-              alt_text: `Imagem de ${item.name}`,
-            },
-          });
-
-          for (const catName of item.categories) {
-            const category = await tx.category.upsert({
-              where: { name: catName },
-              update: {},
-              create: { name: catName },
-            });
-
-            await tx.cityCategory.upsert({
-              where: {
-                city_id_category_id: {
-                  city_id: city.id,
-                  category_id: category.id,
-                },
-              },
-              update: {},
-              create: { city_id: city.id, category_id: category.id },
-            });
-          }
-        }
-        console.log(`🏙️  Cidade: ${item.name}`);
+        const created = await tx.category.upsert({
+          where: { name: cat.name },
+          update: { parent_id: parentId },
+          create: { name: cat.name, parent_id: parentId },
+        });
+        categoryMap.set(cat.name, created.id);
+        console.log(`   ✅ ${cat.name}`);
       }
 
-      // 3. Processar Empresas
-      for (const compData of COMPANIES_TO_SEED) {
-        const company = await tx.company.upsert({
+      console.log('\n📦 Seeding cities...');
+      const cityMap = new Map<string, string>();
+
+      for (const city of data.cities) {
+        let existingCity = await tx.city.findUnique({
+          where: { slug: city.slug },
+        });
+
+        if (!existingCity) {
+          await tx.$executeRaw`
+            INSERT INTO city (id, name, slug, description, cover_img_url, location, updated_at, created_at)
+            VALUES (
+              gen_random_uuid(),
+              ${city.name},
+              ${city.slug},
+              ${city.description},
+              ${city.cover_img_url},
+              ST_SetSRID(ST_MakePoint(${city.lng}, ${city.lat}), 4326),
+              NOW(),
+              NOW()
+            )
+          `;
+          existingCity = await tx.city.findUnique({
+            where: { slug: city.slug },
+          });
+        }
+
+        if (existingCity) {
+          cityMap.set(city.slug, existingCity.id);
+
+          for (const catName of city.categories) {
+            const catId = categoryMap.get(catName);
+            if (catId) {
+              const exists = await tx.city_category.findFirst({
+                where: { city_id: existingCity.id, category_id: catId },
+              });
+              if (!exists) {
+                await tx.city_category.create({
+                  data: { city_id: existingCity.id, category_id: catId },
+                });
+              }
+            }
+          }
+          console.log(`   ✅ ${city.name}`);
+        }
+      }
+
+      console.log('\n📦 Seeding users...');
+      const userMap = new Map<string, string>();
+
+      for (const user of data.users) {
+        const hashedPassword = await hashPassword(user.password);
+
+        const created = await tx.user.upsert({
+          where: { email: user.email },
+          update: {
+            name: user.name,
+            username: user.username,
+            phone_number: user.phone_number,
+            password: hashedPassword,
+            birth_date: new Date(user.birth_date),
+            role: user.role as 'user' | 'superuser',
+          },
+          create: {
+            name: user.name,
+            username: user.username,
+            email: user.email,
+            phone_number: user.phone_number,
+            password: hashedPassword,
+            birth_date: new Date(user.birth_date),
+            role: user.role as 'user' | 'superuser',
+            active: true,
+          },
+        });
+        userMap.set(user.email, created.id);
+
+        for (const interestName of user.interests) {
+          const catId = categoryMap.get(interestName);
+          if (catId) {
+            const exists = await tx.user_interest.findFirst({
+              where: { user_id: created.id, category_id: catId },
+            });
+            if (!exists) {
+              await tx.user_interest.create({
+                data: { user_id: created.id, category_id: catId },
+              });
+            }
+          }
+        }
+        console.log(`   ✅ ${user.email}`);
+      }
+
+      console.log('\n📦 Seeding companies...');
+      const companyMap = new Map<string, string>();
+
+      for (const compData of data.companies) {
+        const created = await tx.company.upsert({
           where: { slug: compData.slug },
-          update: { description: compData.description },
+          update: {
+            name: compData.name,
+            description: compData.description,
+            cnpj: compData.cnpj,
+            max_reach_level: compData.max_reach_level as 'local' | 'regional',
+            active: compData.active,
+            cover_img_url: compData.cover_img_url,
+          },
           create: {
             name: compData.name,
             slug: compData.slug,
             description: compData.description,
-            active: true,
+            cnpj: compData.cnpj,
+            max_reach_level: compData.max_reach_level as 'local' | 'regional',
+            active: compData.active,
+            cover_img_url: compData.cover_img_url,
           },
         });
+        companyMap.set(compData.slug, created.id);
 
-        // Relacionamento Admin-Empresa
-        await tx.userCompany.upsert({
-          where: {
-            user_id_company_id: { user_id: admin.id, company_id: company.id },
-          },
-          update: {},
-          create: {
-            user_id: admin.id,
-            company_id: company.id,
-            role: CompanyRole.owner,
-          },
-        });
-
-        // Categorias Empresa
         for (const catName of compData.categories) {
-          const category = await tx.category.upsert({
-            where: { name: catName },
-            update: {},
-            create: { name: catName },
-          });
-
-          await tx.companyCategory.upsert({
-            where: {
-              company_id_category_id: {
-                company_id: company.id,
-                category_id: category.id,
-              },
-            },
-            update: {},
-            create: { company_id: company.id, category_id: category.id },
-          });
+          const catId = categoryMap.get(catName);
+          if (catId) {
+            const exists = await tx.company_category.findFirst({
+              where: { company_id: created.id, category_id: catId },
+            });
+            if (!exists) {
+              await tx.company_category.create({
+                data: { company_id: created.id, category_id: catId },
+              });
+            }
+          }
         }
 
-        await tx.media.upsert({
-          where: { id: company.id },
-          update: { url: compData.imageUrl },
+        for (const cityData of compData.cities) {
+          const cityId = cityMap.get(cityData.slug);
+          if (cityId) {
+            const exists = await tx.company_city.findFirst({
+              where: { company_id: created.id, city_id: cityId },
+            });
+            if (!exists) {
+              await tx.company_city.create({
+                data: {
+                  company_id: created.id,
+                  city_id: cityId,
+                  is_headquarter: cityData.is_headquarter,
+                  adress_specific: cityData.adress_specific,
+                },
+              });
+            }
+          }
+        }
+
+        for (const userData of compData.users) {
+          const userId = userMap.get(userData.email);
+          if (userId) {
+            const exists = await tx.user_company.findFirst({
+              where: { user_id: userId, company_id: created.id },
+            });
+            if (!exists) {
+              await tx.user_company.create({
+                data: {
+                  user_id: userId,
+                  company_id: created.id,
+                  role: userData.role as
+                    | 'owner'
+                    | 'admin'
+                    | 'editor'
+                    | 'viewer',
+                },
+              });
+            }
+          }
+        }
+
+        for (const media of compData.medias) {
+          const exists = await tx.media.findFirst({
+            where: { company_id: created.id, url: media.url },
+          });
+          if (!exists) {
+            await tx.media.create({
+              data: {
+                company_id: created.id,
+                media_type: media.media_type as 'image' | 'video',
+                url: media.url,
+                is_cover: media.is_cover,
+                alt_text: media.alt_text,
+              },
+            });
+          }
+        }
+        console.log(`   ✅ ${compData.name}`);
+      }
+
+      console.log('\n📦 Seeding events...');
+      const eventMap = new Map<string, string>();
+
+      for (const event of data.events) {
+        let companyId: string | null = null;
+        if (event.company_slug) {
+          companyId = companyMap.get(event.company_slug) || null;
+        }
+
+        let userId: string | null = null;
+        if (event.user_email) {
+          userId = userMap.get(event.user_email) || null;
+        }
+
+        const created = await tx.event.upsert({
+          where: { slug: event.slug },
+          update: {
+            name: event.name,
+            description: event.description,
+            cover_img_url: event.cover_img_url,
+            reach_level: event.reach_level as 'local' | 'regional',
+            type: event.type as 'simple' | 'featured',
+            start_date: new Date(event.start_date),
+            end_date: new Date(event.end_date),
+            active: event.active,
+            company_id: companyId,
+            user_id: userId,
+          },
           create: {
-            entity_type: EntityType.company,
-            entity_id: company.id,
-            media_type: MediaType.image,
-            url: compData.imageUrl,
-            is_cover: true,
-            alt_text: `Imagem de ${compData.name}`,
+            name: event.name,
+            slug: event.slug,
+            description: event.description,
+            cover_img_url: event.cover_img_url,
+            reach_level: event.reach_level as 'local' | 'regional',
+            type: event.type as 'simple' | 'featured',
+            start_date: new Date(event.start_date),
+            end_date: new Date(event.end_date),
+            active: event.active,
+            company_id: companyId,
+            user_id: userId,
           },
         });
-        console.log(`🏢 Empresa: ${compData.name}`);
+        eventMap.set(event.slug, created.id);
+
+        for (const catName of event.categories) {
+          const catId = categoryMap.get(catName);
+          if (catId) {
+            const exists = await tx.event_category.findFirst({
+              where: { event_id: created.id, category_id: catId },
+            });
+            if (!exists) {
+              await tx.event_category.create({
+                data: { event_id: created.id, category_id: catId },
+              });
+            }
+          }
+        }
+
+        for (const cityData of event.cities) {
+          const cityId = cityMap.get(cityData.slug);
+          if (cityId) {
+            const exists = await tx.event_city.findFirst({
+              where: { event_id: created.id, city_id: cityId },
+            });
+            if (!exists) {
+              await tx.event_city.create({
+                data: {
+                  event_id: created.id,
+                  city_id: cityId,
+                  adress_specific: cityData.adress_specific,
+                },
+              });
+            }
+          }
+        }
+
+        for (const media of event.medias) {
+          const exists = await tx.media.findFirst({
+            where: { event_id: created.id, url: media.url },
+          });
+          if (!exists) {
+            await tx.media.create({
+              data: {
+                event_id: created.id,
+                media_type: media.media_type as 'image' | 'video',
+                url: media.url,
+                is_cover: media.is_cover,
+                alt_text: media.alt_text,
+              },
+            });
+          }
+        }
+        console.log(`   ✅ ${event.name}`);
+      }
+
+      console.log('\n📦 Seeding leads...');
+      for (const lead of data.leads) {
+        await tx.lead.upsert({
+          where: { email: lead.email },
+          update: {
+            name: lead.name,
+            phone_number: lead.phone_number,
+            type: lead.type as 'resident' | 'tourist' | 'company',
+            company_name: lead.company_name,
+          },
+          create: {
+            name: lead.name,
+            email: lead.email,
+            phone_number: lead.phone_number,
+            type: lead.type as 'resident' | 'tourist' | 'company',
+            company_name: lead.company_name,
+          },
+        });
+        console.log(`   ✅ ${lead.email}`);
       }
     },
-    { timeout: 30000 },
+    { timeout: 60000 },
   );
 
-  console.log('🚀 Seed finalizado com sucesso!');
+  console.log('\n🚀 Seeding completed successfully!');
 }
 
 main()
@@ -224,7 +442,7 @@ main()
     await pool.end();
   })
   .catch(async (e) => {
-    console.error('❌ Erro crítico no seed:', e);
+    console.error('❌ Fatal error on seeding:', e);
     await prisma.$disconnect();
     await pool.end();
     process.exit(1);
