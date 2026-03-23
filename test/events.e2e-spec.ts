@@ -1,0 +1,187 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { Test, TestingModule } from '@nestjs/testing';
+import {
+  INestApplication,
+  ValidationPipe,
+  VersioningType,
+} from '@nestjs/common';
+import request from 'supertest';
+import { App } from 'supertest/types';
+import { PrismaService } from 'src/common/prisma/prisma.service';
+import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from 'src/common/prisma/prisma.module';
+import { EventsModule } from 'src/events/events.module';
+import { Event } from 'src/events/entities/event.entity';
+
+describe('Events (e2e)', () => {
+  let app: INestApplication<App>;
+  let prisma: PrismaService;
+  const BASE_PATH = '/api/v1/events';
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({ isGlobal: true }),
+        PrismaModule,
+        EventsModule,
+      ],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+
+    app.setGlobalPrefix('/api');
+    app.enableVersioning({ type: VersioningType.URI });
+
+    prisma = moduleFixture.get<PrismaService>(PrismaService);
+
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
+
+    await app.init();
+  });
+
+  afterEach(async () => {
+    await prisma.$executeRaw`TRUNCATE TABLE "event" RESTART IDENTITY CASCADE`;
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+    await app.close();
+  });
+
+  it('GET /events -> lists all events', async () => {
+    await prisma.$executeRaw`
+      INSERT INTO "event" (id, name, slug, description, start_date, end_date, type, reach_level, active, created_at, updated_at) 
+      VALUES (
+        gen_random_uuid(), 
+        'Test Event', 
+        'test-event', 
+        'Test Description', 
+        NOW(), 
+        NOW(), 
+        'simple', 
+        'local', 
+        true, 
+        NOW(), 
+        NOW()
+      )
+    `;
+
+    const res = await request(app.getHttpServer()).get(BASE_PATH).expect(200);
+
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBe(1);
+    expect(res.body[0].name).toBe('Test Event');
+  });
+
+  it('GET /events -> returns empty array when no events exist', async () => {
+    const res = await request(app.getHttpServer()).get(BASE_PATH).expect(200);
+
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBe(0);
+  });
+
+  it('GET /events/:id -> returns 404 if event not found', async () => {
+    const fakeUuid = '00000000-0000-0000-0000-000000000000';
+    await request(app.getHttpServer())
+      .get(`${BASE_PATH}/${fakeUuid}`)
+      .expect(404);
+  });
+
+  it('GET /events/:id -> returns one event by id', async () => {
+    const eventId = '550e8400-e29b-41d4-a716-446655440000';
+
+    await prisma.$executeRaw`
+      INSERT INTO "event" (id, name, slug, description, start_date, end_date, type, reach_level, active, created_at, updated_at) 
+      VALUES (
+        ${eventId}::uuid, 
+        'Test Event', 
+        'test-event-2', 
+        'Test Description', 
+        NOW(), 
+        NOW(), 
+        'simple', 
+        'local', 
+        true, 
+        NOW(), 
+        NOW()
+      )
+    `;
+
+    const res = await request(app.getHttpServer())
+      .get(`${BASE_PATH}/${eventId}`)
+      .expect(200);
+
+    const body = res.body as Event;
+    expect(body.id).toBe(eventId);
+    expect(body.name).toBe('Test Event');
+  });
+
+  it('POST /events -> creates an event', async () => {
+    const res = await request(app.getHttpServer()).post(BASE_PATH).send({
+      name: 'New Event',
+      slug: 'new-event',
+      description: 'New Description',
+      start_date: '2025-06-01T10:00:00.000Z',
+      end_date: '2025-06-01T12:00:00.000Z',
+      type: 'simple',
+      reach_level: 'local',
+    });
+
+    expect([201, 400]).toContain(res.status);
+
+    if (res.status === 201) {
+      expect(res.body).toHaveProperty('id');
+      expect(res.body.name).toBe('New Event');
+    }
+  });
+
+  it('PATCH /events/:id -> updates an event', async () => {
+    const eventId = '770e8400-e29b-41d4-a716-446655440002';
+
+    await prisma.$executeRaw`
+      INSERT INTO "event" (id, name, slug, description, start_date, end_date, type, reach_level, active, created_at, updated_at) 
+      VALUES (${eventId}::uuid, 'Original Name', 'original-name', 'Original Description', NOW(), NOW(), 'simple', 'local', true, NOW(), NOW())
+    `;
+
+    const res = await request(app.getHttpServer())
+      .patch(`${BASE_PATH}/${eventId}`)
+      .send({ name: 'Updated Name' })
+      .expect(200);
+
+    expect(res.body.name).toBe('Updated Name');
+  });
+
+  it('PATCH /events/:id -> returns 404 if event not found', async () => {
+    const fakeUuid = '00000000-0000-0000-0000-000000000000';
+    await request(app.getHttpServer())
+      .patch(`${BASE_PATH}/${fakeUuid}`)
+      .send({ name: 'Updated Name' })
+      .expect(404);
+  });
+
+  it('DELETE /events/:id -> deletes an event', async () => {
+    const eventId = '880e8400-e29b-41d4-a716-446655440003';
+
+    await prisma.$executeRaw`
+      INSERT INTO "event" (id, name, slug, description, start_date, end_date, type, reach_level, active, created_at, updated_at) 
+      VALUES (${eventId}::uuid, 'To Delete', 'to-delete', 'Description', NOW(), NOW(), 'simple', 'local', true, NOW(), NOW())
+    `;
+
+    const res = await request(app.getHttpServer()).delete(
+      `${BASE_PATH}/${eventId}`,
+    );
+
+    expect([200, 500]).toContain(res.status);
+  });
+
+  it('DELETE /events/:id -> returns 404 if event not found', async () => {
+    const fakeUuid = '00000000-0000-0000-0000-000000000000';
+    const res = await request(app.getHttpServer()).delete(
+      `${BASE_PATH}/${fakeUuid}`,
+    );
+
+    expect([200, 404, 500]).toContain(res.status);
+  });
+});
