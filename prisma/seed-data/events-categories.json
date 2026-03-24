@@ -1,0 +1,25 @@
+{
+  "categories": [
+    { "name": "Eventos Abertos ao Público", "parent": null },
+    { "name": "Shows e apresentações", "parent": "Eventos Abertos ao Público" },
+    { "name": "Festivais", "parent": "Eventos Abertos ao Público" },
+    { "name": "Feiras e exposições", "parent": "Eventos Abertos ao Público" },
+    { "name": "Eventos gastronômicos", "parent": "Eventos Abertos ao Público" },
+    { "name": "Eventos culturais", "parent": "Eventos Abertos ao Público" },
+    { "name": "Eventos esportivos", "parent": "Eventos Abertos ao Público" },
+
+    { "name": "Eventos Corporativos", "parent": null },
+    { "name": "Palestras", "parent": "Eventos Corporativos" },
+    { "name": "Workshops", "parent": "Eventos Corporativos" },
+    { "name": "Treinamentos", "parent": "Eventos Corporativos" },
+    { "name": "Congressos", "parent": "Eventos Corporativos" },
+    { "name": "Encontros empresariais", "parent": "Eventos Corporativos" },
+
+    { "name": "Eventos Comerciais", "parent": null },
+    { "name": "Ações Promocionais", "parent": "Eventos Comerciais" },
+    { "name": "Inaugurações", "parent": "Eventos Comerciais" },
+    { "name": "Lançamentos de produtos", "parent": "Eventos Comerciais" },
+    { "name": "Liquidações especiais", "parent": "Eventos Comerciais" },
+    { "name": "Datas comemorativas", "parent": "Eventos Comerciais" }
+  ]
+}

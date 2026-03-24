@@ -1,20 +1,4 @@
 {
-  "categories": [
-    { "name": "Turismo", "parent": null },
-    { "name": "Natureza", "parent": null },
-    { "name": "Serra", "parent": null },
-    { "name": "Restaurante", "parent": null },
-    { "name": "Bar", "parent": null },
-    { "name": "Música", "parent": null },
-    { "name": "Noturno", "parent": null },
-    { "name": "Hotel", "parent": null },
-    { "name": "Pousada", "parent": null },
-    { "name": "Cultura", "parent": null },
-    { "name": "Histórico", "parent": null },
-    { "name": "Comércio", "parent": null },
-    { "name": "Fino", "parent": "Restaurante" },
-    { "name": "Fast Food", "parent": "Restaurante" }
-  ],
   "cities": [
     {
       "name": "Ubajara",

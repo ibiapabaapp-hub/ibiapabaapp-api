@@ -86,11 +86,47 @@ interface SeedData {
   }[];
 }
 
-function loadSeedData(): SeedData {
-  const seedDataPath = path.join(__dirname, 'seed-data.json');
-  const data = fs.readFileSync(seedDataPath, 'utf-8');
+interface CategoriesData {
+  categories: { name: string; parent: string | null }[];
+}
+
+function loadJsonFile<T>(filePath: string): T {
+  const data = fs.readFileSync(filePath, 'utf-8');
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return JSON.parse(data);
+}
+
+function loadSeedData(): SeedData {
+  const seedDataDir = path.join(__dirname, 'seed-data');
+
+  const generalData = loadJsonFile<{
+    cities: SeedData['cities'];
+    users: SeedData['users'];
+    companies: SeedData['companies'];
+    events: SeedData['events'];
+    leads: SeedData['leads'];
+  }>(path.join(seedDataDir, 'general-data.json'));
+
+  const companiesCategories = loadJsonFile<CategoriesData>(
+    path.join(seedDataDir, 'companies-categories.json'),
+  );
+  const eventsCategories = loadJsonFile<CategoriesData>(
+    path.join(seedDataDir, 'events-categories.json'),
+  );
+
+  const allCategories = [
+    ...companiesCategories.categories,
+    ...eventsCategories.categories,
+  ];
+
+  return {
+    categories: allCategories,
+    cities: generalData.cities,
+    users: generalData.users,
+    companies: generalData.companies,
+    events: generalData.events,
+    leads: generalData.leads,
+  };
 }
 
 async function hashPassword(password: string): Promise<string> {
