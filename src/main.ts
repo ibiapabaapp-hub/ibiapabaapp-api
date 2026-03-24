@@ -5,7 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { NextFunction, Request, Response } from 'express';
 import pc from 'picocolors';
-import { AppModule } from './app.module';
+import { AppModule } from './modules/app/app.module';
 
 let app: NestExpressApplication;
 
