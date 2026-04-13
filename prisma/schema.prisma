@@ -40,6 +40,12 @@ model city_category {
   @@index([category_id])
 }
 
+enum CategoryEntity {
+  city
+  company
+  event
+}
+
 model category {
   id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   parent_id String? @db.Uuid
@@ -48,8 +54,9 @@ model category {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  parent   category?  @relation("category_tree", fields: [parent_id], references: [id], onDelete: Cascade)
-  children category[] @relation("category_tree")
+  entities CategoryEntity[]
+  parent   category?        @relation("category_tree", fields: [parent_id], references: [id], onDelete: Cascade)
+  children category[]       @relation("category_tree")
 
   city             city_category[]
   company_category company_category[]
