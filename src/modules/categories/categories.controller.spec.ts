@@ -1,117 +1,163 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
 import { CategoriesController } from './categories.controller';
 import { CategoriesService } from './categories.service';
+import { CategoryEntity } from './dto/category-entity.dto';
 
 describe('CategoriesController', () => {
-  let controller: CategoriesController;
-  let service: CategoriesService;
+	let controller: CategoriesController;
+	let service: CategoriesService;
 
-  const mockCategory = {
-    id: 'category-1',
-    name: 'Test Category',
-    parent_id: null,
-    created_at: new Date(),
-    updated_at: new Date(),
-  };
+	const mockCategory = {
+		id: 'category-1',
+		name: 'Test Category',
+		parent_id: null,
+		entities: [CategoryEntity.city],
+		created_at: new Date(),
+		updated_at: new Date(),
+	};
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [CategoriesController],
-      providers: [
-        {
-          provide: CategoriesService,
-          useValue: {
-            create: jest.fn(),
-            findAll: jest.fn(),
-            findOne: jest.fn(),
-            update: jest.fn(),
-            remove: jest.fn(),
-          },
-        },
-      ],
-    }).compile();
+	beforeEach(async () => {
+		const module: TestingModule = await Test.createTestingModule({
+			controllers: [CategoriesController],
+			providers: [
+				{
+					provide: CategoriesService,
+					useValue: {
+						create: jest.fn(),
+						findParents: jest.fn(),
+						findChildren: jest.fn(),
+						findOne: jest.fn(),
 
-    controller = module.get<CategoriesController>(CategoriesController);
-    service = module.get<CategoriesService>(CategoriesService);
+						update: jest.fn(),
+						remove: jest.fn(),
+					},
+				},
+			],
+		}).compile();
 
-    jest.clearAllMocks();
-  });
+		controller = module.get<CategoriesController>(CategoriesController);
+		service = module.get<CategoriesService>(CategoriesService);
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
+		jest.clearAllMocks();
+	});
 
-  describe('create', () => {
-    it('should create a category', async () => {
-      jest.spyOn(service, 'create').mockResolvedValue(mockCategory);
+	it('should be defined', () => {
+		expect(controller).toBeDefined();
+	});
 
-      const result = await controller.create({
-        name: 'Test Category',
-        parent_id: null,
-      });
+	describe('create', () => {
+		it('should create a category', async () => {
+			jest.spyOn(service, 'create').mockResolvedValue(mockCategory);
 
-      expect(result).toEqual(mockCategory);
-      expect(service.create).toHaveBeenCalledWith({
-        name: 'Test Category',
-        parent_id: null,
-      });
-    });
-  });
+			const result = await controller.create({
+				name: 'Test Category',
+				parent_id: null,
+				entities: [CategoryEntity.city],
+			});
 
-  describe('findAll', () => {
-    it('should return an array of categories', async () => {
-      jest.spyOn(service, 'findAll').mockResolvedValue([mockCategory]);
+			expect(result).toEqual(mockCategory);
+			expect(service.create).toHaveBeenCalledWith({
+				name: 'Test Category',
+				parent_id: null,
+				entities: [CategoryEntity.city],
+			});
+		});
+	});
 
-      const result = await controller.findAll();
+	describe('getParents', () => {
+		const mockParentCategory = {
+			id: 'category-1',
+			name: 'Test Category',
+			entities: [CategoryEntity.city],
+			children: [],
+		};
 
-      expect(result).toEqual([mockCategory]);
-      expect(service.findAll).toHaveBeenCalled();
-    });
+		it('should return an array of categories', async () => {
+			jest
+				.spyOn(service, 'findParents')
+				.mockResolvedValue([mockParentCategory as any]);
 
-    it('should return empty array when no categories exist', async () => {
-      jest.spyOn(service, 'findAll').mockResolvedValue([]);
+			const result = await controller.getParents(undefined);
 
-      const result = await controller.findAll();
+			expect(result).toEqual([mockParentCategory]);
+			expect(service.findParents).toHaveBeenCalledWith(undefined);
+		});
 
-      expect(result).toEqual([]);
-    });
-  });
+		it('should return empty array when no categories exist', async () => {
+			jest.spyOn(service, 'findParents').mockResolvedValue([]);
 
-  describe('findOne', () => {
-    it('should return a category by id', async () => {
-      jest.spyOn(service, 'findOne').mockResolvedValue(mockCategory);
+			const result = await controller.getParents(undefined);
 
-      const result = await controller.findOne('category-1');
+			expect(result).toEqual([]);
+		});
 
-      expect(result).toEqual(mockCategory);
-      expect(service.findOne).toHaveBeenCalledWith('category-1');
-    });
-  });
+		it('should filter by entity', async () => {
+			jest
+				.spyOn(service, 'findParents')
+				.mockResolvedValue([mockParentCategory as any]);
 
-  describe('update', () => {
-    it('should update a category', async () => {
-      const updatedCategory = { ...mockCategory, name: 'Updated Category' };
-      jest.spyOn(service, 'update').mockResolvedValue(updatedCategory);
+			const result = await controller.getParents(CategoryEntity.city);
 
-      const result = await controller.update('category-1', {
-        name: 'Updated Category',
-      });
+			expect(result).toEqual([mockParentCategory]);
+			expect(service.findParents).toHaveBeenCalledWith(CategoryEntity.city);
+		});
+	});
 
-      expect(result).toEqual(updatedCategory);
-      expect(service.update).toHaveBeenCalledWith('category-1', {
-        name: 'Updated Category',
-      });
-    });
-  });
+	describe('getChildren', () => {
+		const mockChildCategory = {
+			id: 'child-1',
+			name: 'Child Category',
+			entities: [CategoryEntity.city],
+		};
 
-  describe('remove', () => {
-    it('should delete a category', async () => {
-      jest.spyOn(service, 'remove').mockResolvedValue(mockCategory);
+		it('should return child categories', async () => {
+			jest
+				.spyOn(service, 'findChildren')
+				.mockResolvedValue([mockChildCategory as any]);
 
-      const result = await controller.remove('category-1');
+			const result = await controller.getChildren('parent-1', undefined);
 
-      expect(result).toEqual(mockCategory);
-      expect(service.remove).toHaveBeenCalledWith('category-1');
-    });
-  });
+			expect(result).toEqual([mockChildCategory]);
+			expect(service.findChildren).toHaveBeenCalledWith('parent-1', undefined);
+		});
+	});
+
+	describe('findOne', () => {
+		it('should return a category by id', async () => {
+			jest.spyOn(service, 'findOne').mockResolvedValue(mockCategory);
+
+			const result = await controller.findOne('category-1');
+
+			expect(result).toEqual(mockCategory);
+			expect(service.findOne).toHaveBeenCalledWith('category-1');
+		});
+	});
+
+	describe('update', () => {
+		it('should update a category', async () => {
+			const updatedCategory = { ...mockCategory, name: 'Updated Category' };
+			jest.spyOn(service, 'update').mockResolvedValue(updatedCategory);
+
+			const result = await controller.update('category-1', {
+				name: 'Updated Category',
+			});
+
+			expect(result).toEqual(updatedCategory);
+			expect(service.update).toHaveBeenCalledWith('category-1', {
+				name: 'Updated Category',
+			});
+		});
+	});
+
+	describe('remove', () => {
+		it('should delete a category', async () => {
+			jest.spyOn(service, 'remove').mockResolvedValue(mockCategory);
+
+			const result = await controller.remove('category-1');
+
+			expect(result).toEqual(mockCategory);
+			expect(service.remove).toHaveBeenCalledWith('category-1');
+		});
+	});
 });

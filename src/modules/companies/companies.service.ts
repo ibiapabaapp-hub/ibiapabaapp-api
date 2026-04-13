@@ -1,79 +1,80 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from 'src/modules/common/prisma/prisma.service';
+
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
-import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
 @Injectable()
 export class CompaniesService {
-  constructor(private readonly prismaService: PrismaService) {}
+	constructor(private readonly prismaService: PrismaService) {}
 
-  async create(createCompanyDto: CreateCompanyDto) {
-    return await this.prismaService.company.create({ data: createCompanyDto });
-  }
+	async create(createCompanyDto: CreateCompanyDto) {
+		return await this.prismaService.company.create({ data: createCompanyDto });
+	}
 
-  async findAll() {
-    const companies = await this.prismaService.company.findMany({
-      include: {
-        categories: {
-          select: {
-            category: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: { name: 'asc' },
-    });
+	async findAll() {
+		const companies = await this.prismaService.company.findMany({
+			include: {
+				categories: {
+					select: {
+						category: {
+							select: {
+								name: true,
+							},
+						},
+					},
+				},
+			},
+			orderBy: { name: 'asc' },
+		});
 
-    return companies.map((c) => ({
-      ...c,
-      categories: c.categories.map((cat) => cat.category.name),
-    }));
-  }
+		return companies.map((c) => ({
+			...c,
+			categories: c.categories.map((cat) => cat.category.name),
+		}));
+	}
 
-  async findOne(id: string) {
-    const company = await this.prismaService.company.findUnique({
-      where: { id },
-      include: {
-        categories: {
-          select: {
-            category: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
+	async findOne(id: string) {
+		const company = await this.prismaService.company.findUnique({
+			where: { id },
+			include: {
+				categories: {
+					select: {
+						category: {
+							select: {
+								name: true,
+							},
+						},
+					},
+				},
+			},
+		});
 
-    if (!company) {
-      throw new NotFoundException();
-    }
+		if (!company) {
+			throw new NotFoundException();
+		}
 
-    return {
-      ...company,
-      categories: company.categories.map((cat) => cat.category.name),
-    };
-  }
+		return {
+			...company,
+			categories: company.categories.map((cat) => cat.category.name),
+		};
+	}
 
-  async update(id: string, updateCompanyDto: UpdateCompanyDto) {
-    return await this.prismaService.company.update({
-      data: {
-        name: updateCompanyDto.name,
-        slug: updateCompanyDto.slug,
-        cnpj: updateCompanyDto.cnpj,
-        description: updateCompanyDto.description,
-        active: updateCompanyDto.active,
-        cover_img_url: updateCompanyDto.cover_img_url,
-      },
-      where: { id },
-    });
-  }
+	async update(id: string, updateCompanyDto: UpdateCompanyDto) {
+		return await this.prismaService.company.update({
+			data: {
+				name: updateCompanyDto.name,
+				slug: updateCompanyDto.slug,
+				cnpj: updateCompanyDto.cnpj,
+				description: updateCompanyDto.description,
+				active: updateCompanyDto.active,
+				cover_img_url: updateCompanyDto.cover_img_url,
+			},
+			where: { id },
+		});
+	}
 
-  async remove(id: string) {
-    return await this.prismaService.company.delete({ where: { id } });
-  }
+	async remove(id: string) {
+		return await this.prismaService.company.delete({ where: { id } });
+	}
 }
