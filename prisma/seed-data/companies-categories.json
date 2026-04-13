@@ -1,160 +1,555 @@
 {
-  "categories": [
-    { "name": "Comércio", "parent": null },
-    { "name": "Supermercados e mercantis", "parent": "Comércio" },
-    { "name": "Lojas de roupas e calçados", "parent": "Comércio" },
-    { "name": "Farmácias e drogarias", "parent": "Comércio" },
-    { "name": "Lojas de eletrônicos", "parent": "Comércio" },
-    { "name": "Materiais de construção", "parent": "Comércio" },
-    { "name": "Papelarias e livrarias", "parent": "Comércio" },
-    { "name": "Lojas de móveis", "parent": "Comércio" },
-    { "name": "Floriculturas", "parent": "Comércio" },
-    { "name": "Lojas agropecuárias", "parent": "Comércio" },
+	"categories": [
+		{ "name": "Comércio", "parent": null, "entities": ["company"] },
+		{
+			"name": "Supermercados e mercantis",
+			"parent": "Comércio",
+			"entities": ["company"]
+		},
+		{
+			"name": "Lojas de roupas e calçados",
+			"parent": "Comércio",
+			"entities": ["company"]
+		},
+		{
+			"name": "Farmácias e drogarias",
+			"parent": "Comércio",
+			"entities": ["company"]
+		},
+		{
+			"name": "Lojas de eletrônicos",
+			"parent": "Comércio",
+			"entities": ["company"]
+		},
+		{
+			"name": "Materiais de construção",
+			"parent": "Comércio",
+			"entities": ["company"]
+		},
+		{
+			"name": "Papelarias e livrarias",
+			"parent": "Comércio",
+			"entities": ["company"]
+		},
+		{
+			"name": "Lojas de móveis",
+			"parent": "Comércio",
+			"entities": ["company"]
+		},
+		{ "name": "Floriculturas", "parent": "Comércio", "entities": ["company"] },
+		{
+			"name": "Lojas agropecuárias",
+			"parent": "Comércio",
+			"entities": ["company"]
+		},
 
-    { "name": "Alimentação e Bebidas", "parent": null },
-    { "name": "Restaurantes", "parent": "Alimentação e Bebidas" },
-    { "name": "Lanchonetes", "parent": "Alimentação e Bebidas" },
-    { "name": "Bares e pubs", "parent": "Alimentação e Bebidas" },
-    { "name": "Pizzarias", "parent": "Alimentação e Bebidas" },
-    { "name": "Cafeterias", "parent": "Alimentação e Bebidas" },
-    { "name": "Sorveterias", "parent": "Alimentação e Bebidas" },
-    { "name": "Docerias e confeitarias", "parent": "Alimentação e Bebidas" },
-    { "name": "Food trucks", "parent": "Alimentação e Bebidas" },
-    {
-      "name": "Produtores artesanais",
-      "parent": "Alimentação e Bebidas"
-    },
+		{
+			"name": "Alimentação e Bebidas",
+			"parent": null,
+			"entities": ["company"]
+		},
+		{
+			"name": "Restaurantes",
+			"parent": "Alimentação e Bebidas",
+			"entities": ["company"]
+		},
+		{
+			"name": "Lanchonetes",
+			"parent": "Alimentação e Bebidas",
+			"entities": ["company"]
+		},
+		{
+			"name": "Bares e pubs",
+			"parent": "Alimentação e Bebidas",
+			"entities": ["company"]
+		},
+		{
+			"name": "Pizzarias",
+			"parent": "Alimentação e Bebidas",
+			"entities": ["company"]
+		},
+		{
+			"name": "Cafeterias",
+			"parent": "Alimentação e Bebidas",
+			"entities": ["company"]
+		},
+		{
+			"name": "Sorveterias",
+			"parent": "Alimentação e Bebidas",
+			"entities": ["company"]
+		},
+		{
+			"name": "Docerias e confeitarias",
+			"parent": "Alimentação e Bebidas",
+			"entities": ["company"]
+		},
+		{
+			"name": "Food trucks",
+			"parent": "Alimentação e Bebidas",
+			"entities": ["company"]
+		},
+		{
+			"name": "Produtores artesanais",
+			"parent": "Alimentação e Bebidas",
+			"entities": ["company"]
+		},
 
-    { "name": "Turismo e Hospitalidade", "parent": null },
-    { "name": "Hotéis", "parent": "Turismo e Hospitalidade" },
-    { "name": "Pousadas", "parent": "Turismo e Hospitalidade" },
-    { "name": "Hostels", "parent": "Turismo e Hospitalidade" },
-    { "name": "Chalés", "parent": "Turismo e Hospitalidade" },
-    { "name": "Guias turísticos", "parent": "Turismo e Hospitalidade" },
-    { "name": "Agências de turismo", "parent": "Turismo e Hospitalidade" },
-    { "name": "Turismo rural", "parent": "Turismo e Hospitalidade" },
-    { "name": "Ecoturismo", "parent": "Turismo e Hospitalidade" },
-    { "name": "Experiências locais", "parent": "Turismo e Hospitalidade" },
+		{
+			"name": "Turismo e Hospitalidade",
+			"parent": null,
+			"entities": ["company", "city"]
+		},
+		{
+			"name": "Hotéis",
+			"parent": "Turismo e Hospitalidade",
+			"entities": ["company"]
+		},
+		{
+			"name": "Pousadas",
+			"parent": "Turismo e Hospitalidade",
+			"entities": ["company"]
+		},
+		{
+			"name": "Hostels",
+			"parent": "Turismo e Hospitalidade",
+			"entities": ["company"]
+		},
+		{
+			"name": "Chalés",
+			"parent": "Turismo e Hospitalidade",
+			"entities": ["company"]
+		},
+		{
+			"name": "Guias turísticos",
+			"parent": "Turismo e Hospitalidade",
+			"entities": ["company"]
+		},
+		{
+			"name": "Agências de turismo",
+			"parent": "Turismo e Hospitalidade",
+			"entities": ["company"]
+		},
+		{
+			"name": "Turismo rural",
+			"parent": "Turismo e Hospitalidade",
+			"entities": ["company", "city"]
+		},
+		{
+			"name": "Ecoturismo",
+			"parent": "Turismo e Hospitalidade",
+			"entities": ["company", "city"]
+		},
+		{
+			"name": "Experiências locais",
+			"parent": "Turismo e Hospitalidade",
+			"entities": ["company", "city"]
+		},
 
-    { "name": "Cultura, Lazer e Entretenimento", "parent": null },
-    { "name": "Casas de eventos", "parent": "Cultura, Lazer e Entretenimento" },
-    {
-      "name": "Produtoras culturais",
-      "parent": "Cultura, Lazer e Entretenimento"
-    },
-    {
-      "name": "Espaços culturais",
-      "parent": "Cultura, Lazer e Entretenimento"
-    },
-    { "name": "Teatros", "parent": "Cultura, Lazer e Entretenimento" },
-    {
-      "name": "Estúdios artísticos",
-      "parent": "Cultura, Lazer e Entretenimento"
-    },
-    { "name": "Artesãos", "parent": "Cultura, Lazer e Entretenimento" },
-    {
-      "name": "Parques e atrações turísticas",
-      "parent": "Cultura, Lazer e Entretenimento"
-    },
-    { "name": "Espaços de lazer", "parent": "Cultura, Lazer e Entretenimento" },
+		{
+			"name": "Cultura, Lazer e Entretenimento",
+			"parent": null,
+			"entities": ["company", "city"]
+		},
+		{
+			"name": "Casas de eventos",
+			"parent": "Cultura, Lazer e Entretenimento",
+			"entities": ["company"]
+		},
+		{
+			"name": "Produtoras culturais",
+			"parent": "Cultura, Lazer e Entretenimento",
+			"entities": ["company"]
+		},
+		{
+			"name": "Espaços culturais",
+			"parent": "Cultura, Lazer e Entretenimento",
+			"entities": ["company", "city"]
+		},
+		{
+			"name": "Teatros",
+			"parent": "Cultura, Lazer e Entretenimento",
+			"entities": ["company"]
+		},
+		{
+			"name": "Estúdios artísticos",
+			"parent": "Cultura, Lazer e Entretenimento",
+			"entities": ["company"]
+		},
+		{
+			"name": "Artesãos",
+			"parent": "Cultura, Lazer e Entretenimento",
+			"entities": ["company"]
+		},
+		{
+			"name": "Parques e atrações turísticas",
+			"parent": "Cultura, Lazer e Entretenimento",
+			"entities": ["company", "city"]
+		},
+		{
+			"name": "Espaços de lazer",
+			"parent": "Cultura, Lazer e Entretenimento",
+			"entities": ["company", "city"]
+		},
 
-    { "name": "Saúde e Bem-estar", "parent": null },
-    { "name": "Clínicas médicas", "parent": "Saúde e Bem-estar" },
-    { "name": "Consultórios odontológicos", "parent": "Saúde e Bem-estar" },
-    { "name": "Laboratórios", "parent": "Saúde e Bem-estar" },
-    { "name": "Farmácias", "parent": "Saúde e Bem-estar" },
-    { "name": "Clínicas veterinárias", "parent": "Saúde e Bem-estar" },
-    { "name": "Academias", "parent": "Saúde e Bem-estar" },
-    { "name": "Estúdios de pilates/yoga", "parent": "Saúde e Bem-estar" },
-    { "name": "Spas e estética", "parent": "Saúde e Bem-estar" },
-    { "name": "Terapias alternativas", "parent": "Saúde e Bem-estar" },
+		{ "name": "Saúde e Bem-estar", "parent": null, "entities": ["company"] },
+		{
+			"name": "Clínicas médicas",
+			"parent": "Saúde e Bem-estar",
+			"entities": ["company"]
+		},
+		{
+			"name": "Consultórios odontológicos",
+			"parent": "Saúde e Bem-estar",
+			"entities": ["company"]
+		},
+		{
+			"name": "Laboratórios",
+			"parent": "Saúde e Bem-estar",
+			"entities": ["company"]
+		},
+		{
+			"name": "Farmácias",
+			"parent": "Saúde e Bem-estar",
+			"entities": ["company"]
+		},
+		{
+			"name": "Clínicas veterinárias",
+			"parent": "Saúde e Bem-estar",
+			"entities": ["company"]
+		},
+		{
+			"name": "Academias",
+			"parent": "Saúde e Bem-estar",
+			"entities": ["company"]
+		},
+		{
+			"name": "Estúdios de pilates/yoga",
+			"parent": "Saúde e Bem-estar",
+			"entities": ["company"]
+		},
+		{
+			"name": "Spas e estética",
+			"parent": "Saúde e Bem-estar",
+			"entities": ["company"]
+		},
+		{
+			"name": "Terapias alternativas",
+			"parent": "Saúde e Bem-estar",
+			"entities": ["company"]
+		},
 
-    { "name": "Serviços Gerais", "parent": null },
-    { "name": "Oficinas mecânicas", "parent": "Serviços Gerais" },
-    { "name": "Serviços elétricos", "parent": "Serviços Gerais" },
-    { "name": "Serviços hidráulicos", "parent": "Serviços Gerais" },
-    { "name": "Manutenção predial", "parent": "Serviços Gerais" },
-    { "name": "Limpeza e conservação", "parent": "Serviços Gerais" },
-    { "name": "Segurança privada", "parent": "Serviços Gerais" },
-    { "name": "Transportadoras", "parent": "Serviços Gerais" },
-    { "name": "Serviços funerários", "parent": "Serviços Gerais" },
+		{ "name": "Serviços Gerais", "parent": null, "entities": ["company"] },
+		{
+			"name": "Oficinas mecânicas",
+			"parent": "Serviços Gerais",
+			"entities": ["company"]
+		},
+		{
+			"name": "Serviços elétricos",
+			"parent": "Serviços Gerais",
+			"entities": ["company"]
+		},
+		{
+			"name": "Serviços hidráulicos",
+			"parent": "Serviços Gerais",
+			"entities": ["company"]
+		},
+		{
+			"name": "Manutenção predial",
+			"parent": "Serviços Gerais",
+			"entities": ["company"]
+		},
+		{
+			"name": "Limpeza e conservação",
+			"parent": "Serviços Gerais",
+			"entities": ["company"]
+		},
+		{
+			"name": "Segurança privada",
+			"parent": "Serviços Gerais",
+			"entities": ["company"]
+		},
+		{
+			"name": "Transportadoras",
+			"parent": "Serviços Gerais",
+			"entities": ["company"]
+		},
+		{
+			"name": "Serviços funerários",
+			"parent": "Serviços Gerais",
+			"entities": ["company"]
+		},
 
-    { "name": "Educação e Capacitação", "parent": null },
-    { "name": "Escolas", "parent": "Educação e Capacitação" },
-    { "name": "Faculdades", "parent": "Educação e Capacitação" },
-    { "name": "Cursos técnicos", "parent": "Educação e Capacitação" },
-    {
-      "name": "Cursos profissionalizantes",
-      "parent": "Educação e Capacitação"
-    },
-    { "name": "Idiomas", "parent": "Educação e Capacitação" },
-    { "name": "Reforço escolar", "parent": "Educação e Capacitação" },
-    { "name": "Treinamentos corporativos", "parent": "Educação e Capacitação" },
-    { "name": "Autoescolas", "parent": "Educação e Capacitação" },
+		{
+			"name": "Educação e Capacitação",
+			"parent": null,
+			"entities": ["company"]
+		},
+		{
+			"name": "Escolas",
+			"parent": "Educação e Capacitação",
+			"entities": ["company"]
+		},
+		{
+			"name": "Faculdades",
+			"parent": "Educação e Capacitação",
+			"entities": ["company"]
+		},
+		{
+			"name": "Cursos técnicos",
+			"parent": "Educação e Capacitação",
+			"entities": ["company"]
+		},
+		{
+			"name": "Cursos profissionalizantes",
+			"parent": "Educação e Capacitação",
+			"entities": ["company"]
+		},
+		{
+			"name": "Idiomas",
+			"parent": "Educação e Capacitação",
+			"entities": ["company"]
+		},
+		{
+			"name": "Reforço escolar",
+			"parent": "Educação e Capacitação",
+			"entities": ["company"]
+		},
+		{
+			"name": "Treinamentos corporativos",
+			"parent": "Educação e Capacitação",
+			"entities": ["company"]
+		},
+		{
+			"name": "Autoescolas",
+			"parent": "Educação e Capacitação",
+			"entities": ["company"]
+		},
 
-    { "name": "Serviços Profissionais", "parent": null },
-    { "name": "Contabilidade", "parent": "Serviços Profissionais" },
-    { "name": "Advocacia", "parent": "Serviços Profissionais" },
-    { "name": "Consultoria empresarial", "parent": "Serviços Profissionais" },
-    { "name": "Recursos humanos", "parent": "Serviços Profissionais" },
-    { "name": "Marketing e publicidade", "parent": "Serviços Profissionais" },
-    { "name": "Design gráfico", "parent": "Serviços Profissionais" },
-    { "name": "Tecnologia da informação", "parent": "Serviços Profissionais" },
-    {
-      "name": "Desenvolvimento de software",
-      "parent": "Serviços Profissionais"
-    },
-    { "name": "Fotografia e audiovisual", "parent": "Serviços Profissionais" },
+		{
+			"name": "Serviços Profissionais",
+			"parent": null,
+			"entities": ["company"]
+		},
+		{
+			"name": "Contabilidade",
+			"parent": "Serviços Profissionais",
+			"entities": ["company"]
+		},
+		{
+			"name": "Advocacia",
+			"parent": "Serviços Profissionais",
+			"entities": ["company"]
+		},
+		{
+			"name": "Consultoria empresarial",
+			"parent": "Serviços Profissionais",
+			"entities": ["company"]
+		},
+		{
+			"name": "Recursos humanos",
+			"parent": "Serviços Profissionais",
+			"entities": ["company"]
+		},
+		{
+			"name": "Marketing e publicidade",
+			"parent": "Serviços Profissionais",
+			"entities": ["company"]
+		},
+		{
+			"name": "Design gráfico",
+			"parent": "Serviços Profissionais",
+			"entities": ["company"]
+		},
+		{
+			"name": "Tecnologia da informação",
+			"parent": "Serviços Profissionais",
+			"entities": ["company"]
+		},
+		{
+			"name": "Desenvolvimento de software",
+			"parent": "Serviços Profissionais",
+			"entities": ["company"]
+		},
+		{
+			"name": "Fotografia e audiovisual",
+			"parent": "Serviços Profissionais",
+			"entities": ["company"]
+		},
 
-    { "name": "Indústria e Produção", "parent": null },
-    { "name": "Indústrias alimentícias", "parent": "Indústria e Produção" },
-    { "name": "Fábricas", "parent": "Indústria e Produção" },
-    { "name": "Agroindústrias", "parent": "Indústria e Produção" },
-    { "name": "Confecções", "parent": "Indústria e Produção" },
-    { "name": "Marcenarias", "parent": "Indústria e Produção" },
-    { "name": "Metalúrgicas", "parent": "Indústria e Produção" },
-    { "name": "Produção artesanal", "parent": "Indústria e Produção" },
-    { "name": "Cooperativas", "parent": "Indústria e Produção" },
+		{ "name": "Indústria e Produção", "parent": null, "entities": ["company"] },
+		{
+			"name": "Indústrias alimentícias",
+			"parent": "Indústria e Produção",
+			"entities": ["company"]
+		},
+		{
+			"name": "Fábricas",
+			"parent": "Indústria e Produção",
+			"entities": ["company"]
+		},
+		{
+			"name": "Agroindústrias",
+			"parent": "Indústria e Produção",
+			"entities": ["company"]
+		},
+		{
+			"name": "Confecções",
+			"parent": "Indústria e Produção",
+			"entities": ["company"]
+		},
+		{
+			"name": "Marcenarias",
+			"parent": "Indústria e Produção",
+			"entities": ["company"]
+		},
+		{
+			"name": "Metalúrgicas",
+			"parent": "Indústria e Produção",
+			"entities": ["company"]
+		},
+		{
+			"name": "Produção artesanal",
+			"parent": "Indústria e Produção",
+			"entities": ["company"]
+		},
+		{
+			"name": "Cooperativas",
+			"parent": "Indústria e Produção",
+			"entities": ["company"]
+		},
 
-    { "name": "Agronegócio e Economia Rural", "parent": null },
-    { "name": "Produtores rurais", "parent": "Agronegócio e Economia Rural" },
-    {
-      "name": "Cooperativas agrícolas",
-      "parent": "Agronegócio e Economia Rural"
-    },
-    { "name": "Floricultura", "parent": "Agronegócio e Economia Rural" },
-    { "name": "Cafeicultura", "parent": "Agronegócio e Economia Rural" },
-    { "name": "Hortifruti", "parent": "Agronegócio e Economia Rural" },
-    { "name": "Avicultura", "parent": "Agronegócio e Economia Rural" },
-    { "name": "Apicultura", "parent": "Agronegócio e Economia Rural" },
-    { "name": "Viveiros", "parent": "Agronegócio e Economia Rural" },
-    { "name": "Associações rurais", "parent": "Agronegócio e Economia Rural" },
+		{
+			"name": "Agronegócio e Economia Rural",
+			"parent": null,
+			"entities": ["company", "city"]
+		},
+		{
+			"name": "Produtores rurais",
+			"parent": "Agronegócio e Economia Rural",
+			"entities": ["company"]
+		},
+		{
+			"name": "Cooperativas agrícolas",
+			"parent": "Agronegócio e Economia Rural",
+			"entities": ["company"]
+		},
+		{
+			"name": "Floricultura",
+			"parent": "Agronegócio e Economia Rural",
+			"entities": ["company"]
+		},
+		{
+			"name": "Cafeicultura",
+			"parent": "Agronegócio e Economia Rural",
+			"entities": ["company", "city"]
+		},
+		{
+			"name": "Hortifruti",
+			"parent": "Agronegócio e Economia Rural",
+			"entities": ["company"]
+		},
+		{
+			"name": "Avicultura",
+			"parent": "Agronegócio e Economia Rural",
+			"entities": ["company"]
+		},
+		{
+			"name": "Apicultura",
+			"parent": "Agronegócio e Economia Rural",
+			"entities": ["company"]
+		},
+		{
+			"name": "Viveiros",
+			"parent": "Agronegócio e Economia Rural",
+			"entities": ["company"]
+		},
+		{
+			"name": "Associações rurais",
+			"parent": "Agronegócio e Economia Rural",
+			"entities": ["company"]
+		},
 
-    { "name": "Financeiro e Imobiliário", "parent": null },
-    { "name": "Bancos", "parent": "Financeiro e Imobiliário" },
-    { "name": "Cooperativas de crédito", "parent": "Financeiro e Imobiliário" },
-    {
-      "name": "Correspondentes bancários",
-      "parent": "Financeiro e Imobiliário"
-    },
-    { "name": "Imobiliárias", "parent": "Financeiro e Imobiliário" },
-    { "name": "Corretores de imóveis", "parent": "Financeiro e Imobiliário" },
-    { "name": "Seguradoras", "parent": "Financeiro e Imobiliário" },
-    { "name": "Consórcios", "parent": "Financeiro e Imobiliário" },
+		{
+			"name": "Financeiro e Imobiliário",
+			"parent": null,
+			"entities": ["company"]
+		},
+		{
+			"name": "Bancos",
+			"parent": "Financeiro e Imobiliário",
+			"entities": ["company"]
+		},
+		{
+			"name": "Cooperativas de crédito",
+			"parent": "Financeiro e Imobiliário",
+			"entities": ["company"]
+		},
+		{
+			"name": "Correspondentes bancários",
+			"parent": "Financeiro e Imobiliário",
+			"entities": ["company"]
+		},
+		{
+			"name": "Imobiliárias",
+			"parent": "Financeiro e Imobiliário",
+			"entities": ["company"]
+		},
+		{
+			"name": "Corretores de imóveis",
+			"parent": "Financeiro e Imobiliário",
+			"entities": ["company"]
+		},
+		{
+			"name": "Seguradoras",
+			"parent": "Financeiro e Imobiliário",
+			"entities": ["company"]
+		},
+		{
+			"name": "Consórcios",
+			"parent": "Financeiro e Imobiliário",
+			"entities": ["company"]
+		},
 
-    { "name": "Institucional e Terceiro Setor", "parent": null },
-    { "name": "Associações", "parent": "Institucional e Terceiro Setor" },
-    { "name": "ONGs", "parent": "Institucional e Terceiro Setor" },
-    { "name": "Cooperativas", "parent": "Institucional e Terceiro Setor" },
-    { "name": "Sindicatos", "parent": "Institucional e Terceiro Setor" },
-    {
-      "name": "Instituições religiosas",
-      "parent": "Institucional e Terceiro Setor"
-    },
-    { "name": "Fundações", "parent": "Institucional e Terceiro Setor" },
-    {
-      "name": "Entidades culturais",
-      "parent": "Institucional e Terceiro Setor"
-    }
-  ]
+		{
+			"name": "Institucional e Terceiro Setor",
+			"parent": null,
+			"entities": ["company"]
+		},
+		{
+			"name": "Associações",
+			"parent": "Institucional e Terceiro Setor",
+			"entities": ["company"]
+		},
+		{
+			"name": "ONGs",
+			"parent": "Institucional e Terceiro Setor",
+			"entities": ["company"]
+		},
+		{
+			"name": "Cooperativas",
+			"parent": "Institucional e Terceiro Setor",
+			"entities": ["company"]
+		},
+		{
+			"name": "Sindicatos",
+			"parent": "Institucional e Terceiro Setor",
+			"entities": ["company"]
+		},
+		{
+			"name": "Instituições religiosas",
+			"parent": "Institucional e Terceiro Setor",
+			"entities": ["company"]
+		},
+		{
+			"name": "Fundações",
+			"parent": "Institucional e Terceiro Setor",
+			"entities": ["company"]
+		},
+		{
+			"name": "Entidades culturais",
+			"parent": "Institucional e Terceiro Setor",
+			"entities": ["company"]
+		}
+	]
 }
