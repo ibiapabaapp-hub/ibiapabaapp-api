@@ -6,51 +6,49 @@ import {
 	NotFoundException,
 	UnauthorizedException,
 } from '@nestjs/common';
-import { user_role } from '@prisma/client';
 import { PaginationDto } from 'src/modules/common/dtos/pagination.dto';
 import { PasswordService } from 'src/modules/common/password/password.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
-import { CreateUserDto } from './dtos/create-user.dto';
-import { UpdateUserDto } from './dtos/update-user.dto';
-import { User } from './entities/user.entity';
+import { CreateAccountDTO } from './dtos/create-account.dto';
+import { Account } from './entities/account.entity';
+import { UpdateAccountDTO } from './dtos/update-account.dto';
 
 @Injectable()
-export class UsersService {
+export class AccountsService {
 	constructor(
 		private readonly prismaService: PrismaService,
 		private readonly passwordService: PasswordService,
 	) {}
 
-	async create(userData: CreateUserDto) {
-		if (userData.password !== userData.password_confirm) {
+	async create(data: CreateAccountDTO) {
+		if (data.password !== data.password_confirm) {
 			throw new BadRequestException({
 				message: 'Password and password confirmation must be equal',
 				code: 'password_mismatch',
 			});
 		}
 
-		const user = await this.prismaService.user.create({
+		const account = await this.prismaService.account.create({
 			data: {
 				id: randomUUID(),
-				name: userData.name.trim(),
-				// cpf,
-				birth_date: userData.birth_date,
-				role: userData.role as user_role,
-				email: userData.email.trim(),
-				password: await this.passwordService.hashPassword(userData.password),
-				username: userData.username.toLowerCase().trim(),
-				phone_number: userData.phone_number,
+				name: data.name,
+				// birth_date: data.birth_date,
+				email: data.email.trim(),
+				password: await this.passwordService.hashPassword(
+					data.password,
+				),
+				phone_number: data.phone_number,
 			},
 			omit: { password: true },
 		});
 
-		return user;
+		return account;
 	}
 
 	async findAll(paginationDto: PaginationDto) {
 		const { limit = 10, offset } = paginationDto;
-		return await this.prismaService.user.findMany({
+		return await this.prismaService.account.findMany({
 			take: limit,
 			skip: offset,
 			omit: { password: true },
@@ -58,46 +56,48 @@ export class UsersService {
 	}
 
 	async findOneById(id: string) {
-		const user = await this.prismaService.user.findFirst({
+		const account = await this.prismaService.account.findFirst({
 			where: { id },
 			omit: { password: true },
 		});
 
-		if (!user) {
+		if (!account) {
 			throw new NotFoundException('User not found');
 		}
 
-		return user;
+		return account;
 	}
 
 	async findOneByEmail(email: string, getPassword: boolean = false) {
-		const user = await this.prismaService.user.findFirst({
+		const account = await this.prismaService.account.findFirst({
 			where: { email },
 			omit: { password: !getPassword },
 		});
 
-		if (!user) {
+		if (!account) {
 			throw new NotFoundException('User not found');
 		}
 
-		return user;
+		return account;
 	}
 
-	async update(id: string, updateUserDto: UpdateUserDto) {
-		const userExists = await this.prismaService.user.findUnique({
+	async update(id: string, updateUserDto: UpdateAccountDTO) {
+		const accountExists = await this.prismaService.account.findUnique({
 			where: { id },
 		});
 
-		if (!userExists) {
+		if (!accountExists) {
 			throw new NotFoundException('User not found');
 		}
 
 		if (!updateUserDto.password) {
-			throw new BadRequestException('Current password is required for updates');
+			throw new BadRequestException(
+				'Current password is required for updates',
+			);
 		}
 
 		const isPasswordValid = await this.passwordService.verifyPassword(
-			userExists.password,
+			accountExists.password,
 			updateUserDto.password,
 		);
 
@@ -105,22 +105,19 @@ export class UsersService {
 			throw new UnauthorizedException('Invalid credentials');
 		}
 
-		const { role, password, ...rest } = updateUserDto;
+		const { password, ...rest } = updateUserDto;
 
-		const dataToUpdate: Partial<User> = {
+		const dataToUpdate: Partial<Account> = {
 			...rest,
 			updated_at: new Date(),
 		};
 
 		if (password) {
-			dataToUpdate.password = await this.passwordService.hashPassword(password);
+			dataToUpdate.password =
+				await this.passwordService.hashPassword(password);
 		}
 
-		if (role) {
-			dataToUpdate.role = role as user_role;
-		}
-
-		return this.prismaService.user.update({
+		return this.prismaService.account.update({
 			where: { id },
 			data: dataToUpdate,
 			omit: { password: true },
@@ -128,16 +125,16 @@ export class UsersService {
 	}
 
 	async remove(id: string) {
-		const user = await this.prismaService.user.findFirst({
+		const account = await this.prismaService.account.findFirst({
 			where: { id },
 			omit: { password: true },
 		});
 
-		if (!user) {
+		if (!account) {
 			throw new NotFoundException('User not found');
 		}
 
-		await this.prismaService.user.delete({ where: { id } });
-		return user;
+		await this.prismaService.account.delete({ where: { id } });
+		return account;
 	}
 }

@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { user_role } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
 	IsDate,
@@ -12,17 +11,11 @@ import {
 	MinLength,
 } from 'class-validator';
 
-export class CreateUserDto {
+export class CreateAccountDTO {
 	@ApiProperty({ example: 'João Silva' })
 	@MaxLength(100)
 	@IsString()
 	name: string;
-
-	@ApiProperty({ example: 'joaosilva' })
-	@MaxLength(50)
-	@MinLength(4)
-	@IsString()
-	username: string;
 
 	@ApiProperty({ example: 'joao@email.com' })
 	@IsString()
@@ -38,15 +31,11 @@ export class CreateUserDto {
 	@Matches(/^\+[1-9]\d{1,14}$/)
 	phone_number: string;
 
-	@ApiProperty({ example: '2000-01-01T00:00:00.000Z' })
-	@IsDate()
-	@MaxDate(new Date())
-	@Type(() => Date)
-	birth_date: Date;
-
-	@ApiProperty({ enum: user_role, example: 'USER' })
-	@IsEnum(user_role)
-	role: string;
+	// @ApiProperty({ example: '2000-01-01T00:00:00.000Z' })
+	// @IsDate()
+	// @MaxDate(new Date())
+	// @Type(() => Date)
+	// birth_date: Date;
 
 	@ApiProperty({ example: 'Senha@123', minLength: 8 })
 	@IsString()

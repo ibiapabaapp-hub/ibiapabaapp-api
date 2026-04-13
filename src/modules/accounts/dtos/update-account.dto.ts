@@ -1,4 +1,3 @@
-import { user_role } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
 	IsBoolean,
@@ -11,20 +10,16 @@ import {
 	MinLength,
 } from 'class-validator';
 
-export class UpdateUserDto {
+export class UpdateAccountDTO {
 	@IsString()
 	@IsOptional()
 	name?: string;
 
-	@IsDate()
-	@MaxDate(new Date())
-	@Type(() => Date)
-	@IsOptional()
-	birth_date?: Date;
-
-	@IsEnum(user_role)
-	@IsOptional()
-	role?: string;
+	// @IsDate()
+	// @MaxDate(new Date())
+	// @Type(() => Date)
+	// @IsOptional()
+	// birth_date?: Date;
 
 	@IsString()
 	@IsEmail()

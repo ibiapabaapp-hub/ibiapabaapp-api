@@ -1,0 +1,247 @@
+import {
+	BadRequestException,
+	InternalServerErrorException,
+	NotFoundException,
+	UnauthorizedException,
+} from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { account as AccountPrisma } from '@prisma/client';
+import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
+import { PasswordService } from 'src/modules/common/password/password.service';
+import { PrismaService } from 'src/modules/common/prisma/prisma.service';
+
+import { UpdateAccountDTO } from '../dtos/update-account.dto';
+import { Account } from '../entities/account.entity';
+import { AccountsService } from '../accounts.service';
+
+describe('AccountsService', () => {
+	let service: AccountsService;
+	let prisma: DeepMockProxy<PrismaService>;
+	let passwordService: DeepMockProxy<PasswordService>;
+
+	beforeEach(async () => {
+		const module: TestingModule = await Test.createTestingModule({
+			providers: [
+				AccountsService,
+				{
+					provide: PrismaService,
+					useValue: mockDeep<PrismaService>(),
+				},
+				{
+					provide: PasswordService,
+					useValue: mockDeep<PasswordService>(),
+				},
+			],
+		}).compile();
+
+		service = module.get<AccountsService>(AccountsService);
+		prisma = module.get(PrismaService);
+		passwordService = module.get(PasswordService);
+
+		jest.clearAllMocks();
+	});
+
+	it('should be defined', () => {
+		expect(service).toBeDefined();
+	});
+
+	describe('findAll', () => {
+		it('should return accounts with pagination', async () => {
+			const accounts = [{ id: '1' }];
+			prisma.account.findMany.mockResolvedValue(
+				accounts as AccountPrisma[],
+			);
+
+			const result = await service.findAll({ limit: 10, offset: 0 });
+
+			expect(prisma.account.findMany).toHaveBeenCalledWith({
+				take: 10,
+				skip: 0,
+				omit: { password: true },
+			});
+			expect(result).toEqual(accounts);
+		});
+	});
+
+	describe('findOneById', () => {
+		it('should return a account if found', async () => {
+			const account = { id: '1' };
+			prisma.account.findFirst.mockResolvedValue(account as Account);
+
+			const result = await service.findOneById('1');
+
+			expect(prisma.account.findFirst).toHaveBeenCalledWith({
+				where: { id: '1' },
+				omit: { password: true },
+			});
+			expect(result).toEqual(account);
+		});
+
+		it('should throw NotFoundException if account does not exist', async () => {
+			prisma.account.findFirst.mockResolvedValue(null);
+
+			await expect(service.findOneById('1')).rejects.toThrow(
+				NotFoundException,
+			);
+		});
+	});
+
+	describe('findOneByEmail', () => {
+		const mock = {
+			id: '1',
+			email: 'test@example.com',
+			password: 'hashed-password',
+			name: 'Test ',
+		};
+
+		it('should return a account without password by default', async () => {
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			const { password, ...accountWithoutPassword } = mock;
+			prisma.account.findFirst.mockResolvedValue(
+				accountWithoutPassword as AccountPrisma,
+			);
+
+			const result = await service.findOneByEmail('test@example.com');
+
+			expect(prisma.account.findFirst).toHaveBeenCalledWith({
+				where: { email: 'test@example.com' },
+				omit: { password: true },
+			});
+			expect(result).not.toHaveProperty('password');
+			expect(result).toEqual(accountWithoutPassword);
+		});
+
+		it('should return a account with password when getPassword is true', async () => {
+			prisma.account.findFirst.mockResolvedValue(mock as AccountPrisma);
+
+			const result = await service.findOneByEmail(
+				'test@example.com',
+				true,
+			);
+
+			expect(prisma.account.findFirst).toHaveBeenCalledWith({
+				where: { email: 'test@example.com' },
+				omit: { password: false },
+			});
+			expect(result).toHaveProperty('password');
+			expect(result.password).toBe('hashed-password');
+		});
+
+		it('should throw NotFoundException if account email is not found', async () => {
+			prisma.account.findFirst.mockResolvedValue(null);
+
+			await expect(
+				service.findOneByEmail('nonexistent@example.com'),
+			).rejects.toThrow(NotFoundException);
+
+			expect(prisma.account.findFirst).toHaveBeenCalled();
+		});
+	});
+
+	describe('update', () => {
+		it('should update a account when credentials are valid', async () => {
+			const existing = {
+				id: '1',
+				password: 'hashed-password',
+			};
+
+			const updated = {
+				id: '1',
+				username: 'testuser',
+				email: 'test@example.com',
+				phone_number: '123456789',
+				password: 'new-hash',
+				name: 'Updated',
+				active: true,
+				created_at: new Date(),
+				updated_at: new Date(),
+			};
+
+			prisma.account.findUnique.mockResolvedValue(existing as Account);
+			passwordService.verifyPassword.mockResolvedValue(true);
+			passwordService.hashPassword.mockResolvedValue('new-hash');
+			prisma.account.update.mockResolvedValue(updated as Account);
+
+			const result = await service.update('1', {
+				name: 'Updated',
+				password: '123456',
+				role: 'superaccount',
+			} as UpdateAccountDTO);
+
+			expect(prisma.account.findUnique).toHaveBeenCalledWith({
+				where: { id: '1' },
+			});
+			expect(passwordService.verifyPassword).toHaveBeenCalled();
+			expect(prisma.account.update).toHaveBeenCalled();
+			expect(result).toEqual(updated);
+		});
+
+		it('should throw UnauthorizedException if password is invalid', async () => {
+			prisma.account.findUnique.mockResolvedValue({
+				id: '1',
+				password: 'hashed',
+			} as Account);
+
+			passwordService.verifyPassword.mockResolvedValue(false);
+
+			await expect(
+				service.update('1', { password: 'wrong' } as Account),
+			).rejects.toThrow(UnauthorizedException);
+		});
+
+		it('should throw NotFoundException if account does not exist', async () => {
+			prisma.account.findUnique.mockResolvedValue(null);
+
+			await expect(
+				service.update('1', { password: '123' } as Account),
+			).rejects.toThrow(NotFoundException);
+		});
+
+		it('should throw BadRequestException if password is missing in DTO', async () => {
+			prisma.account.findUnique.mockResolvedValue({ id: '1' } as Account);
+
+			await expect(
+				service.update('1', { name: 'New Name' } as Account),
+			).rejects.toThrow(BadRequestException);
+		});
+	});
+
+	describe('remove', () => {
+		it('should delete a account if it exists', async () => {
+			const account = { id: '1' };
+
+			prisma.account.findFirst.mockResolvedValue(account as Account);
+			prisma.account.delete.mockResolvedValue(account as Account);
+
+			const result = await service.remove('1');
+
+			expect(prisma.account.findFirst).toHaveBeenCalledWith({
+				where: { id: '1' },
+				omit: { password: true },
+			});
+			expect(prisma.account.delete).toHaveBeenCalledWith({
+				where: { id: '1' },
+			});
+			expect(result).toEqual(account);
+		});
+
+		it('should throw NotFoundException if account does not exist', async () => {
+			prisma.account.findFirst.mockResolvedValue(null);
+
+			await expect(service.remove('1')).rejects.toThrow(
+				NotFoundException,
+			);
+		});
+
+		it('should throw InternalServerErrorException on database failure', async () => {
+			prisma.account.findFirst.mockResolvedValue({ id: '1' } as Account);
+			prisma.account.delete.mockRejectedValue(
+				new InternalServerErrorException('Delete failed'),
+			);
+
+			await expect(service.remove('1')).rejects.toThrow(
+				InternalServerErrorException,
+			);
+		});
+	});
+});
