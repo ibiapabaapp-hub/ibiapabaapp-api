@@ -13,6 +13,10 @@ import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 import { CreateAccountDTO } from './dtos/create-account.dto';
 import { Account } from './entities/account.entity';
 import { UpdateAccountDTO } from './dtos/update-account.dto';
+import {
+	SecureAccountDTO,
+	SecureAccountWithProfilesDTO,
+} from './dtos/secure-account-dto';
 
 @Injectable()
 export class AccountsService {
@@ -46,13 +50,42 @@ export class AccountsService {
 		return account;
 	}
 
-	async findAll(paginationDto: PaginationDto) {
-		const { limit = 10, offset } = paginationDto;
+	async findAll(paginationQuery: PaginationDto) {
+		const { limit = 10, offset } = paginationQuery;
 		return await this.prismaService.account.findMany({
 			take: limit,
 			skip: offset,
 			omit: { password: true },
 		});
+	}
+
+	async findOneInDetailById(id: string) {
+		const account = await this.prismaService.account.findFirst({
+			where: { id },
+			include: {
+				profiles: {
+					select: {
+						profile: {
+							select: {
+								id: true,
+								slug: true,
+								display_name: true,
+								bio: true,
+								avatar_url: true,
+								interests: true,
+							},
+						},
+					},
+				},
+			},
+			omit: { password: true },
+		});
+
+		if (!account) {
+			throw new NotFoundException('User not found');
+		}
+
+		return new SecureAccountWithProfilesDTO(account);
 	}
 
 	async findOneById(id: string) {
@@ -65,7 +98,7 @@ export class AccountsService {
 			throw new NotFoundException('User not found');
 		}
 
-		return account;
+		return new SecureAccountDTO(account);
 	}
 
 	async findOneByEmail(email: string, getPassword: boolean = false) {

@@ -30,8 +30,8 @@ export class AccountsController {
 	@ApiOperation({ summary: 'Obtém todas as contas' })
 	@ApiResponse({ status: 200, type: SecureAccountDTO, isArray: true })
 	@Get()
-	findAll(@Query() paginationDto: PaginationDto) {
-		return this.accountsService.findAll(paginationDto);
+	findAll(@Query() paginationQuery: PaginationDto) {
+		return this.accountsService.findAll(paginationQuery);
 	}
 
 	// ─── GET: /accounts/:id ─────────────────────────────────────────────────────────
