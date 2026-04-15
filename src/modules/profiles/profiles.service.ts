@@ -55,31 +55,9 @@ export class ProfilesService {
 	async findAllByAccountId(accountId: string) {
 		const accountProfiles = await this.prismaService.account_profile.findMany({
 			where: { account_id: accountId },
-			include: {
-				profile: {
-					include: {
-						interests: {
-							include: {
-								category: {
-									select: {
-										id: true,
-										name: true,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
 		});
 
-		return accountProfiles.map((ap) => ({
-			...ap.profile,
-			interests: ap.profile.interests.map((i) => ({
-				id: i.category.id,
-				name: i.category.name,
-			})),
-		}));
+		return accountProfiles;
 	}
 
 	async findOneById(profileId: string, accountId: string) {
