@@ -17,9 +17,9 @@ import { ProfilesModule } from '../../modules/profiles/profiles.module';
 import { SearchModule } from '../../modules/search/search.module';
 import { AccountsModule } from '../accounts/accounts.module';
 import { BusinessesModule } from '../businesses/businesses.module';
+import { ThrottlerBehindProxyGuard } from '../common/guards/throttler-behind-proxy-guard';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ThrottlerBehindProxyGuard } from '../common/guards/throttler-behind-proxy-guard';
 
 @Module({
 	imports: [
@@ -32,12 +32,12 @@ import { ThrottlerBehindProxyGuard } from '../common/guards/throttler-behind-pro
 				{
 					name: 'short',
 					ttl: 1000,
-					limit: 3,
+					limit: 10,
 				},
 				{
 					name: 'medium',
 					ttl: 60000,
-					limit: 60,
+					limit: 100,
 				},
 			],
 		}),
@@ -61,10 +61,10 @@ import { ThrottlerBehindProxyGuard } from '../common/guards/throttler-behind-pro
 			provide: APP_GUARD,
 			useClass: AuthGuard,
 		},
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerBehindProxyGuard,
-    },
+		{
+			provide: APP_GUARD,
+			useClass: ThrottlerBehindProxyGuard,
+		},
 		{
 			provide: APP_FILTER,
 			useClass: GlobalExceptionsFilter,
