@@ -15,8 +15,8 @@ import {
 	ApiResponse,
 } from '@nestjs/swagger';
 
-import { CreateEventDto } from './dto/create-event.dto';
-import { UpdateEventDto } from './dto/update-event.dto';
+import { CreateEventDTO } from './dto/create-event.dto';
+import { UpdateEventDTO } from './dto/update-event.dto';
 import { Event } from './entities/event.entity';
 import { EventsService } from './events.service';
 
@@ -25,11 +25,11 @@ export class EventsController {
 	constructor(private readonly eventsService: EventsService) {}
 
 	@ApiBearerAuth()
-	@ApiBody({ type: CreateEventDto })
+	@ApiBody({ type: CreateEventDTO })
 	@ApiOperation({ summary: 'Cria um novo evento' })
 	@ApiResponse({ status: 201, type: Event })
 	@Post()
-	create(@Body() createEventDto: CreateEventDto) {
+	create(@Body() createEventDto: CreateEventDTO) {
 		return this.eventsService.create(createEventDto);
 	}
 
@@ -53,11 +53,11 @@ export class EventsController {
 
 	@ApiBearerAuth()
 	@ApiParam({ name: 'id', description: 'UUID do evento' })
-	@ApiBody({ type: UpdateEventDto })
+	@ApiBody({ type: UpdateEventDTO })
 	@ApiOperation({ summary: 'Atualizar dados de um evento' })
 	@ApiResponse({ status: 200, type: Event })
 	@Patch(':id')
-	update(@Param('id') id: string, @Body() updateEventDto: UpdateEventDto) {
+	update(@Param('id') id: string, @Body() updateEventDto: UpdateEventDTO) {
 		return this.eventsService.update(id, updateEventDto);
 	}
 

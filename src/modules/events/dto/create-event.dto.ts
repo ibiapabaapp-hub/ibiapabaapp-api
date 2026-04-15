@@ -11,26 +11,16 @@ import {
 	IsUrl,
 	IsUUID,
 	MaxLength,
-	MinLength,
-	ValidateIf,
+	MinLength
 } from 'class-validator';
 
-export class CreateEventDto {
+export class CreateEventDTO {
 	@ApiProperty({
 		example: 'uuidv4',
 		type: String,
 	})
 	@IsUUID('4')
-	@ValidateIf((o: { user_id?: string }) => o.user_id === undefined)
-	company_id: string | null;
-
-	@ApiProperty({
-		example: 'uuidv4',
-		type: String,
-	})
-	@IsUUID('4')
-	@ValidateIf((o: { company_id?: string }) => o.company_id === undefined)
-	user_id: string | null;
+	owner_profile_id: string;
 
 	@ApiProperty({
 		example: 'Evento Importante',

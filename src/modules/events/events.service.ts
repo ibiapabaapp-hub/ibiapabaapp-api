@@ -1,30 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
-import { CreateEventDto } from './dto/create-event.dto';
-import { UpdateEventDto } from './dto/update-event.dto';
+import { CreateEventDTO } from './dto/create-event.dto';
+import { UpdateEventDTO } from './dto/update-event.dto';
 
 @Injectable()
 export class EventsService {
 	constructor(private readonly prismaService: PrismaService) {}
 
-	async create(createEventDto: CreateEventDto) {
-		return await this.prismaService.event.create({
-			data: createEventDto,
-		});
+	async create(dto: CreateEventDTO) {
+		return await this.prismaService.event.create({ data: dto });
 	}
 
 	async findAll() {
 		const events = await this.prismaService.event.findMany({
 			include: {
 				categories: {
-					select: {
-						category: {
-							select: {
-								name: true,
-							},
-						},
-					},
+					select: { category: { select: { name: true } } },
 				},
 			},
 			orderBy: { name: 'asc' },
@@ -41,13 +33,7 @@ export class EventsService {
 			where: { id },
 			include: {
 				categories: {
-					select: {
-						category: {
-							select: {
-								name: true,
-							},
-						},
-					},
+					select: { category: { select: { name: true } } },
 				},
 			},
 		});
@@ -62,20 +48,20 @@ export class EventsService {
 		};
 	}
 
-	async update(id: string, updateEventDto: UpdateEventDto) {
+	async update(id: string, dto: UpdateEventDTO) {
 		await this.findOne(id);
 		return await this.prismaService.event.update({
 			where: { id },
 			data: {
-				name: updateEventDto.name,
-				description: updateEventDto.description,
-				cover_img_url: updateEventDto.cover_img_url,
-				slug: updateEventDto.slug,
-				type: updateEventDto.type,
-				active: updateEventDto.active,
-				reach_level: updateEventDto.reach_level,
-				start_date: updateEventDto.start_date,
-				end_date: updateEventDto.end_date,
+				name: dto.name,
+				description: dto.description,
+				cover_img_url: dto.cover_img_url,
+				slug: dto.slug,
+				type: dto.type,
+				active: dto.active,
+				reach_level: dto.reach_level,
+				start_date: dto.start_date,
+				end_date: dto.end_date,
 			},
 		});
 	}

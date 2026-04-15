@@ -2,8 +2,7 @@ import { event, event_type, reach_level } from '@prisma/client';
 
 export class Event implements event {
 	id: string;
-	company_id: string | null;
-	user_id: string | null;
+	owner_profile_id: string;
 
 	name: string;
 	slug: string;
