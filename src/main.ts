@@ -17,7 +17,7 @@ let app: NestExpressApplication;
 export async function bootstrap() {
 	if (!app) {
 		app = await NestFactory.create<NestExpressApplication>(AppModule, {
-			logger: ['error', 'warn'],
+			logger: ['error', 'fatal', 'warn'],
 		});
 
 		app.useGlobalInterceptors(
@@ -61,25 +61,10 @@ export async function bootstrap() {
 			// cookies no CORS
 		});
 
-		const config = new DocumentBuilder()
-			.setTitle('IbiapabaAppAPI')
-			.setDescription(
-				'Ponte entre o IbiapabaApp mobile e web para a persistência de dados',
-			)
-			.setVersion('1.0')
-			.build();
+		initDocs();
 
-		if (process.env.NODE_ENV !== 'production') {
-			const document = SwaggerModule.createDocument(app, config);
-			SwaggerModule.setup('docs', app, document);
-		}
-
-		if (process.env.NODE_ENV === 'development') {
-			app.use((_, res: Response, next: NextFunction) => {
-				res.setHeader('ngrok-skip-browser-warning', 'true');
-				next();
-			});
-		}
+		const httpAdapter = app.getHttpAdapter();
+		httpAdapter.getInstance().set('trust proxy', 1);
 
 		await app.listen(process.env.PORT ?? 3000);
 		await app.init();
@@ -96,6 +81,28 @@ if (process.env.NODE_ENV !== 'test') {
 		console.error(err);
 		process.exit(1);
 	});
+}
+
+function initDocs() {
+	const config = new DocumentBuilder()
+		.setTitle('IbiapabaAppAPI')
+		.setDescription(
+			'Ponte entre o IbiapabaApp mobile e web para a persistência de dados',
+		)
+		.setVersion('1.0')
+		.build();
+
+	if (process.env.NODE_ENV !== 'production') {
+		const document = SwaggerModule.createDocument(app, config);
+		SwaggerModule.setup('docs', app, document);
+	}
+
+	if (process.env.NODE_ENV === 'development') {
+		app.use((_, res: Response, next: NextFunction) => {
+			res.setHeader('ngrok-skip-browser-warning', 'true');
+			next();
+		});
+	}
 }
 
 function showBootstrapLogs() {

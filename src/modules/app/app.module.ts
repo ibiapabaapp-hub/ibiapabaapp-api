@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from 'src/modules/auth/auth.module';
 
 import { CategoriesModule } from '../../modules/categories/categories.module';
@@ -12,17 +13,33 @@ import { PrismaModule } from '../../modules/common/prisma/prisma.module';
 import { EventsModule } from '../../modules/events/events.module';
 import { LeadsModule } from '../../modules/leads/leads.module';
 import { MediasModule } from '../../modules/medias/medias.module';
+import { ProfilesModule } from '../../modules/profiles/profiles.module';
 import { SearchModule } from '../../modules/search/search.module';
 import { AccountsModule } from '../accounts/accounts.module';
 import { BusinessesModule } from '../businesses/businesses.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ThrottlerBehindProxyGuard } from '../common/guards/throttler-behind-proxy-guard';
 
 @Module({
 	imports: [
 		ConfigModule.forRoot({
 			isGlobal: true,
 			envFilePath: '.env',
+		}),
+		ThrottlerModule.forRoot({
+			throttlers: [
+				{
+					name: 'short',
+					ttl: 1000,
+					limit: 3,
+				},
+				{
+					name: 'medium',
+					ttl: 60000,
+					limit: 60,
+				},
+			],
 		}),
 		PrismaModule,
 		AuthModule,
@@ -35,6 +52,7 @@ import { AppService } from './app.service';
 		BusinessesModule,
 		EventsModule,
 		CategoriesModule,
+		ProfilesModule,
 	],
 	controllers: [AppController],
 	providers: [
@@ -43,6 +61,10 @@ import { AppService } from './app.service';
 			provide: APP_GUARD,
 			useClass: AuthGuard,
 		},
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerBehindProxyGuard,
+    },
 		{
 			provide: APP_FILTER,
 			useClass: GlobalExceptionsFilter,

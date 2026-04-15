@@ -13,6 +13,7 @@ import { AuthResponseDto } from './dtos/auth-response.dto';
 import { CheckUniqueDto } from './dtos/check-unique-field.dto';
 import { LoginDto } from './dtos/login.dto';
 import { RegisterDto } from './dtos/register.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
@@ -30,6 +31,9 @@ export class AuthController {
 	@ApiResponse({ status: 401, description: 'Credenciais inválidas' })
 	@Post('login')
 	@Public()
+	@Throttle({ 
+    	default: { limit: 5, ttl: 900000 } // 5 tentativas a cada 15 minutos
+  	})
 	async login(@Body() loginDto: LoginDto) {
 		const authData = await this.authService.login(loginDto);
 
@@ -56,6 +60,7 @@ export class AuthController {
 	})
 	@Post('register')
 	@Public()
+	@Throttle({default: { limit: 5, ttl: 900000 }})
 	async register(@Body() registerDto: RegisterDto) {
 		const authData = await this.authService.register(registerDto);
 
@@ -84,6 +89,7 @@ export class AuthController {
 	})
 	@Post('refresh')
 	@Public()
+	@Throttle({default: { limit: 5, ttl: 900000 }})
 	async refresh(@Headers('x-refresh-token') token: string) {
 		const { account, accessToken, refreshToken } =
 			await this.authService.refreshTokens(token);
@@ -100,6 +106,7 @@ export class AuthController {
 	@ApiOperation({ summary: 'Encerrar sessão' })
 	@ApiResponse({ status: 200, type: SecureAccountDTO })
 	@Post('logout')
+	@Throttle({default: { limit: 5, ttl: 900000 }})
 	logout() {
 		// response.cookie('refreshToken', '', {
 		//   httpOnly: true,
@@ -118,6 +125,7 @@ export class AuthController {
 	})
 	@Public()
 	@Get('check-unique')
+	@Throttle({default: { limit: 5, ttl: 900000 }})
 	async checkUnique(@Query() dto: CheckUniqueDto) {
 		return this.authService.isUniqueAvailable(dto.field, dto.value);
 	}
@@ -128,6 +136,7 @@ export class AuthController {
 		summary: 'Checar validade de criação um campo único por seu valor',
 	})
 	@Get('me')
+	@Throttle({default: { limit: 15, ttl: 900000 }})
 	async getMe(@Headers('Authorization') authorization: string) {
 		return this.authService.getMe(authorization);
 	}
