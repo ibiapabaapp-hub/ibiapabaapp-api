@@ -1,5 +1,9 @@
-import { ValidationPipe, VersioningType } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
+import {
+	ClassSerializerInterceptor,
+	ValidationPipe,
+	VersioningType,
+} from '@nestjs/common';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
@@ -15,6 +19,10 @@ export async function bootstrap() {
 		app = await NestFactory.create<NestExpressApplication>(AppModule, {
 			logger: ['error', 'warn'],
 		});
+
+		app.useGlobalInterceptors(
+			new ClassSerializerInterceptor(app.get(Reflector)),
+		);
 
 		app.useGlobalPipes(
 			new ValidationPipe({
