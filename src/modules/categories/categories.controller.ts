@@ -20,10 +20,10 @@ import {
 import { Public } from 'src/modules/common/decorators/public.decorator';
 
 import { CategoriesService } from './categories.service';
-import { CategoryEntity } from './dto/category-entity.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
+import { entity_category } from '@prisma/client';
 
 @Controller({ path: 'categories', version: '1' })
 export class CategoriesController {
@@ -33,21 +33,22 @@ export class CategoriesController {
 	@ApiResponse({ status: 200, type: Category, isArray: true })
 	@ApiQuery({
 		name: 'entity',
-		enum: CategoryEntity,
+		enum: entity_category,
 		required: false,
 		description: 'Entidade das categorias a serem obtidas',
 	})
 	@Public()
 	@Get('/parents')
 	getParents(
-		@Query('entity', new ParseEnumPipe(CategoryEntity, { optional: true }))
-		entity?: CategoryEntity,
+		@Query('entity', new ParseEnumPipe(entity_category, { optional: true }))
+		entity?: entity_category,
 	) {
 		return this.categoriesService.findParents(entity);
 	}
 
 	@ApiOperation({
-		summary: 'Obtém todas as categorias-filhas de uma categoria pai por uuid',
+		summary:
+			'Obtém todas as categorias-filhas de uma categoria pai por uuid',
 	})
 	@ApiParam({
 		name: 'id',
@@ -56,7 +57,7 @@ export class CategoriesController {
 	})
 	@ApiQuery({
 		name: 'entity',
-		enum: CategoryEntity,
+		enum: entity_category,
 		required: false,
 		description: 'Entidade das categorias a serem obtidas',
 	})
@@ -65,8 +66,8 @@ export class CategoriesController {
 	@Get('/parents/:id/children')
 	getChildren(
 		@Param('id') id: string,
-		@Query('entity', new ParseEnumPipe(CategoryEntity, { optional: true }))
-		entity?: CategoryEntity,
+		@Query('entity', new ParseEnumPipe(entity_category, { optional: true }))
+		entity?: entity_category,
 	) {
 		return this.categoriesService.findChildren(id, entity);
 	}

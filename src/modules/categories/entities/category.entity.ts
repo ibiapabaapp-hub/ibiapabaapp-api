@@ -1,7 +1,7 @@
-import { $Enums, category } from '@prisma/client';
+import { entity_category, category } from '@prisma/client';
 
 export class Category implements category {
-	entities: $Enums.CategoryEntity[];
+	entities: entity_category[];
 	name: string;
 	id: string;
 	parent_id: string | null;

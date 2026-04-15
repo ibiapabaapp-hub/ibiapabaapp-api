@@ -1,9 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
-
-import { CategoryEntity } from './dto/category-entity.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { entity_category } from '@prisma/client';
 
 @Injectable()
 export class CategoriesService {
@@ -14,7 +13,7 @@ export class CategoriesService {
 		});
 	}
 
-	async findParents(entity?: CategoryEntity) {
+	async findParents(entity?: entity_category) {
 		return this.prisma.category.findMany({
 			where: {
 				parent_id: null,
@@ -42,7 +41,7 @@ export class CategoriesService {
 		});
 	}
 
-	async findChildren(parentId: string, entity?: CategoryEntity) {
+	async findChildren(parentId: string, entity?: entity_category) {
 		return this.prisma.category.findMany({
 			where: {
 				parent_id: parentId,

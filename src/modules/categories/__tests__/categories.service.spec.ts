@@ -3,8 +3,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
-import { CategoriesService } from './categories.service';
-import { CategoryEntity } from './dto/category-entity.dto';
+import { CategoriesService } from '../categories.service';
+import { entity_category } from '@prisma/client';
 
 describe('CategoriesService', () => {
 	let service: CategoriesService;
@@ -14,7 +14,7 @@ describe('CategoriesService', () => {
 		id: 'category-1',
 		name: 'Test Category',
 		parent_id: null,
-		entities: [CategoryEntity.city],
+		entities: [entity_category.city],
 		created_at: new Date(),
 		updated_at: new Date(),
 	};
@@ -47,7 +47,7 @@ describe('CategoriesService', () => {
 			const result = await service.create({
 				name: 'Test Category',
 				parent_id: null,
-				entities: [CategoryEntity.city],
+				entities: [entity_category.city],
 			});
 
 			expect(result).toEqual(mockCategory);
@@ -55,7 +55,7 @@ describe('CategoriesService', () => {
 				data: {
 					name: 'Test Category',
 					parent_id: null,
-					entities: [CategoryEntity.city],
+					entities: [entity_category.city],
 				},
 			});
 		});
@@ -78,14 +78,14 @@ describe('CategoriesService', () => {
 		it('should filter parent categories by entity', async () => {
 			prisma.category.findMany.mockResolvedValue([mockCategory]);
 
-			const result = await service.findParents(CategoryEntity.city);
+			const result = await service.findParents(entity_category.city);
 
 			expect(result).toEqual([mockCategory]);
 			expect(prisma.category.findMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					where: expect.objectContaining({
 						OR: expect.arrayContaining([
-							{ entities: { has: CategoryEntity.city } },
+							{ entities: { has: entity_category.city } },
 						]),
 					}),
 				}),
@@ -131,7 +131,10 @@ describe('CategoriesService', () => {
 
 	describe('update', () => {
 		it('should update a category', async () => {
-			const updatedCategory = { ...mockCategory, name: 'Updated Category' };
+			const updatedCategory = {
+				...mockCategory,
+				name: 'Updated Category',
+			};
 			prisma.category.findFirst.mockResolvedValue(mockCategory);
 			prisma.category.update.mockResolvedValue(updatedCategory);
 

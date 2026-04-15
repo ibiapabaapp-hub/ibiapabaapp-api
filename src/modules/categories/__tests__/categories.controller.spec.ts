@@ -1,9 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { CategoriesController } from './categories.controller';
-import { CategoriesService } from './categories.service';
-import { CategoryEntity } from './dto/category-entity.dto';
-
+import { CategoriesController } from '../categories.controller';
+import { CategoriesService } from '../categories.service';
+import { entity_category } from '@prisma/client';
 describe('CategoriesController', () => {
 	let controller: CategoriesController;
 	let service: CategoriesService;
@@ -12,7 +11,7 @@ describe('CategoriesController', () => {
 		id: 'category-1',
 		name: 'Test Category',
 		parent_id: null,
-		entities: [CategoryEntity.city],
+		entities: [entity_category.city],
 		created_at: new Date(),
 		updated_at: new Date(),
 	};
@@ -53,14 +52,14 @@ describe('CategoriesController', () => {
 			const result = await controller.create({
 				name: 'Test Category',
 				parent_id: null,
-				entities: [CategoryEntity.city],
+				entities: [entity_category.city],
 			});
 
 			expect(result).toEqual(mockCategory);
 			expect(service.create).toHaveBeenCalledWith({
 				name: 'Test Category',
 				parent_id: null,
-				entities: [CategoryEntity.city],
+				entities: [entity_category.city],
 			});
 		});
 	});
@@ -69,14 +68,14 @@ describe('CategoriesController', () => {
 		const mockParentCategory = {
 			id: 'category-1',
 			name: 'Test Category',
-			entities: [CategoryEntity.city],
+			entities: [entity_category.city],
 			children: [],
 		};
 
 		it('should return an array of categories', async () => {
-			jest
-				.spyOn(service, 'findParents')
-				.mockResolvedValue([mockParentCategory as any]);
+			jest.spyOn(service, 'findParents').mockResolvedValue([
+				mockParentCategory as any,
+			]);
 
 			const result = await controller.getParents(undefined);
 
@@ -93,14 +92,16 @@ describe('CategoriesController', () => {
 		});
 
 		it('should filter by entity', async () => {
-			jest
-				.spyOn(service, 'findParents')
-				.mockResolvedValue([mockParentCategory as any]);
+			jest.spyOn(service, 'findParents').mockResolvedValue([
+				mockParentCategory as any,
+			]);
 
-			const result = await controller.getParents(CategoryEntity.city);
+			const result = await controller.getParents(entity_category.city);
 
 			expect(result).toEqual([mockParentCategory]);
-			expect(service.findParents).toHaveBeenCalledWith(CategoryEntity.city);
+			expect(service.findParents).toHaveBeenCalledWith(
+				entity_category.city,
+			);
 		});
 	});
 
@@ -108,18 +109,21 @@ describe('CategoriesController', () => {
 		const mockChildCategory = {
 			id: 'child-1',
 			name: 'Child Category',
-			entities: [CategoryEntity.city],
+			entities: [entity_category.city],
 		};
 
 		it('should return child categories', async () => {
-			jest
-				.spyOn(service, 'findChildren')
-				.mockResolvedValue([mockChildCategory as any]);
+			jest.spyOn(service, 'findChildren').mockResolvedValue([
+				mockChildCategory as any,
+			]);
 
 			const result = await controller.getChildren('parent-1', undefined);
 
 			expect(result).toEqual([mockChildCategory]);
-			expect(service.findChildren).toHaveBeenCalledWith('parent-1', undefined);
+			expect(service.findChildren).toHaveBeenCalledWith(
+				'parent-1',
+				undefined,
+			);
 		});
 	});
 
@@ -136,7 +140,10 @@ describe('CategoriesController', () => {
 
 	describe('update', () => {
 		it('should update a category', async () => {
-			const updatedCategory = { ...mockCategory, name: 'Updated Category' };
+			const updatedCategory = {
+				...mockCategory,
+				name: 'Updated Category',
+			};
 			jest.spyOn(service, 'update').mockResolvedValue(updatedCategory);
 
 			const result = await controller.update('category-1', {
