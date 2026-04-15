@@ -6,12 +6,11 @@ import { PasswordModule } from 'src/modules/common/password/password.module';
 import { AccountsController } from './accounts.controller';
 import { AccountsService } from './accounts.service';
 import { RolesGuard } from './guards/user-roles.guard';
-import { ProfilesModule } from './profiles/profiles.module';
 
 @Module({
-	imports: [PasswordModule, JwtModule, ProfilesModule],
+	imports: [PasswordModule, JwtModule],
 	controllers: [AccountsController],
 	providers: [AccountsService, { provide: APP_GUARD, useClass: RolesGuard }],
-	exports: [AccountsService, ProfilesModule],
+	exports: [AccountsService],
 })
 export class AccountsModule {}
