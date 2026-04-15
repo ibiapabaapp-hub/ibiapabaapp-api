@@ -1,184 +1,185 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { DeepMockProxy, mockDeep } from "jest-mock-extended";
-import { JwtService } from "../../common/jwt/jwt.service";
-import { PrismaService } from "../../common/prisma/prisma.service";
-import { ProfileInterestsService } from "../interests.service";
-import { ProfilesController } from "../profiles.controller";
-import { ProfilesService } from "../profiles.service";
-import { ProfileOwnershipGuard } from "../guards/profile-ownership.guard";
-import { Profile } from "../entities/profile.entity";
+import { Test, TestingModule } from '@nestjs/testing';
+import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 
-describe("ProfilesController", () => {
-  let controller: ProfilesController;
-  let profilesService: DeepMockProxy<ProfilesService>;
-  let profileInterestsService: DeepMockProxy<ProfileInterestsService>;
+import { JwtService } from '../../common/jwt/jwt.service';
+import { PrismaService } from '../../common/prisma/prisma.service';
+import { Profile } from '../entities/profile.entity';
+import { ProfileOwnershipGuard } from '../guards/profile-ownership.guard';
+import { ProfileInterestsService } from '../interests.service';
+import { ProfilesController } from '../profiles.controller';
+import { ProfilesService } from '../profiles.service';
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [ProfilesController],
-      providers: [
-        {
-          provide: ProfilesService,
-          useValue: mockDeep<ProfilesService>(),
-        },
-        {
-          provide: ProfileInterestsService,
-          useValue: mockDeep<ProfileInterestsService>(),
-        },
-        {
-          provide: JwtService,
-          useValue: mockDeep<JwtService>(),
-        },
-        {
-          provide: PrismaService,
-          useValue: mockDeep<PrismaService>(),
-        },
-        ProfileOwnershipGuard,
-      ],
-    }).compile();
+describe('ProfilesController', () => {
+	let controller: ProfilesController;
+	let profilesService: DeepMockProxy<ProfilesService>;
+	let profileInterestsService: DeepMockProxy<ProfileInterestsService>;
 
-    controller = module.get<ProfilesController>(ProfilesController);
-    profilesService =
-      module.get<DeepMockProxy<ProfilesService>>(ProfilesService);
-    profileInterestsService = module.get<
-      DeepMockProxy<ProfileInterestsService>
-    >(ProfileInterestsService);
+	beforeEach(async () => {
+		const module: TestingModule = await Test.createTestingModule({
+			controllers: [ProfilesController],
+			providers: [
+				{
+					provide: ProfilesService,
+					useValue: mockDeep<ProfilesService>(),
+				},
+				{
+					provide: ProfileInterestsService,
+					useValue: mockDeep<ProfileInterestsService>(),
+				},
+				{
+					provide: JwtService,
+					useValue: mockDeep<JwtService>(),
+				},
+				{
+					provide: PrismaService,
+					useValue: mockDeep<PrismaService>(),
+				},
+				ProfileOwnershipGuard,
+			],
+		}).compile();
 
-    jest.clearAllMocks();
-  });
+		controller = module.get<ProfilesController>(ProfilesController);
+		profilesService =
+			module.get<DeepMockProxy<ProfilesService>>(ProfilesService);
+		profileInterestsService = module.get<
+			DeepMockProxy<ProfileInterestsService>
+		>(ProfileInterestsService);
 
-  it("should be defined", () => {
-    expect(controller).toBeDefined();
-  });
+		jest.clearAllMocks();
+	});
 
-  describe("create", () => {
-    it("should call profilesService.create with accountId from token and data", async () => {
-      const account = { id: "123e4567-e89b-12d3-a456-426614174000" };
-      const dto = {
-        slug: "test-profile",
-        display_name: "Test Profile",
-        type: "personal",
-      };
-      const profile = {
-        id: "1",
-        slug: "test-profile",
-        display_name: "Test Profile",
-        type: "personal",
-      } as unknown as Profile;
+	it('should be defined', () => {
+		expect(controller).toBeDefined();
+	});
 
-      profilesService.create.mockResolvedValue(profile);
+	describe('create', () => {
+		it('should call profilesService.create with accountId from token and data', async () => {
+			const account = { id: '123e4567-e89b-12d3-a456-426614174000' };
+			const dto = {
+				slug: 'test-profile',
+				display_name: 'Test Profile',
+				type: 'personal',
+			};
+			const profile = {
+				id: '1',
+				slug: 'test-profile',
+				display_name: 'Test Profile',
+				type: 'personal',
+			} as unknown as Profile;
 
-      const result = await controller.create(account, dto);
+			profilesService.create.mockResolvedValue(profile);
 
-      expect(profilesService.create).toHaveBeenCalledWith(account.id, dto);
-      expect(result).toEqual(profile);
-    });
-  });
+			const result = await controller.create(account, dto);
 
-  describe("findAll", () => {
-    it("should call profilesService.findAllByAccountId with accountId from token", async () => {
-      const account = { id: "123e4567-e89b-12d3-a456-426614174000" };
-      const profiles = [
-        { id: "1", slug: "profile1", display_name: "Profile 1" },
-        { id: "2", slug: "profile2", display_name: "Profile 2" },
-      ] as unknown as Profile[];
+			expect(profilesService.create).toHaveBeenCalledWith(account.id, dto);
+			expect(result).toEqual(profile);
+		});
+	});
 
-      profilesService.findAllByAccountId.mockResolvedValue(profiles);
+	describe('findAll', () => {
+		it('should call profilesService.findAllByAccountId with accountId from token', async () => {
+			const account = { id: '123e4567-e89b-12d3-a456-426614174000' };
+			const profiles = [
+				{ id: '1', slug: 'profile1', display_name: 'Profile 1' },
+				{ id: '2', slug: 'profile2', display_name: 'Profile 2' },
+			] as unknown as Profile[];
 
-      const result = await controller.findAll(account);
+			profilesService.findAllByAccountId.mockResolvedValue(profiles);
 
-      expect(profilesService.findAllByAccountId).toHaveBeenCalledWith(
-        account.id,
-      );
-      expect(result).toEqual(profiles);
-    });
-  });
+			const result = await controller.findAll(account);
 
-  describe("findOne", () => {
-    it("should call profilesService.findOneById with id and accountId from token", async () => {
-      const account = { id: "123e4567-e89b-12d3-a456-426614174000" };
-      const profileId = "123e4567-e89b-12d3-a456-426614174001";
-      const profile = { id: profileId } as unknown as Profile;
+			expect(profilesService.findAllByAccountId).toHaveBeenCalledWith(
+				account.id,
+			);
+			expect(result).toEqual(profiles);
+		});
+	});
 
-      profilesService.findOneById.mockResolvedValue(profile);
+	describe('findOne', () => {
+		it('should call profilesService.findOneById with id and accountId from token', async () => {
+			const account = { id: '123e4567-e89b-12d3-a456-426614174000' };
+			const profileId = '123e4567-e89b-12d3-a456-426614174001';
+			const profile = { id: profileId } as unknown as Profile;
 
-      const result = await controller.findOne(profileId, account);
+			profilesService.findOneById.mockResolvedValue(profile);
 
-      expect(profilesService.findOneById).toHaveBeenCalledWith(
-        profileId,
-        account.id,
-      );
-      expect(result).toEqual(profile);
-    });
-  });
+			const result = await controller.findOne(profileId, account);
 
-  describe("update", () => {
-    it("should call profilesService.update with id, accountId from token and data", async () => {
-      const account = { id: "123e4567-e89b-12d3-a456-426614174000" };
-      const profileId = "123e4567-e89b-12d3-a456-426614174001";
-      const dto = { display_name: "Updated Name" };
-      const profile = {
-        id: profileId,
-        display_name: "Updated Name",
-      } as unknown as Profile;
+			expect(profilesService.findOneById).toHaveBeenCalledWith(
+				profileId,
+				account.id,
+			);
+			expect(result).toEqual(profile);
+		});
+	});
 
-      profilesService.update.mockResolvedValue(profile);
+	describe('update', () => {
+		it('should call profilesService.update with id, accountId from token and data', async () => {
+			const account = { id: '123e4567-e89b-12d3-a456-426614174000' };
+			const profileId = '123e4567-e89b-12d3-a456-426614174001';
+			const dto = { display_name: 'Updated Name' };
+			const profile = {
+				id: profileId,
+				display_name: 'Updated Name',
+			} as unknown as Profile;
 
-      const result = await controller.update(profileId, account, dto);
+			profilesService.update.mockResolvedValue(profile);
 
-      expect(profilesService.update).toHaveBeenCalledWith(
-        profileId,
-        account.id,
-        dto,
-      );
-      expect(result).toEqual(profile);
-    });
-  });
+			const result = await controller.update(profileId, account, dto);
 
-  describe("remove", () => {
-    it("should call profilesService.remove with id and accountId from token", async () => {
-      const account = { id: "123e4567-e89b-12d3-a456-426614174000" };
-      const profileId = "123e4567-e89b-12d3-a456-426614174001";
-      const profile = { id: profileId } as unknown as Profile;
+			expect(profilesService.update).toHaveBeenCalledWith(
+				profileId,
+				account.id,
+				dto,
+			);
+			expect(result).toEqual(profile);
+		});
+	});
 
-      profilesService.remove.mockResolvedValue(profile);
+	describe('remove', () => {
+		it('should call profilesService.remove with id and accountId from token', async () => {
+			const account = { id: '123e4567-e89b-12d3-a456-426614174000' };
+			const profileId = '123e4567-e89b-12d3-a456-426614174001';
+			const profile = { id: profileId } as unknown as Profile;
 
-      const result = await controller.remove(profileId, account);
+			profilesService.remove.mockResolvedValue(profile);
 
-      expect(profilesService.remove).toHaveBeenCalledWith(
-        profileId,
-        account.id,
-      );
-      expect(result).toEqual(profile);
-    });
-  });
+			const result = await controller.remove(profileId, account);
 
-  describe("upsertInterests", () => {
-    it("should call profileInterestsService.upsert with id, accountId from token and interests", async () => {
-      const account = { id: "123e4567-e89b-12d3-a456-426614174000" };
-      const profileId = "123e4567-e89b-12d3-a456-426614174001";
-      const dto = {
-        interests: ["123e4567-e89b-12d3-a456-426614174002"],
-      };
-      const result = {
-        id: profileId,
-        interests: [{ id: dto.interests[0], name: "Category" }],
-      } as unknown as Profile;
+			expect(profilesService.remove).toHaveBeenCalledWith(
+				profileId,
+				account.id,
+			);
+			expect(result).toEqual(profile);
+		});
+	});
 
-      profileInterestsService.upsert.mockResolvedValue(result);
+	describe('upsertInterests', () => {
+		it('should call profileInterestsService.upsert with id, accountId from token and interests', async () => {
+			const account = { id: '123e4567-e89b-12d3-a456-426614174000' };
+			const profileId = '123e4567-e89b-12d3-a456-426614174001';
+			const dto = {
+				interests: ['123e4567-e89b-12d3-a456-426614174002'],
+			};
+			const result = {
+				id: profileId,
+				interests: [{ id: dto.interests[0], name: 'Category' }],
+			} as unknown as Profile;
 
-      const controllerResult = await controller.upsertInterests(
-        profileId,
-        account,
-        dto,
-      );
+			profileInterestsService.upsert.mockResolvedValue(result);
 
-      expect(profileInterestsService.upsert).toHaveBeenCalledWith(
-        profileId,
-        account.id,
-        [{ category_id: dto.interests[0] }],
-      );
-      expect(controllerResult).toEqual(result);
-    });
-  });
+			const controllerResult = await controller.upsertInterests(
+				profileId,
+				account,
+				dto,
+			);
+
+			expect(profileInterestsService.upsert).toHaveBeenCalledWith(
+				profileId,
+				account.id,
+				[{ category_id: dto.interests[0] }],
+			);
+			expect(controllerResult).toEqual(result);
+		});
+	});
 });
