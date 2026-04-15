@@ -7,7 +7,11 @@
 			"lat": -3.8321,
 			"lng": -40.9224,
 			"cover_img_url": "https://cdn.ibiapabaapp.com.br/cities/ubajara.png",
-			"categories": ["Turismo", "Serra", "Natureza"]
+			"categories": [
+				"Turismo e Hospitalidade",
+				"Ecoturismo",
+				"Parques e atrações turísticas"
+			]
 		},
 		{
 			"name": "Tianguá",
@@ -16,7 +20,7 @@
 			"lat": -3.7314,
 			"lng": -40.9917,
 			"cover_img_url": "https://cdn.ibiapabaapp.com.br/cities/tiangua.png",
-			"categories": ["Comércio", "Serra"]
+			"categories": ["Comércio", "Turismo e Hospitalidade"]
 		},
 		{
 			"name": "Viçosa do Ceará",
@@ -25,7 +29,11 @@
 			"lat": -3.5622,
 			"lng": -41.0911,
 			"cover_img_url": "https://cdn.ibiapabaapp.com.br/cities/vicosa-do-ceara.png",
-			"categories": ["Histórico", "Serra", "Cultura"]
+			"categories": [
+				"Cultura, Lazer e Entretenimento",
+				"Espaços culturais",
+				"Turismo e Hospitalidade"
+			]
 		}
 	],
 	"users": [
@@ -37,7 +45,10 @@
 			"password": "12345678",
 			"birth_date": "1990-01-01",
 			"role": "superuser",
-			"interests": ["Turismo", "Cultura"]
+			"interests": [
+				"Turismo e Hospitalidade",
+				"Cultura, Lazer e Entretenimento"
+			]
 		},
 		{
 			"name": "Usuário Teste",
@@ -47,10 +58,10 @@
 			"password": "12345678",
 			"birth_date": "1995-05-15",
 			"role": "user",
-			"interests": ["Natureza", "Música"]
+			"interests": ["Ecoturismo", "Shows e apresentações"]
 		}
 	],
-	"companies": [
+	"businesses": [
 		{
 			"name": "Manacá da Serra",
 			"slug": "manaca-da-serra",
@@ -58,8 +69,8 @@
 			"cnpj": "12.345.678/0001-90",
 			"max_reach_level": "local",
 			"active": true,
-			"cover_img_url": "https://cdn.ibiapabaapp.com.br/companies/manaca.png",
-			"categories": ["Restaurante", "Fino"],
+			"cover_img_url": "https://cdn.ibiapabaapp.com.br/businesses/manaca.png",
+			"categories": ["Restaurantes"],
 			"cities": [
 				{
 					"slug": "ubajara",
@@ -76,7 +87,7 @@
 			"medias": [
 				{
 					"media_type": "image",
-					"url": "https://cdn.ibiapabaapp.com.br/companies/manaca.png",
+					"url": "https://cdn.ibiapabaapp.com.br/businesses/manaca.png",
 					"is_cover": true,
 					"alt_text": "Imagem do Manacá da Serra"
 				}
@@ -89,8 +100,8 @@
 			"cnpj": "98.765.432/0001-10",
 			"max_reach_level": "regional",
 			"active": true,
-			"cover_img_url": "https://cdn.ibiapabaapp.com.br/companies/serraviva.png",
-			"categories": ["Bar", "Música", "Noturno"],
+			"cover_img_url": "https://cdn.ibiapabaapp.com.br/businesses/serraviva.png",
+			"categories": ["Bares e pubs", "Casas de eventos"],
 			"cities": [
 				{
 					"slug": "ubajara",
@@ -112,7 +123,7 @@
 			"medias": [
 				{
 					"media_type": "image",
-					"url": "https://cdn.ibiapabaapp.com.br/companies/serraviva.png",
+					"url": "https://cdn.ibiapabaapp.com.br/businesses/serraviva.png",
 					"is_cover": true,
 					"alt_text": "Imagem do Serra Viva"
 				}
@@ -130,9 +141,13 @@
 			"start_date": "2025-06-15T19:00:00Z",
 			"end_date": "2025-06-22T23:00:00Z",
 			"active": true,
-			"company_slug": null,
+			"business_slug": null,
 			"user_email": "admin@teste.com",
-			"categories": ["Cultura", "Música", "Turismo"],
+			"categories": [
+				"Eventos culturais",
+				"Shows e apresentações",
+				"Festivais"
+			],
 			"cities": [
 				{
 					"slug": "ubajara",
@@ -158,9 +173,9 @@
 			"start_date": "2025-07-05T21:00:00Z",
 			"end_date": "2025-07-05T23:59:00Z",
 			"active": true,
-			"company_slug": "serra-viva-music-bar",
+			"business_slug": "serra-viva-music-bar",
 			"user_email": null,
-			"categories": ["Música", "Noturno"],
+			"categories": ["Shows e apresentações", "Eventos culturais"],
 			"cities": [
 				{
 					"slug": "tiangua",
@@ -183,21 +198,21 @@
 			"email": "joao@email.com",
 			"phone_number": "+5588991111222",
 			"type": "resident",
-			"company_name": null
+			"business_name": null
 		},
 		{
 			"name": "Maria Turismo",
 			"email": "maria@travel.com",
 			"phone_number": "+5588993333444",
 			"type": "tourist",
-			"company_name": null
+			"business_name": null
 		},
 		{
 			"name": "Empresa Teste Ltda",
 			"email": "contato@empresateste.com",
 			"phone_number": "+5588995555666",
-			"type": "company",
-			"company_name": "Empresa Teste Ltda"
+			"type": "business",
+			"business_name": "Empresa Teste Ltda"
 		}
 	]
 }
