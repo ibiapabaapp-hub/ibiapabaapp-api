@@ -7,10 +7,10 @@ import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AccountsController } from 'src/modules/accounts/accounts.controller';
 import { AccountsService } from 'src/modules/accounts/accounts.service';
-import { ProfilesModule } from 'src/modules/accounts/profiles/profiles.module';
 import { JwtService } from 'src/modules/common/jwt/jwt.service';
 import { PasswordService } from 'src/modules/common/password/password.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
+import { ProfilesModule } from 'src/modules/profiles/profiles.module';
 import request from 'supertest';
 import { App } from 'supertest/types';
 
