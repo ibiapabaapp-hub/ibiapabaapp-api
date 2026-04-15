@@ -8,7 +8,7 @@ export class SearchService {
 	constructor(private readonly prisma: PrismaService) {}
 
 	async search(query: string): Promise<SearchResponseDto> {
-		const [cities, companies, events] = await Promise.all([
+		const [cities, businesses, events] = await Promise.all([
 			this.prisma.city.findMany({
 				where: {
 					name: {
@@ -18,13 +18,22 @@ export class SearchService {
 				},
 				take: 10,
 			}),
-			this.prisma.company.findMany({
+			this.prisma.business.findMany({
 				where: {
-					name: {
-						contains: query,
-						mode: 'insensitive',
+					profile: {
+						display_name: {
+							contains: query,
+							mode: 'insensitive',
+						},
 					},
-					active: true,
+				},
+				select: {
+					id: true,
+					cnpj: true,
+					profile_id: true,
+					max_reach_level: true,
+					created_at: true,
+					updated_at: true,
 				},
 				take: 10,
 			}),
@@ -42,7 +51,7 @@ export class SearchService {
 
 		return {
 			cities,
-			companies,
+			businesses,
 			events,
 		};
 	}
