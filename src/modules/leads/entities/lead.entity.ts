@@ -1,12 +1,12 @@
-import { $Enums, lead } from '@prisma/client';
+import { lead, lead_type } from '@prisma/client';
 
 export class Lead implements lead {
-	name: string;
 	id: string;
+	name: string;
 	email: string;
 	phone_number: string;
-	type: $Enums.lead_type;
-	company_name: string | null;
-	created_at: Date | null;
-	updated_at: Date | null;
+	business_name: string | null;
+	type: lead_type;
+	created_at: Date;
+	updated_at: Date;
 }

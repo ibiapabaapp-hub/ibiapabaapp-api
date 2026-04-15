@@ -26,13 +26,13 @@ export class CreateLeadDto {
 	email: string;
 
 	@ApiProperty({
-		example: 'company',
-		enum: ['resident', 'tourist', 'company'],
+		example: 'business',
+		enum: ['resident', 'tourist', 'business'],
 		description: 'Tipo de lead categorizado',
 	})
 	@IsNotEmpty()
 	@IsString()
-	@IsIn(['resident', 'tourist', 'company'])
+	@IsIn(['resident', 'tourist', 'business'])
 	@MinLength(4)
 	@MaxLength(10)
 	type: lead_type;
@@ -40,16 +40,17 @@ export class CreateLeadDto {
 	@ApiProperty({
 		example: 'Tech Solutions Ltda',
 		required: false,
-		description: 'Obrigatório apenas se o type for "company"',
+		description: 'Obrigatório apenas se o type for "business"',
 	})
 	@ValidateIf(
-		(o: { type: 'resident' | 'tourist' | 'company' }) => o.type === 'company',
+		(o: { type: 'resident' | 'tourist' | 'business' }) =>
+			o.type === 'business',
 	)
 	@IsNotEmpty()
 	@IsString()
 	@MinLength(5)
 	@MaxLength(50)
-	company_name?: string;
+	business_name?: string;
 
 	@ApiProperty({
 		example: '(11) 9 9999-8888',

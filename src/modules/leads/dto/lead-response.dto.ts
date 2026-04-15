@@ -10,11 +10,11 @@ export class LeadResponseDto {
 	@ApiProperty({ example: 'bruno@email.com' })
 	email: string;
 
-	@ApiProperty({ example: 'company' })
+	@ApiProperty({ example: 'business' })
 	type: string;
 
 	@ApiProperty({ example: 'Tech Solutions Ltda', nullable: true })
-	company_name: string | null;
+	business_name: string | null;
 
 	@ApiProperty({ example: '(11) 9 9999-8888' })
 	phone_number: string;

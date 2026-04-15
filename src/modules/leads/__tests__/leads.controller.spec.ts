@@ -75,7 +75,7 @@ describe('LeadsController', () => {
 			email: 'john@test.com',
 			type: 'resident',
 			phone_number: '(11) 9 9999-9999',
-			company_name: null,
+			business_name: null,
 			created_at: new Date(),
 			updated_at: new Date(),
 		};
