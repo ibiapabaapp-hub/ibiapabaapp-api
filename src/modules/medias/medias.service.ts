@@ -77,16 +77,16 @@ export class MediasService {
 		return `${process.env.R2_PUBLIC_URL}/${key}`;
 	}
 
-	async getMediaByCity(cityId: string): Promise<Media[]> {
+	async getMediaByCity(id: string): Promise<Media[]> {
 		return this.prismaService.media.findMany({
-			where: { city_id: cityId },
+			where: { city_id: id },
 			orderBy: [{ is_cover: 'desc' }, { position: 'asc' }],
 		});
 	}
 
-	async getMediaByCompany(companyId: string) {
+	async getMediaByBusiness(id: string) {
 		return this.prismaService.media.findMany({
-			where: { company_id: companyId },
+			where: { profile_id: id },
 			orderBy: [{ is_cover: 'desc' }, { position: 'asc' }],
 		});
 	}
