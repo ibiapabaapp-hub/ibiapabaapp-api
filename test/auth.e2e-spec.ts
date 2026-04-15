@@ -38,7 +38,7 @@ describe('Auth (e2e)', () => {
 	});
 
 	beforeEach(async () => {
-		await prisma.user.deleteMany();
+		await prisma.account.deleteMany();
 	});
 
 	afterAll(async () => {
@@ -46,7 +46,7 @@ describe('Auth (e2e)', () => {
 		await app.close();
 	});
 
-	const testUser = {
+	const testAccount = {
 		name: 'Test User',
 		username: 'testuser',
 		email: 'test@example.com',
@@ -54,14 +54,13 @@ describe('Auth (e2e)', () => {
 		password_confirm: 'Password123!',
 		birth_date: '1990-01-01T00:00:00.000Z',
 		phone_number: '+5585999999999',
-		role: 'user',
 	};
 
 	describe('POST /register', () => {
 		it('should register successfully', async () => {
 			return request(app.getHttpServer())
 				.post(`${BASE_PATH}/register`)
-				.send(testUser)
+				.send(testAccount)
 				.expect(201);
 		});
 	});
@@ -70,11 +69,14 @@ describe('Auth (e2e)', () => {
 		it('should login successfully', async () => {
 			await request(app.getHttpServer())
 				.post(`${BASE_PATH}/register`)
-				.send(testUser);
+				.send(testAccount);
 
 			const res = await request(app.getHttpServer())
 				.post(`${BASE_PATH}/login`)
-				.send({ email: testUser.email, password: testUser.password })
+				.send({
+					email: testAccount.email,
+					password: testAccount.password,
+				})
 				.expect(201);
 
 			expect(res.body).toHaveProperty('accessToken');
@@ -85,11 +87,11 @@ describe('Auth (e2e)', () => {
 		it('should return available false for existing email', async () => {
 			await request(app.getHttpServer())
 				.post(`${BASE_PATH}/register`)
-				.send(testUser);
+				.send(testAccount);
 
 			const res = await request(app.getHttpServer())
 				.get(`${BASE_PATH}/check-unique`)
-				.query({ field: 'email', value: testUser.email })
+				.query({ field: 'email', value: testAccount.email })
 				.expect(200);
 
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -99,7 +101,9 @@ describe('Auth (e2e)', () => {
 
 	describe('GET /me', () => {
 		it('should return 401 instead of 500 when no token is provided', async () => {
-			await request(app.getHttpServer()).get(`${BASE_PATH}/me`).expect(401);
+			await request(app.getHttpServer())
+				.get(`${BASE_PATH}/me`)
+				.expect(401);
 		});
 	});
 });

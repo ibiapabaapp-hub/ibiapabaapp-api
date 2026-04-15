@@ -6,9 +6,8 @@ import {
 } from '@nestjs/common';
 import { JwtService } from 'src/modules/common/jwt/jwt.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
-import { SecureUserDto } from 'src/modules/users/dtos/secure-user-dto';
-import { User } from 'src/modules/users/entities/user.entity';
-import { UsersService } from 'src/modules/users/users.service';
+import { Account } from 'src/modules/accounts/entities/account.entity';
+import { AccountsService } from 'src/modules/accounts/accounts.service';
 import { extractBearerTokenFromString } from 'src/utils/extract-bearer-token';
 
 import { PasswordService } from '../common/password/password.service';
@@ -18,7 +17,7 @@ import {
 } from './dtos/auth-response.dto';
 import { LoginDto } from './dtos/login.dto';
 import { RegisterDto } from './dtos/register.dto';
-import { UniqueUserField } from './dtos/unique-user-fields';
+import { UniqueAccountFields } from './dtos/unique-account-fields';
 
 @Injectable()
 export class AuthService {
@@ -26,31 +25,15 @@ export class AuthService {
 		private readonly prismaService: PrismaService,
 		private readonly passwordService: PasswordService,
 		private readonly jwtService: JwtService,
-		private readonly userService: UsersService,
+		private readonly accountService: AccountsService,
 	) {}
 
-	private generateAuthResponse(user: User | SecureUserDto): AuthResponseDto {
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const { password, ...userWithoutPassword } = user as User;
-		const payload = { id: user.id, role: user.role };
-
-		return {
-			user: userWithoutPassword as SecureUserDto,
-			accessToken: this.jwtService.sign(payload, { expiresIn: '40m' }),
-			refreshToken: this.jwtService.sign(payload, { expiresIn: '7d' }),
-		};
-	}
-
-	async login(loginDto: LoginDto): Promise<{
-		accessToken: string;
-		refreshToken: string;
-		user: SecureUserDto;
-	}> {
+	async login(loginDto: LoginDto): Promise<AuthResponseDto> {
 		const { email, password } = loginDto;
 
-		const user = await this.userService.findOneByEmail(email, true);
+		const account = await this.accountService.findOneByEmail(email, true);
 		const isPasswordValid = await this.passwordService.verifyPassword(
-			user.password,
+			account.password,
 			password,
 		);
 		if (!isPasswordValid) {
@@ -60,7 +43,16 @@ export class AuthService {
 			});
 		}
 
-		return this.generateAuthResponse(user);
+		const accessToken = this.jwtService.sign(
+			{ id: account.id },
+			{ expiresIn: '40m' },
+		);
+		const refreshToken = this.jwtService.sign(
+			{ id: account.id },
+			{ expiresIn: '7d' },
+		);
+
+		return new AuthResponseDto({ account, accessToken, refreshToken });
 	}
 
 	async register(
@@ -75,37 +67,53 @@ export class AuthService {
 			});
 		}
 
-		const user = await this.userService.create(registerDto);
-		return this.generateAuthResponse(user);
+		const account = await this.accountService.create(registerDto);
+		const accessToken = this.jwtService.sign(
+			{ id: account.id },
+			{ expiresIn: '40m' },
+		);
+		const refreshToken = this.jwtService.sign(
+			{ id: account.id },
+			{ expiresIn: '7d' },
+		);
+
+		return new AuthResponseDto({ account, accessToken, refreshToken });
 	}
 
-	async refreshTokens(refreshToken: string): Promise<{
-		user: SecureUserDto;
-		refreshToken: string;
-		accessToken: string;
-	}> {
+	async refreshTokens(pastRefreshToken: string): Promise<AuthResponseDto> {
 		const decodedTokenData = this.jwtService.verify<{
 			id: string;
 			role: number;
-		}>(refreshToken);
+		}>(pastRefreshToken);
 
-		const user = await this.userService.findOneById(decodedTokenData.id);
-		if (!user) {
+		const account = await this.accountService.findOneById(
+			decodedTokenData.id,
+		);
+		if (!account) {
 			throw new UnauthorizedException({
 				message: 'Expired or invalid token',
 				code: 'invalid_token',
 			});
 		}
 
-		return this.generateAuthResponse(user);
+		const accessToken = this.jwtService.sign(
+			{ id: account.id },
+			{ expiresIn: '40m' },
+		);
+		const refreshToken = this.jwtService.sign(
+			{ id: account.id },
+			{ expiresIn: '7d' },
+		);
+
+		return new AuthResponseDto({ account, accessToken, refreshToken });
 	}
 
-	async isUniqueAvailable<K extends UniqueUserField>(
+	async isUniqueAvailable<K extends UniqueAccountFields>(
 		field: K,
-		value: User[K],
+		value: Account[K],
 	): Promise<CheckUniqueResponseDto> {
 		try {
-			const count = await this.prismaService.user.count({
+			const count = await this.prismaService.account.count({
 				where: {
 					[field]: value,
 				},
@@ -126,7 +134,9 @@ export class AuthService {
 
 	async getMe(authorization: string) {
 		const token = extractBearerTokenFromString(authorization);
-		const { id } = this.jwtService.verify<{ id: string; role: string }>(token);
-		return this.userService.findOneById(id);
+		const { id } = this.jwtService.verify<{ id: string; role: string }>(
+			token,
+		);
+		return this.accountService.findOneInDetailById(id);
 	}
 }
