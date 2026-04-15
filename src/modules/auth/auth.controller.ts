@@ -8,10 +8,11 @@ import {
 import { Public } from 'src/modules/common/decorators/public.decorator';
 
 import { AuthService } from './auth.service';
-import { AuthResponseDto, UserResponse } from './dtos/auth-response.dto';
+import { AuthResponseDto } from './dtos/auth-response.dto';
 import { CheckUniqueDto } from './dtos/check-unique-field.dto';
 import { LoginDto } from './dtos/login.dto';
 import { RegisterDto } from './dtos/register.dto';
+import { SecureAccountDTO } from '../accounts/dtos/secure-account-dto';
 
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
@@ -19,7 +20,7 @@ export class AuthController {
 
 	@ApiOperation({
 		summary: 'Realizar login',
-		description: 'Retorna tokens de acesso e dados do usuário',
+		description: 'Retorna tokens de acesso e dados da conta',
 	})
 	@ApiResponse({
 		status: 200,
@@ -41,16 +42,16 @@ export class AuthController {
 		// });
 
 		return {
-			user: authData.user,
+			account: authData.account,
 			accessToken: authData.accessToken,
 			refreshToken: authData.refreshToken,
 		};
 	}
 
-	@ApiOperation({ summary: 'Registrar novo usuário' })
+	@ApiOperation({ summary: 'Registrar novo conta' })
 	@ApiResponse({
 		status: 201,
-		description: 'Usuário criado com sucesso',
+		description: 'Conta criada com sucesso',
 		type: AuthResponseDto,
 	})
 	@Post('register')
@@ -66,14 +67,15 @@ export class AuthController {
 		// });
 
 		return {
-			user: authData?.user,
+			account: authData?.account,
 			accessToken: authData?.accessToken,
 			refreshToken: authData?.refreshToken,
 		};
 	}
 	@ApiOperation({
 		summary: 'Atualizar Access Token',
-		description: 'Envia o x-refresh-token via Header para obter novos tokens',
+		description:
+			'Envia o x-refresh-token via Header para obter novos tokens',
 	})
 	@ApiResponse({ status: 200, type: AuthResponseDto })
 	@ApiHeader({
@@ -84,7 +86,7 @@ export class AuthController {
 	@Post('refresh')
 	@Public()
 	async refresh(@Headers('x-refresh-token') token: string) {
-		const { user, accessToken, refreshToken } =
+		const { account, accessToken, refreshToken } =
 			await this.authService.refreshTokens(token);
 
 		// response.cookie('refreshToken', refreshToken, {
@@ -93,11 +95,11 @@ export class AuthController {
 		//   secure: process.env.NODE_ENV === 'production' ? true : false,
 		// });
 
-		return { user, accessToken, refreshToken };
+		return { account, accessToken, refreshToken };
 	}
 
 	@ApiOperation({ summary: 'Encerrar sessão' })
-	@ApiResponse({ status: 200, type: UserResponse })
+	@ApiResponse({ status: 200, type: SecureAccountDTO })
 	@Post('logout')
 	logout() {
 		// response.cookie('refreshToken', '', {

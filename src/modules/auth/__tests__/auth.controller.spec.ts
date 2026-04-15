@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
-import { User } from 'src/modules/users/entities/user.entity';
+import { Account } from 'src/modules/accounts/entities/account.entity';
 
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
@@ -39,13 +39,17 @@ describe('AuthController', () => {
 	it('should call authService.login on login()', async () => {
 		const dto = { email: 'test@test.com', password: '123' };
 		const response = {
-			user: { id: '1' },
+			account: { id: '1' },
 			accessToken: 'access',
 			refreshToken: 'refresh',
 		};
 
 		service.login.mockResolvedValue(
-			response as { user: User; accessToken: string; refreshToken: string },
+			response as {
+				account: Account;
+				accessToken: string;
+				refreshToken: string;
+			},
 		);
 
 		const result = await controller.login(dto as LoginDto);
@@ -63,13 +67,17 @@ describe('AuthController', () => {
 		};
 
 		const response = {
-			user: { id: '1' },
+			account: { id: '1' },
 			accessToken: 'access',
 			refreshToken: 'refresh',
 		};
 
 		service.register.mockResolvedValue(
-			response as { user: User; accessToken: string; refreshToken: string },
+			response as {
+				account: Account;
+				accessToken: string;
+				refreshToken: string;
+			},
 		);
 
 		const result = await controller.register(dto as RegisterDto);
@@ -81,13 +89,17 @@ describe('AuthController', () => {
 	it('should call authService.refreshTokens on refresh()', async () => {
 		const token = 'refresh';
 		const response = {
-			user: { id: '1' },
+			account: { id: '1' },
 			accessToken: 'new-access',
 			refreshToken: 'new-refresh',
 		};
 
 		service.refreshTokens.mockResolvedValue(
-			response as { user: User; accessToken: string; refreshToken: string },
+			response as {
+				account: Account;
+				accessToken: string;
+				refreshToken: string;
+			},
 		);
 
 		const result = await controller.refresh(token);
@@ -128,12 +140,12 @@ describe('AuthController', () => {
 
 		it('should return available false when value is taken', async () => {
 			const dto: CheckUniqueDto = {
-				field: 'username',
+				field: 'accountname',
 				value: 'john',
 			};
 
 			const response: CheckUniqueResponse = {
-				field: 'username',
+				field: 'accountname',
 				value: 'john',
 				available: false,
 			};
@@ -143,7 +155,7 @@ describe('AuthController', () => {
 			const result = await controller.checkUnique(dto);
 
 			expect(service.isUniqueAvailable).toHaveBeenCalledWith(
-				'username',
+				'accountname',
 				'john',
 			);
 			expect(result.available).toBe(false);

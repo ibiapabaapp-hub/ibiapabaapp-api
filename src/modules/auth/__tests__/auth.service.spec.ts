@@ -4,13 +4,12 @@ import {
 	UnauthorizedException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { user_role } from '@prisma/client';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { JwtService } from 'src/modules/common/jwt/jwt.service';
 import { PasswordService } from 'src/modules/common/password/password.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
-import { User } from 'src/modules/users/entities/user.entity';
-import { UsersService } from 'src/modules/users/users.service';
+import { Account } from 'src/modules/accounts/entities/account.entity';
+import { AccountsService } from 'src/modules/accounts/accounts.service';
 
 import { AuthService } from '../auth.service';
 import { RegisterDto } from '../dtos/register.dto';
@@ -20,16 +19,22 @@ describe('AuthService', () => {
 	let prisma: DeepMockProxy<PrismaService>;
 	let passwordService: DeepMockProxy<PasswordService>;
 	let jwtService: DeepMockProxy<JwtService>;
-	let usersService: DeepMockProxy<UsersService>;
+	let usersService: DeepMockProxy<AccountsService>;
 
 	beforeEach(async () => {
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				AuthService,
 				{ provide: PrismaService, useValue: mockDeep<PrismaService>() },
-				{ provide: PasswordService, useValue: mockDeep<PasswordService>() },
+				{
+					provide: PasswordService,
+					useValue: mockDeep<PasswordService>(),
+				},
 				{ provide: JwtService, useValue: mockDeep<JwtService>() },
-				{ provide: UsersService, useValue: mockDeep<UsersService>() },
+				{
+					provide: AccountsService,
+					useValue: mockDeep<AccountsService>(),
+				},
 			],
 		}).compile();
 
@@ -37,7 +42,7 @@ describe('AuthService', () => {
 		prisma = module.get(PrismaService);
 		passwordService = module.get(PasswordService);
 		jwtService = module.get(JwtService);
-		usersService = module.get(UsersService);
+		usersService = module.get(AccountsService);
 
 		jest.clearAllMocks();
 	});
@@ -51,21 +56,19 @@ describe('AuthService', () => {
 			const passwordInDb = 'hashed_password';
 			const rawPassword = '123';
 
-			const mockUser: User = {
+			const mockAccount: Account = {
 				id: '1',
 				email: 'test@test.com',
 				password: passwordInDb,
-				role: user_role.superuser,
 				name: 'Test',
-				username: 'test',
 				phone_number: '123',
 				active: true,
-				birth_date: new Date(),
+				// birth_date: new Date(),
 				created_at: new Date(),
 				updated_at: new Date(),
 			};
 
-			usersService.findOneByEmail.mockResolvedValue(mockUser);
+			usersService.findOneByEmail.mockResolvedValue(mockAccount);
 			passwordService.verifyPassword.mockResolvedValue(true);
 			jwtService.sign.mockReturnValue('token');
 
@@ -83,7 +86,7 @@ describe('AuthService', () => {
 				rawPassword,
 			);
 			expect(jwtService.sign).toHaveBeenCalledTimes(2);
-			expect(result.user).not.toHaveProperty('password');
+			expect(result.account).not.toHaveProperty('password');
 			expect(result.accessToken).toBe('token');
 			expect(result.refreshToken).toBe('token');
 		});
@@ -92,7 +95,7 @@ describe('AuthService', () => {
 			usersService.findOneByEmail.mockResolvedValue({
 				id: '1',
 				password: 'hashed',
-			} as User);
+			} as Account);
 
 			passwordService.verifyPassword.mockResolvedValue(false);
 
@@ -113,26 +116,23 @@ describe('AuthService', () => {
 		});
 
 		it('should register a user successfully', async () => {
-			const mockCreatedUser = {
+			const mockCreatedAccount = {
 				id: '1',
-				role: user_role.superuser,
 				name: 'John',
-			} as User;
+			} as Account;
 
-			usersService.create.mockResolvedValue(mockCreatedUser);
+			usersService.create.mockResolvedValue(mockCreatedAccount);
 			jwtService.sign.mockReturnValue('token');
 
 			const result = await service.register({
 				name: 'John',
-				username: 'john_doe',
 				email: 'test@test.com',
 				birth_date: new Date(),
-				role: user_role.superuser,
 				password: '123',
 				password_confirm: '123',
 			} as RegisterDto);
 
-			expect(result?.user).not.toHaveProperty('password');
+			expect(result?.account).not.toHaveProperty('password');
 			expect(usersService.create).toHaveBeenCalled();
 			expect(jwtService.sign).toHaveBeenCalledTimes(2);
 			expect(result?.accessToken).toBe('token');
@@ -141,11 +141,12 @@ describe('AuthService', () => {
 
 	describe('refreshTokens', () => {
 		it('should refresh tokens successfully', async () => {
-			jwtService.verify.mockReturnValue({ id: '1', role: user_role.superuser });
+			jwtService.verify.mockReturnValue({
+				id: '1',
+			});
 			usersService.findOneById.mockResolvedValue({
 				id: '1',
-				role: user_role.superuser,
-			} as User);
+			} as Account);
 			jwtService.sign.mockReturnValue('token');
 
 			const result = await service.refreshTokens('refresh');
@@ -167,12 +168,15 @@ describe('AuthService', () => {
 	});
 
 	describe('isUniqueAvailable', () => {
-		it('should return available true when no user exists', async () => {
-			prisma.user.count.mockResolvedValue(0);
+		it('should return available true when no account exists', async () => {
+			prisma.account.count.mockResolvedValue(0);
 
-			const result = await service.isUniqueAvailable('email', 'test@test.com');
+			const result = await service.isUniqueAvailable(
+				'email',
+				'test@test.com',
+			);
 
-			expect(prisma.user.count).toHaveBeenCalledWith({
+			expect(prisma.account.count).toHaveBeenCalledWith({
 				where: { email: 'test@test.com' },
 			});
 
@@ -183,24 +187,24 @@ describe('AuthService', () => {
 			});
 		});
 
-		it('should return available false when user already exists', async () => {
-			prisma.user.count.mockResolvedValue(1);
+		it('should return available false when account already exists', async () => {
+			prisma.account.count.mockResolvedValue(1);
 
-			const result = await service.isUniqueAvailable('username', 'john');
+			const result = await service.isUniqueAvailable('email', 'test@test.com');
 
-			expect(prisma.user.count).toHaveBeenCalledWith({
-				where: { username: 'john' },
+			expect(prisma.account.count).toHaveBeenCalledWith({
+				where: { email: 'test@test.com' },
 			});
 
 			expect(result).toEqual({
-				field: 'username',
-				value: 'john',
+				field: 'email',
+				value: 'test@test.com',
 				available: false,
 			});
 		});
 
 		it('should throw InternalServerErrorException on prisma error', async () => {
-			prisma.user.count.mockRejectedValue(new Error('DB error'));
+			prisma.account.count.mockRejectedValue(new Error('DB error'));
 
 			await expect(
 				service.isUniqueAvailable('email', 'test@test.com'),

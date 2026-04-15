@@ -8,7 +8,10 @@ import {
 	ValidateIf,
 } from 'class-validator';
 
-import { UNIQUE_USER_FIELDS, type UniqueUserField } from './unique-user-fields';
+import {
+	UNIQUE_ACCOUNT_FIELDS,
+	type UniqueAccountFields,
+} from './unique-account-fields';
 
 export class CheckUniqueDto {
 	@ApiProperty({
@@ -16,8 +19,8 @@ export class CheckUniqueDto {
 		description: 'Nome do campo único a ser checado',
 		example: 'email',
 	})
-	@IsIn(UNIQUE_USER_FIELDS)
-	field: UniqueUserField;
+	@IsIn(UNIQUE_ACCOUNT_FIELDS)
+	field: UniqueAccountFields;
 
 	@ApiProperty({
 		name: 'value',
@@ -34,7 +37,7 @@ export class CheckUniqueDto {
 }
 
 export type CheckUniqueResponse = {
-	field: UniqueUserField;
+	field: UniqueAccountFields;
 	value: string;
 	available: boolean;
 };
