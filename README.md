@@ -1,100 +1,278 @@
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ibiapabaapp-hub_ibiapabaapp-api&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ibiapabaapp-hub_ibiapabaapp-api)
+# API IbiapabaApp
 
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+<div>
+  <img src='https://img.shields.io/badge/nestjs-%23E0234E.svg?style=for-the-badge&logo=nestjs&logoColor=white' alt='NestJS'>
+  <img src='https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white' alt='TypeScript'>
+  <img src='https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white' alt='PostgreSQL'>
+  <img src='https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white' alt='Prisma'>
+  <img src='https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens' alt='JWT'>
+  <img src='https://img.shields.io/badge/PostGIS-336791?style=for-the-badge&logo=postgresql&logoColor=white' alt='PostGIS'>
+  <img src='https://img.shields.io/badge/Cloudflare_R2-F38020?style=for-the-badge&logo=cloudflare&logoColor=white' alt='Cloudflare R2'>
+</div>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API RESTful desenvolvida com NestJS para a plataforma IbiapabaApp, conectando aplicações mobile e web para gestão de cidades, negócios, eventos e conteúdo multimídia na região do Ibiapaba.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Funcionalidades
 
-## Description
+- **Autenticação e Autorização**: Registro, login/logout com JWT, refresh tokens e autenticação por cookies seguros.
+- **Gestão de Contas**: CRUD completo de contas de usuários com validação robusta.
+- **Perfis Personalizados**: Perfis pessoais e empresariais com controle de permissões (owner, admin, editor, viewer).
+- **Cidades**: Cadastro de cidades com localização geográfica (PostGIS), imagens de capa e categorias.
+- **Negócios (Businesses)**: Gestão de estabelecimentos comerciais com CNPJ, categorias, múltiplas localizações e reach level.
+- **Eventos**: Criação e gerenciamento de eventos com datas, tipo (simple/featured), localização e categorias.
+- **Categorias**: Sistema hierárquico de categorias para cidades, negócios e eventos.
+- **Leads**: Captura e gestão de leads (residentes, turistas, empresários).
+- **Mídia**: Upload e gestão de imagens/vídeos usando Cloudflare R2 CDN.
+- **Busca**: Pesquisa unificada por cidades, negócios e eventos.
+- **Documentação**: API documentada com Swagger (disponível em ambiente de desenvolvimento).
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Stack Principal
 
-## Project setup
+- **NestJS**: Framework Node.js para construção de APIs escaláveis.
+- **TypeScript**: Tipagem estática para maior segurança e manutenibilidade.
+- **Prisma**: ORM moderno com suporte a PostgreSQL.
+- **PostgreSQL + PostGIS**: Banco de dados relacional com suporte a dados geoespaciais.
+- **JWT**: Autenticação baseada em tokens com suporte a refresh tokens.
+- **Cloudflare R2**: Armazenamento de mídia com CDN público.
+- **Swagger/OpenAPI**: Documentação interativa da API.
+
+## Estrutura do Banco de Dados
+
+O projeto utiliza PostgreSQL com Prisma como ORM. Principais entidades:
+
+- **account**: Usuários da plataforma com email, telefone e senha hasheada.
+- **profile**: Perfis pessoais ou empresariais com slug único, nome de exibição e biografia.
+- **account_profile**: Relação many-to-many entre contas e perfis com roles (owner, admin, editor, viewer).
+- **business**: Extensão de perfil para funcionalidades empresariais (CNPJ, reach level).
+- **city**: Cidades com localização geográfica (Point PostGIS), capa e descrição.
+- **event**: Eventos com datas, tipo, owner e localização.
+- **media**: Mídia polimórfica associada a perfis, cidades ou eventos.
+- **category**: Categorias hierárquicas para classificação de entidades.
+- **lead**: Leads capturados através de formulários (residentes, turistas, empresários).
+
+## Rotas e Endpoints
+
+### Autenticação (`/api/v1/auth`)
+
+- `POST /auth/login` - Autenticação de usuário
+- `POST /auth/register` - Registro de novo usuário
+- `POST /auth/refresh` - Renovação de token
+- `POST /auth/logout` - Logout
+- `GET /auth/check-unique` - Verificar uniqueness de campos
+- `GET /auth/me` - Dados do usuário autenticado
+
+### Contas (`/api/v1/accounts`)
+
+- `GET /accounts` - Listar todas as contas (paginado)
+- `GET /accounts/:id` - Obter conta por ID
+- `PATCH /accounts/:id` - Atualizar conta
+- `DELETE /accounts/:id` - Remover conta
+
+### Perfis (`/api/v1/profiles`)
+
+- `POST /profiles` - Criar novo perfil (accountId vem do JWT)
+- `GET /profiles` - Listar perfis da conta autenticada
+- `GET /profiles/:id` - Obter perfil por ID (accountId vem do JWT)
+- `PATCH /profiles/:id` - Atualizar perfil (accountId vem do JWT)
+- `DELETE /profiles/:id` - Remover perfil (accountId vem do JWT)
+- `POST /profiles/:id/interests` - Adicionar interesses ao perfil (accountId vem do JWT)
+
+> **Nota**: O `accountId` é extraído automaticamente do token JWT no header `Authorization`. Não é necessário passá-lo via path, query ou body.
+
+### Cidades (`/api/v1/cities`)
+
+- `GET /cities` - Listar cidades
+- `GET /cities/:id` - Obter cidade por ID
+- `GET /cities/:id/media` - Obter mídias da cidade
+
+### Categorias (`/api/v1/categories`)
+
+- `GET /categories` - Listar categorias
+- `GET /categories/parents` - Listar categorias raiz
+- `GET /categories/parents/:id/children` - Listar subcategorias
+- `GET /categories/:id` - Obter categoria por ID
+- `PATCH /categories/:id` - Atualizar categoria
+- `DELETE /categories/:id` - Remover categoria
+
+### Negócios (`/api/v1/businesses`)
+
+- `POST /businesses` - Criar negócio
+- `GET /businesses` - Listar negócios
+- `GET /businesses/:id` - Obter negócio por ID
+- `PATCH /businesses/:id` - Atualizar negócio
+- `DELETE /businesses/:id` - Remover negócio
+- `GET /businesses/:id/media` - Obter mídias do negócio
+
+### Eventos (`/api/v1/events`)
+
+- `POST /events` - Criar evento
+- `GET /events` - Listar eventos
+- `GET /events/:id` - Obter evento por ID
+- `PATCH /events/:id` - Atualizar evento
+- `DELETE /events/:id` - Remover evento
+
+### Leads (`/api/v1/leads`)
+
+- `POST /leads` - Criar lead
+- `GET /leads` - Listar leads
+- `GET /leads/:id` - Obter lead por ID
+- `PATCH /leads/:id` - Atualizar lead
+- `DELETE /leads/:id` - Remover lead
+
+### Mídia (`/api/v1/media`)
+
+- `POST /media/upload` - Upload de mídia (Cloudflare R2)
+- `DELETE /media/:key` - Remover mídia
+
+### Busca (`/api/v1/search`)
+
+- `GET /search` - Busca unificada por cidades, negócios e eventos
+
+## Executando Localmente
+
+### 1. Clonar o repositório
 
 ```bash
-$ pnpm install
+git clone https://github.com/1manuelc/ibiapabaapp-api.git
+cd ibiapabaapp-api
 ```
 
-## Compile and run the project
+### 2. Instalar dependências
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+npm install
+# ou
+pnpm install
+# ou
+yarn install
 ```
 
-## Run tests
+### 3. Configurar variáveis de ambiente
+
+Crie um arquivo `.env` na raiz do projeto:
+
+```env
+NODE_ENV="development"
+PORT="3000"
+SECRET_KEY="sua-chave-secreta-aqui"
+
+DB_USER="seu-usuario"
+DB_PASSWORD="sua-senha"
+DB_NAME="ibiapabaapp"
+DB_PORT="5432"
+DATABASE_URL="postgresql://usuario:senha@localhost:5432/ibiapabaapp"
+
+R2_ENDPOINT="https://..."
+R2_ACCESS_KEY="..."
+R2_SECRET_KEY="..."
+R2_BUCKET="ibiapabaapp-media"
+R2_PUBLIC_URL="https://cdn.seudominio.com.br"
+```
+
+### 4. Configurar banco de dados
+
+Certifique-se de ter PostgreSQL rodando com a extensão PostGIS habilitada.
 
 ```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+npx prisma migrate dev --name init
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 5. Executar em modo desenvolvimento
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+npm run start:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+A API estará disponível em:
 
-## Resources
+- API: `http://localhost:3000/api`
+- Documentação Swagger: `http://localhost:3000/docs`
 
-Check out a few resources that may come in handy when working with NestJS:
+## Scripts Disponíveis
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+- `npm run build` - Compila o projeto TypeScript
+- `npm run lint` - Executa o linter
+- `npm run lint:fix` - Corrige problemas do linter automaticamente com Oxlint
+- `npm run fmt` - Formata código com Oxfmt
+- `npm run fmt:check` - Verifica formatação
+- `npm run start` - Inicia em modo produção
+- `npm run start:dev` - Inicia em modo desenvolvimento com hot-reload
+- `npm run db:migrate` - Executa migrações em produção
+- `npm run db:migrate:dev` - Executa migrações em desenvolvimento
+- `npm run db:studio` - Abre Prisma Studio
+- `npm run db:seed` - Popula o banco com dados iniciais
+- `npm run test:unit` - Executa testes unitários
+- `npm run test:unit:cov` - Executa testes com coverage
+- `npm run test:e2e` - Executa testes end-to-end
 
-## Support
+## Autenticação
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+A API utiliza JWT com cookies seguros. O fluxo:
 
-## Stay in touch
+1. **Registro**: `POST /auth/register`
+2. **Login**: `POST /auth/login`
+3. **Requisições autenticadas**: Envie o token no header `Authorization: Bearer <token>`
+4. **Refresh**: `POST /auth/refresh` para renovar tokens expirados
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Validação de Dados
 
-## License
+Todas as requisições são validadas usando `class-validator` e `class-transformer`, garantindo integridade dos dados. Erros retornam mensagens claras e estruturadas.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## CORS
+
+A API permite requisições das seguintes origens:
+
+- `http://localhost:3001`
+- `https://ibiapabaapp.com.br`
+- `https://www.ibiapabaapp.com.br`
+- `https://ibiapabaapp-landingpage.vercel.app`
+
+## Arquitetura
+
+O projeto segue a arquitetura modular do NestJS:
+
+```
+src/
+├── modules/
+│   ├── accounts/      - Gestão de contas
+│   ├── auth/          - Autenticação e JWT
+│   ├── businesses/    - Negócios/Estabelecimentos
+│   ├── categories/    - Categorias hierárquicas
+│   ├── cities/        - Cidades com geolocalização
+│   ├── events/        - Eventos
+│   ├── leads/         - Leads e contato
+│   ├── medias/        - Upload e gestão de mídia
+│   ├── profiles/      - Perfis de usuário
+│   ├── search/        - Busca unificada
+│   └── app/           - Módulo raiz
+├── common/            - Componentes compartilhados
+├── utils/             - Funções utilitárias
+└── main.ts            - Ponto de entrada
+```
+
+## Tecnologias e Dependências
+
+### Dependências Principais
+
+- `@nestjs/core`, `@nestjs/common`, `@nestjs/platform-express`
+- `@prisma/client`, `@prisma/adapter-pg`
+- `jsonwebtoken`, `@types/jsonwebtoken`
+- `argon2` - Hash de senhas
+- `class-validator`, `class-transformer`
+- `@aws-sdk/client-s3` - Integração com R2
+- `swagger-ui-express`, `@nestjs/swagger`
+
+### Dependências de Desenvolvimento
+
+- `typescript`
+- `jest`, `@nestjs/testing`
+- `eslint`, `prettier`
+- `oxlint`, `oxfmt`
+
+## Autor
+
+[@1manuelc](https://github.com/1manuelc)
+
+## Licença
+
+MIT
