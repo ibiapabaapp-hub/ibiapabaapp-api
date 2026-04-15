@@ -78,9 +78,7 @@ describe('LeadsService', () => {
 		it('should throw NotFoundException if not found', async () => {
 			prisma.lead.findFirst.mockResolvedValue(null);
 
-			await expect(service.findOne('123')).rejects.toThrow(
-				NotFoundException,
-			);
+			await expect(service.findOne('123')).rejects.toThrow(NotFoundException);
 		});
 	});
 
@@ -117,9 +115,9 @@ describe('LeadsService', () => {
 		it('should throw NotFoundException if lead does not exist', async () => {
 			prisma.lead.findFirst.mockResolvedValue(null);
 
-			await expect(
-				service.update('123', { name: 'Updated' }),
-			).rejects.toThrow(NotFoundException);
+			await expect(service.update('123', { name: 'Updated' })).rejects.toThrow(
+				NotFoundException,
+			);
 
 			expect(prisma.lead.update).not.toHaveBeenCalled();
 		});
@@ -152,9 +150,7 @@ describe('LeadsService', () => {
 		it('should throw NotFoundException if lead does not exist', async () => {
 			prisma.lead.findFirst.mockResolvedValue(null);
 
-			await expect(service.remove('123')).rejects.toThrow(
-				NotFoundException,
-			);
+			await expect(service.remove('123')).rejects.toThrow(NotFoundException);
 
 			expect(prisma.lead.delete).not.toHaveBeenCalled();
 		});

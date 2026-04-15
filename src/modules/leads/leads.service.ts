@@ -13,8 +13,7 @@ export class LeadsService {
 	constructor(private readonly prismaService: PrismaService) {}
 
 	async create(createLeadDto: CreateLeadDto) {
-		const { name, email, phone_number, type, business_name } =
-			createLeadDto;
+		const { name, email, phone_number, type, business_name } = createLeadDto;
 
 		const lead = await this.prismaService.lead.findFirst({
 			where: { email },

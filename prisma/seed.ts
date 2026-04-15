@@ -169,9 +169,7 @@ async function main() {
 			const categoryMap = new Map<string, string>();
 
 			// Primeira passagem: categorias raiz (sem parent)
-			for (const cat of data.categories.filter(
-				(c) => c.parent === null,
-			)) {
+			for (const cat of data.categories.filter((c) => c.parent === null)) {
 				const created = await tx.category.upsert({
 					where: { name: cat.name },
 					update: { entities: cat.entities as any[] },
@@ -184,9 +182,7 @@ async function main() {
 			}
 
 			// Segunda passagem: categorias filhas
-			for (const cat of data.categories.filter(
-				(c) => c.parent !== null,
-			)) {
+			for (const cat of data.categories.filter((c) => c.parent !== null)) {
 				const parentId = categoryMap.get(cat.parent!);
 				if (!parentId) {
 					console.warn(
@@ -358,9 +354,7 @@ async function main() {
 				}
 			}
 
-			console.log(
-				`  ✅ ${accountMap.size} contas de usuário processadas.`,
-			);
+			console.log(`  ✅ ${accountMap.size} contas de usuário processadas.`);
 
 			// ─── 4. BUSINESSES ──────────────────────────────────────────────
 
@@ -495,9 +489,7 @@ async function main() {
 				}
 			}
 
-			console.log(
-				`  ✅ ${businessProfileMap.size} businesses processados.`,
-			);
+			console.log(`  ✅ ${businessProfileMap.size} businesses processados.`);
 
 			// ─── 5. EVENTOS ─────────────────────────────────────────────────
 
@@ -510,9 +502,7 @@ async function main() {
 				let ownerProfileId: string | undefined;
 
 				if (evData.business_slug) {
-					ownerProfileId = businessProfileMap.get(
-						evData.business_slug,
-					);
+					ownerProfileId = businessProfileMap.get(evData.business_slug);
 					if (!ownerProfileId) {
 						console.warn(
 							`  ⚠️  Business "${evData.business_slug}" não encontrado para evento "${evData.slug}". Pulando.`,

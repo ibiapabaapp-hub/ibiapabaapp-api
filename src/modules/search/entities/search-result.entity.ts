@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { City } from 'src/modules/cities/entities/city.entity';
 import { Business } from 'src/modules/businesses/entities/business.entity';
+import { City } from 'src/modules/cities/entities/city.entity';
 import { Event } from 'src/modules/events/entities/event.entity';
 
 export class SearchResponseDto {

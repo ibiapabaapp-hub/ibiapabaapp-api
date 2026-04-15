@@ -17,13 +17,13 @@ import {
 	ApiQuery,
 	ApiResponse,
 } from '@nestjs/swagger';
+import { entity_category } from '@prisma/client';
 import { Public } from 'src/modules/common/decorators/public.decorator';
 
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
-import { entity_category } from '@prisma/client';
 
 @Controller({ path: 'categories', version: '1' })
 export class CategoriesController {
@@ -47,8 +47,7 @@ export class CategoriesController {
 	}
 
 	@ApiOperation({
-		summary:
-			'Obtém todas as categorias-filhas de uma categoria pai por uuid',
+		summary: 'Obtém todas as categorias-filhas de uma categoria pai por uuid',
 	})
 	@ApiParam({
 		name: 'id',

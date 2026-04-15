@@ -143,11 +143,7 @@
 			"active": true,
 			"business_slug": null,
 			"user_email": "admin@teste.com",
-			"categories": [
-				"Eventos culturais",
-				"Shows e apresentações",
-				"Festivais"
-			],
+			"categories": ["Eventos culturais", "Shows e apresentações", "Festivais"],
 			"cities": [
 				{
 					"slug": "ubajara",

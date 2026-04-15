@@ -16,9 +16,9 @@ import {
 } from '@nestjs/swagger';
 
 import { PaginationDto } from '../common/dtos/pagination.dto';
+import { AccountsService } from './accounts.service';
 import { SecureAccountDTO } from './dtos/secure-account-dto';
 import { UpdateAccountDTO } from './dtos/update-account.dto';
-import { AccountsService } from './accounts.service';
 
 // TODO: modificações de segurança devido a falta de user_roles
 @Controller({ path: 'accounts', version: '1' })

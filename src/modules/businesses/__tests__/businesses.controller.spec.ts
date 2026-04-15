@@ -25,8 +25,7 @@ describe('BusinessesController', () => {
 		}).compile();
 
 		controller = module.get<BusinessesController>(BusinessesController);
-		service =
-			module.get<DeepMockProxy<BusinessesService>>(BusinessesService);
+		service = module.get<DeepMockProxy<BusinessesService>>(BusinessesService);
 		mediasService = module.get<DeepMockProxy<MediasService>>(MediasService);
 	});
 

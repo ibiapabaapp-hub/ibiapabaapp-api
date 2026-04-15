@@ -43,8 +43,7 @@ export class CreateLeadDto {
 		description: 'Obrigatório apenas se o type for "business"',
 	})
 	@ValidateIf(
-		(o: { type: 'resident' | 'tourist' | 'business' }) =>
-			o.type === 'business',
+		(o: { type: 'resident' | 'tourist' | 'business' }) => o.type === 'business',
 	)
 	@IsNotEmpty()
 	@IsString()

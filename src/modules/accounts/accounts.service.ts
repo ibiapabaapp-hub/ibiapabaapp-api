@@ -11,12 +11,12 @@ import { PasswordService } from 'src/modules/common/password/password.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
 import { CreateAccountDTO } from './dtos/create-account.dto';
-import { Account } from './entities/account.entity';
-import { UpdateAccountDTO } from './dtos/update-account.dto';
 import {
 	SecureAccountDTO,
 	SecureAccountWithProfilesDTO,
 } from './dtos/secure-account-dto';
+import { UpdateAccountDTO } from './dtos/update-account.dto';
+import { Account } from './entities/account.entity';
 
 @Injectable()
 export class AccountsService {
@@ -39,9 +39,7 @@ export class AccountsService {
 				name: data.name,
 				// birth_date: data.birth_date,
 				email: data.email.trim(),
-				password: await this.passwordService.hashPassword(
-					data.password,
-				),
+				password: await this.passwordService.hashPassword(data.password),
 				phone_number: data.phone_number,
 			},
 			omit: { password: true },
@@ -124,9 +122,7 @@ export class AccountsService {
 		}
 
 		if (!updateUserDto.password) {
-			throw new BadRequestException(
-				'Current password is required for updates',
-			);
+			throw new BadRequestException('Current password is required for updates');
 		}
 
 		const isPasswordValid = await this.passwordService.verifyPassword(
@@ -146,8 +142,7 @@ export class AccountsService {
 		};
 
 		if (password) {
-			dataToUpdate.password =
-				await this.passwordService.hashPassword(password);
+			dataToUpdate.password = await this.passwordService.hashPassword(password);
 		}
 
 		return this.prismaService.account.update({

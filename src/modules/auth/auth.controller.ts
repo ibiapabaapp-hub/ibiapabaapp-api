@@ -7,12 +7,12 @@ import {
 } from '@nestjs/swagger';
 import { Public } from 'src/modules/common/decorators/public.decorator';
 
+import { SecureAccountDTO } from '../accounts/dtos/secure-account-dto';
 import { AuthService } from './auth.service';
 import { AuthResponseDto } from './dtos/auth-response.dto';
 import { CheckUniqueDto } from './dtos/check-unique-field.dto';
 import { LoginDto } from './dtos/login.dto';
 import { RegisterDto } from './dtos/register.dto';
-import { SecureAccountDTO } from '../accounts/dtos/secure-account-dto';
 
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
@@ -74,8 +74,7 @@ export class AuthController {
 	}
 	@ApiOperation({
 		summary: 'Atualizar Access Token',
-		description:
-			'Envia o x-refresh-token via Header para obter novos tokens',
+		description: 'Envia o x-refresh-token via Header para obter novos tokens',
 	})
 	@ApiResponse({ status: 200, type: AuthResponseDto })
 	@ApiHeader({

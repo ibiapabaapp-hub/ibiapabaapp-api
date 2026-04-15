@@ -101,9 +101,7 @@ describe('Auth (e2e)', () => {
 
 	describe('GET /me', () => {
 		it('should return 401 instead of 500 when no token is provided', async () => {
-			await request(app.getHttpServer())
-				.get(`${BASE_PATH}/me`)
-				.expect(401);
+			await request(app.getHttpServer()).get(`${BASE_PATH}/me`).expect(401);
 		});
 	});
 });

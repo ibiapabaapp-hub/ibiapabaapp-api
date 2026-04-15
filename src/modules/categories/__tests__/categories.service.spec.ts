@@ -1,10 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { entity_category } from '@prisma/client';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
 import { CategoriesService } from '../categories.service';
-import { entity_category } from '@prisma/client';
 
 describe('CategoriesService', () => {
 	let service: CategoriesService;

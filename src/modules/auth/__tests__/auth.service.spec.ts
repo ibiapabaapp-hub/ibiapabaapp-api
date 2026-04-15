@@ -5,11 +5,11 @@ import {
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
+import { AccountsService } from 'src/modules/accounts/accounts.service';
+import { Account } from 'src/modules/accounts/entities/account.entity';
 import { JwtService } from 'src/modules/common/jwt/jwt.service';
 import { PasswordService } from 'src/modules/common/password/password.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
-import { Account } from 'src/modules/accounts/entities/account.entity';
-import { AccountsService } from 'src/modules/accounts/accounts.service';
 
 import { AuthService } from '../auth.service';
 import { RegisterDto } from '../dtos/register.dto';
@@ -171,10 +171,7 @@ describe('AuthService', () => {
 		it('should return available true when no account exists', async () => {
 			prisma.account.count.mockResolvedValue(0);
 
-			const result = await service.isUniqueAvailable(
-				'email',
-				'test@test.com',
-			);
+			const result = await service.isUniqueAvailable('email', 'test@test.com');
 
 			expect(prisma.account.count).toHaveBeenCalledWith({
 				where: { email: 'test@test.com' },

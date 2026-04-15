@@ -8,9 +8,9 @@ import {
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { reach_level } from '@prisma/client';
+import { BusinessesModule } from 'src/modules/businesses/businesses.module';
 import { PrismaModule } from 'src/modules/common/prisma/prisma.module';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
-import { BusinessesModule } from 'src/modules/businesses/businesses.module';
 import request from 'supertest';
 
 describe('Companies (e2e)', () => {
@@ -65,9 +65,7 @@ describe('Companies (e2e)', () => {
 		});
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-		const res = await request(app.getHttpServer())
-			.get(BASE_PATH)
-			.expect(200);
+		const res = await request(app.getHttpServer()).get(BASE_PATH).expect(200);
 
 		expect(Array.isArray(res.body)).toBe(true);
 		expect(res.body[0].name).toBe('Restaurante Serra');

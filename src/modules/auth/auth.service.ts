@@ -4,10 +4,10 @@ import {
 	InternalServerErrorException,
 	UnauthorizedException,
 } from '@nestjs/common';
+import { AccountsService } from 'src/modules/accounts/accounts.service';
+import { Account } from 'src/modules/accounts/entities/account.entity';
 import { JwtService } from 'src/modules/common/jwt/jwt.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
-import { Account } from 'src/modules/accounts/entities/account.entity';
-import { AccountsService } from 'src/modules/accounts/accounts.service';
 import { extractBearerTokenFromString } from 'src/utils/extract-bearer-token';
 
 import { PasswordService } from '../common/password/password.service';
@@ -86,9 +86,7 @@ export class AuthService {
 			role: number;
 		}>(pastRefreshToken);
 
-		const account = await this.accountService.findOneById(
-			decodedTokenData.id,
-		);
+		const account = await this.accountService.findOneById(decodedTokenData.id);
 		if (!account) {
 			throw new UnauthorizedException({
 				message: 'Expired or invalid token',
@@ -134,9 +132,7 @@ export class AuthService {
 
 	async getMe(authorization: string) {
 		const token = extractBearerTokenFromString(authorization);
-		const { id } = this.jwtService.verify<{ id: string; role: string }>(
-			token,
-		);
+		const { id } = this.jwtService.verify<{ id: string; role: string }>(token);
 		return this.accountService.findOneInDetailById(id);
 	}
 }

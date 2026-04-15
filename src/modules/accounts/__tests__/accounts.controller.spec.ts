@@ -2,10 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
-import { UpdateAccountDTO } from '../dtos/update-account.dto';
-import { Account } from '../entities/account.entity';
 import { AccountsController } from '../accounts.controller';
 import { AccountsService } from '../accounts.service';
+import { UpdateAccountDTO } from '../dtos/update-account.dto';
+import { Account } from '../entities/account.entity';
 
 describe('AccountsController', () => {
 	let controller: AccountsController;

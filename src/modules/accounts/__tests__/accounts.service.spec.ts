@@ -10,9 +10,9 @@ import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { PasswordService } from 'src/modules/common/password/password.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
+import { AccountsService } from '../accounts.service';
 import { UpdateAccountDTO } from '../dtos/update-account.dto';
 import { Account } from '../entities/account.entity';
-import { AccountsService } from '../accounts.service';
 
 describe('AccountsService', () => {
 	let service: AccountsService;
@@ -48,9 +48,7 @@ describe('AccountsService', () => {
 	describe('findAll', () => {
 		it('should return accounts with pagination', async () => {
 			const accounts = [{ id: '1' }];
-			prisma.account.findMany.mockResolvedValue(
-				accounts as AccountPrisma[],
-			);
+			prisma.account.findMany.mockResolvedValue(accounts as AccountPrisma[]);
 
 			const result = await service.findAll({ limit: 10, offset: 0 });
 
@@ -80,9 +78,7 @@ describe('AccountsService', () => {
 		it('should throw NotFoundException if account does not exist', async () => {
 			prisma.account.findFirst.mockResolvedValue(null);
 
-			await expect(service.findOneById('1')).rejects.toThrow(
-				NotFoundException,
-			);
+			await expect(service.findOneById('1')).rejects.toThrow(NotFoundException);
 		});
 	});
 
@@ -114,10 +110,7 @@ describe('AccountsService', () => {
 		it('should return a account with password when getPassword is true', async () => {
 			prisma.account.findFirst.mockResolvedValue(mock as AccountPrisma);
 
-			const result = await service.findOneByEmail(
-				'test@example.com',
-				true,
-			);
+			const result = await service.findOneByEmail('test@example.com', true);
 
 			expect(prisma.account.findFirst).toHaveBeenCalledWith({
 				where: { email: 'test@example.com' },
@@ -228,9 +221,7 @@ describe('AccountsService', () => {
 		it('should throw NotFoundException if account does not exist', async () => {
 			prisma.account.findFirst.mockResolvedValue(null);
 
-			await expect(service.remove('1')).rejects.toThrow(
-				NotFoundException,
-			);
+			await expect(service.remove('1')).rejects.toThrow(NotFoundException);
 		});
 
 		it('should throw InternalServerErrorException on database failure', async () => {

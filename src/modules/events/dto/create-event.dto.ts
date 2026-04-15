@@ -11,7 +11,7 @@ import {
 	IsUrl,
 	IsUUID,
 	MaxLength,
-	MinLength
+	MinLength,
 } from 'class-validator';
 
 export class CreateEventDTO {

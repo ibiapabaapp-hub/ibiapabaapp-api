@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { entity_category } from '@prisma/client';
 
 import { CategoriesController } from '../categories.controller';
 import { CategoriesService } from '../categories.service';
-import { entity_category } from '@prisma/client';
 describe('CategoriesController', () => {
 	let controller: CategoriesController;
 	let service: CategoriesService;
@@ -73,9 +73,9 @@ describe('CategoriesController', () => {
 		};
 
 		it('should return an array of categories', async () => {
-			jest.spyOn(service, 'findParents').mockResolvedValue([
-				mockParentCategory as any,
-			]);
+			jest
+				.spyOn(service, 'findParents')
+				.mockResolvedValue([mockParentCategory as any]);
 
 			const result = await controller.getParents(undefined);
 
@@ -92,16 +92,14 @@ describe('CategoriesController', () => {
 		});
 
 		it('should filter by entity', async () => {
-			jest.spyOn(service, 'findParents').mockResolvedValue([
-				mockParentCategory as any,
-			]);
+			jest
+				.spyOn(service, 'findParents')
+				.mockResolvedValue([mockParentCategory as any]);
 
 			const result = await controller.getParents(entity_category.city);
 
 			expect(result).toEqual([mockParentCategory]);
-			expect(service.findParents).toHaveBeenCalledWith(
-				entity_category.city,
-			);
+			expect(service.findParents).toHaveBeenCalledWith(entity_category.city);
 		});
 	});
 
@@ -113,17 +111,14 @@ describe('CategoriesController', () => {
 		};
 
 		it('should return child categories', async () => {
-			jest.spyOn(service, 'findChildren').mockResolvedValue([
-				mockChildCategory as any,
-			]);
+			jest
+				.spyOn(service, 'findChildren')
+				.mockResolvedValue([mockChildCategory as any]);
 
 			const result = await controller.getChildren('parent-1', undefined);
 
 			expect(result).toEqual([mockChildCategory]);
-			expect(service.findChildren).toHaveBeenCalledWith(
-				'parent-1',
-				undefined,
-			);
+			expect(service.findChildren).toHaveBeenCalledWith('parent-1', undefined);
 		});
 	});
 
