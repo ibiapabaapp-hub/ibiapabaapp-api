@@ -1,6 +1,9 @@
+import { join } from 'path';
+
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from 'src/modules/auth/auth.module';
 
@@ -41,6 +44,16 @@ import { AppService } from './app.service';
 				},
 			],
 		}),
+		...(process.env.NODE_ENV === 'development'
+			? [
+					ServeStaticModule.forRoot({
+						rootPath: join(process.cwd(), 'public'),
+						serveStaticOptions: {
+							fallthrough: false,
+						},
+					}),
+				]
+			: []),
 		PrismaModule,
 		AuthModule,
 		SearchModule,
