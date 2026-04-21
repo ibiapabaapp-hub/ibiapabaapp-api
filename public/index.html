@@ -4,11 +4,7 @@
 		<meta charset="utf-8" />
 		<meta content="width=device-width, initial-scale=1.0" name="viewport" />
 		<title>IbiapabaAppAPI | Página de desenvolvedor</title>
-		<link
-			rel="shortcut icon"
-			href="./icon_foreground.png"
-			type="image/png"
-		/>
+		<link rel="shortcut icon" href="./icon_foreground.png" type="image/png" />
 		<link
 			href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
 			rel="stylesheet"
@@ -92,10 +88,23 @@
 			.accent {
 				color: #b9ff70;
 			}
+			.ngrok-card {
+				background-color: #171717;
+				border: 1px solid #ffffff12;
+			}
+			.ngrok-card:hover {
+				background-color: #141c1c;
+				border-color: #4af0c433;
+			}
+			.ngrok-card:hover .ngrok-icon {
+				color: #4af0c4;
+			}
+			.ngrok-card:hover .ngrok-label {
+				color: #4af0c4;
+			}
 		</style>
 	</head>
 	<body class="text-[#e2e2e2] antialiased">
-		<!-- Vertically + horizontally centered full-screen hero -->
 		<main class="flex min-h-dvh items-center justify-center px-4 md:px-8">
 			<section
 				class="flex w-full max-w-2xl flex-col items-center py-12 text-center"
@@ -143,13 +152,17 @@
 								stroke-linejoin="round"
 								class="shrink-0 text-[#c2cab3] transition-colors group-hover:text-[#b9ff70]"
 							>
-								<!-- Lucide: book-open -->
 								<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
 								<path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
 							</svg>
-							<span class="text-start text-sm font-medium"
-								>Documentação Swagger</span
-							>
+							<div class="flex flex-col gap-1">
+								<span class="text-start text-sm font-medium"
+									>Documentação Swagger</span
+								>
+								<span class="text-start text-xs text-[#c2cab3] opacity-40"
+									>/docs</span
+								>
+							</div>
 						</div>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -163,7 +176,6 @@
 							stroke-linejoin="round"
 							class="shrink-0 text-[#c2cab3] transition-transform group-hover:translate-x-1"
 						>
-							<!-- Lucide: chevron-right -->
 							<path d="m9 18 6-6-6-6" />
 						</svg>
 					</a>
@@ -186,7 +198,6 @@
 								stroke-linejoin="round"
 								class="shrink-0 text-[#c2cab3] transition-colors group-hover:text-[#b9ff70]"
 							>
-								<!-- Lucide: braces -->
 								<path
 									d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"
 								/>
@@ -194,9 +205,14 @@
 									d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"
 								/>
 							</svg>
-							<span class="text-start text-sm font-medium"
-								>Especificação JSON</span
-							>
+							<div class="flex flex-col gap-1">
+								<span class="text-start text-sm font-medium"
+									>Especificação OpenAPI JSON</span
+								>
+								<span class="text-start text-xs text-[#c2cab3] opacity-40"
+									>/docs-json</span
+								>
+							</div>
 						</div>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -234,13 +250,17 @@
 								stroke-linejoin="round"
 								class="shrink-0 text-[#c2cab3] transition-colors group-hover:text-[#b9ff70]"
 							>
-								<!-- Lucide: github -->
 								<path
 									d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"
 								/>
 								<path d="M9 18c-4.51 2-5-2-7-2" />
 							</svg>
-							<span class="text-start text-sm font-medium">GitHub</span>
+							<div class="flex flex-col gap-1">
+								<span class="text-start text-sm font-medium">GitHub</span>
+								<span class="text-start text-xs text-[#c2cab3] opacity-40"
+									>/ibiapabaapp-api</span
+								>
+							</div>
 						</div>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -258,6 +278,57 @@
 						</svg>
 					</a>
 				</div>
+
+				<!-- Ngrok Inspector -->
+				<a
+					href="http://127.0.0.1:4040"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="ngrok-card group mt-3 flex w-full items-center justify-between gap-4 rounded-lg px-4 py-3 transition-all duration-200"
+				>
+					<div class="flex items-center gap-3">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class="ngrok-icon shrink-0 text-[#c2cab3] transition-colors"
+						>
+							<!-- Lucide: globe -->
+							<circle cx="12" cy="12" r="10" />
+							<path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+							<path d="M2 12h20" />
+						</svg>
+						<div class="flex flex-col items-start">
+							<span
+								class="ngrok-label text-start text-sm font-medium transition-colors"
+								>Ngrok Inspector</span
+							>
+							<span class="text-start text-xs text-[#c2cab3] opacity-60"
+								>127.0.0.1:4040 · inspecione túnel local</span
+							>
+						</div>
+					</div>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="shrink-0 text-[#c2cab3] transition-transform group-hover:translate-x-1"
+					>
+						<path d="m9 18 6-6-6-6" />
+					</svg>
+				</a>
 			</section>
 		</main>
 	</body>
