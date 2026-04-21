@@ -57,7 +57,46 @@ export class ProfilesService {
 			where: { account_id: accountId },
 		});
 
-		return accountProfiles;
+		if (!accountProfiles) {
+			throw new NotFoundException('Profiles not found');
+		}
+
+		const profileIds = accountProfiles.map(
+			(accountProfile) => accountProfile.profile_id,
+		);
+
+		const profiles = await this.prismaService.profile.findMany({
+			where: { id: { in: profileIds } },
+			include: {
+				business: {
+					select: {
+						id: true,
+						cnpj: true,
+						max_reach_level: true,
+						categories: {
+							select: {
+								id: true,
+							},
+						},
+					},
+				},
+			},
+		});
+
+		return profiles.map((p) => {
+			if (p.type === 'business') {
+				return {
+					...p,
+					role: accountProfiles.find((ap) => ap.profile_id === p.id)?.role,
+					business: {
+						...p.business,
+						categories: p.business?.categories.map((c) => c.id),
+					},
+				};
+			}
+
+			return p;
+		});
 	}
 
 	async findOneById(profileId: string, accountId: string) {
@@ -74,27 +113,9 @@ export class ProfilesService {
 
 		const profile = await this.prismaService.profile.findUnique({
 			where: { id: profileId },
-			include: {
-				interests: {
-					include: {
-						category: {
-							select: {
-								id: true,
-								name: true,
-							},
-						},
-					},
-				},
-			},
 		});
 
-		return {
-			...profile,
-			interests: profile?.interests.map((i) => ({
-				id: i.category.id,
-				name: i.category.name,
-			})),
-		};
+		return profile;
 	}
 
 	async update(profileId: string, accountId: string, data: UpdateProfileDTO) {

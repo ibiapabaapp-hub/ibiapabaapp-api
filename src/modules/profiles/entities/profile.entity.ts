@@ -4,8 +4,8 @@ export class Profile {
 	id: string;
 	slug: string;
 	display_name: string;
-	bio?: string;
-	avatar_url?: string;
+	bio?: string | null;
+	avatar_url?: string | null;
 	type: profile_type;
 	created_at: Date;
 	updated_at: Date;
