@@ -11,6 +11,8 @@ import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 import { extractBearerTokenFromString } from 'src/utils/extract-bearer-token';
 
 import { PasswordService } from '../common/password/password.service';
+import { TokenService } from '../common/token/token.service';
+import { EmailService } from '../email/email.service';
 import {
 	AuthResponseDto,
 	CheckUniqueResponseDto,
@@ -26,6 +28,8 @@ export class AuthService {
 		private readonly passwordService: PasswordService,
 		private readonly jwtService: JwtService,
 		private readonly accountService: AccountsService,
+		private readonly tokenService: TokenService,
+		private readonly emailService: EmailService,
 	) {}
 
 	async login(loginDto: LoginDto): Promise<AuthResponseDto> {
@@ -77,7 +81,27 @@ export class AuthService {
 			{ expiresIn: '7d' },
 		);
 
+		const token = await this.tokenService.create(account.id, 'verify_email');
+		await this.emailService.sendVerificationEmail(account.email, token);
 		return new AuthResponseDto({ account, accessToken, refreshToken });
+	}
+
+	// TODO: escrever teste unitário de verifyEmail -> auth.service
+	async verifyEmail(token: string): Promise<{ success: boolean }> {
+		const rawAccountId = await this.tokenService.validateAndConsume(
+			token,
+			'verify_email',
+		);
+
+		if (!rawAccountId) {
+			throw new BadRequestException({
+				message: 'Invalid token',
+				code: 'invalid_token',
+			});
+		}
+
+		const verifyResult = await this.accountService.verifyAccount(rawAccountId);
+		return { success: verifyResult.is_verified };
 	}
 
 	async refreshTokens(pastRefreshToken: string): Promise<AuthResponseDto> {

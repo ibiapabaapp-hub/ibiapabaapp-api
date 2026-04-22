@@ -13,6 +13,7 @@ export class SecureAccountDTO {
 export class SecureAccountWithProfilesDTO {
 	@Expose() id: string;
 	@Expose() email: string;
+	@Expose() is_verified: boolean;
 
 	@Expose()
 	@Transform(({ obj }) => {

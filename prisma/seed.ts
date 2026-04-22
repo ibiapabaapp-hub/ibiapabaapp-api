@@ -293,12 +293,14 @@ async function main() {
 						name: userData.name,
 						password: hashedPassword,
 						phone_number: userData.phone_number,
+						is_verified: true,
 					},
 					create: {
 						name: userData.name,
 						email: userData.email,
 						password: hashedPassword,
 						phone_number: userData.phone_number,
+						is_verified: true,
 					},
 				});
 

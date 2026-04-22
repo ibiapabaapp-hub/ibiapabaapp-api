@@ -48,6 +48,21 @@ export class AccountsService {
 		return account;
 	}
 
+	// TODO: escrever teste unitário de verifyAccount -> accounts.service
+	async verifyAccount(id: string) {
+		try {
+			return await this.prismaService.account.update({
+				where: { id },
+				data: { is_verified: true },
+			});
+		} catch {
+			throw new BadRequestException({
+				message: 'Account already verified',
+				code: 'account_already_verified',
+			});
+		}
+	}
+
 	async findAll(paginationQuery: PaginationDto) {
 		const { limit = 10, offset } = paginationQuery;
 		return await this.prismaService.account.findMany({

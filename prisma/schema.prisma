@@ -57,12 +57,14 @@ model account {
   password     String @db.VarChar(255)
   phone_number String @unique @db.VarChar(20)
 
-  name       String   @db.VarChar(50)
-  active     Boolean  @default(true)
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt @db.Timestamp(6)
+  name        String   @db.VarChar(50)
+  active      Boolean  @default(true)
+  is_verified Boolean  @default(false)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @updatedAt @db.Timestamp(6)
 
-  profiles account_profile[]
+  profiles           account_profile[]
+  verificationTokens verification_token[]
 }
 
 model profile {
@@ -96,6 +98,26 @@ model account_profile {
   @@unique([account_id, profile_id])
   @@index([account_id])
   @@index([profile_id])
+}
+
+// ——— TOKENS DE VERIFICAÇÃO ———————————————————————————————————————————————————————
+enum token_type {
+  verify_email
+  reset_password
+}
+
+model verification_token {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  token      String     @unique @db.VarChar(255)
+  account_id String     @db.Uuid
+  type       token_type
+  expires_at DateTime   @db.Timestamp(6)
+  used_at    DateTime?  @db.Timestamp(6)
+  created_at DateTime   @default(now()) @db.Timestamp(6)
+
+  account account @relation(fields: [account_id], references: [id], onDelete: Cascade)
+
+  @@index([account_id])
 }
 
 // ——— NEGÓCIO (BUSINESS) ——————————————————————————————————————————————————————————
@@ -145,7 +167,7 @@ model event {
 
   // Dono do evento (Pode ser uma pessoa ou empresa)
   owner_profile_id String  @db.Uuid
-  owner    profile @relation("ProfileEvents", fields: [owner_profile_id], references: [id], onDelete: Cascade)
+  owner            profile @relation("ProfileEvents", fields: [owner_profile_id], references: [id], onDelete: Cascade)
 
   name          String  @db.VarChar(200)
   description   String? @db.Text

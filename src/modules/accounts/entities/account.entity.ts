@@ -3,6 +3,7 @@ import { account } from '@prisma/client';
 export class Account implements account {
 	id: string;
 	name: string;
+	is_verified: boolean;
 	// birth_date: Date;
 	// username: string;
 	email: string;

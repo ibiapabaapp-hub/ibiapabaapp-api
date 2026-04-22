@@ -3,6 +3,7 @@ import {
 	ApiBearerAuth,
 	ApiHeader,
 	ApiOperation,
+	ApiQuery,
 	ApiResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -14,6 +15,7 @@ import { AuthResponseDto } from './dtos/auth-response.dto';
 import { CheckUniqueDto } from './dtos/check-unique-field.dto';
 import { LoginDto } from './dtos/login.dto';
 import { RegisterDto } from './dtos/register.dto';
+import { SuccessResponseDTO } from './dtos/success-response.dto';
 
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
@@ -52,7 +54,7 @@ export class AuthController {
 		};
 	}
 
-	@ApiOperation({ summary: 'Registrar novo conta' })
+	@ApiOperation({ summary: 'Registrar nova conta' })
 	@ApiResponse({
 		status: 201,
 		description: 'Conta criada com sucesso',
@@ -77,6 +79,19 @@ export class AuthController {
 			refreshToken: authData?.refreshToken,
 		};
 	}
+
+	// TODO: escrever teste e2e de verifyEmail -> auth.controller
+	// TODO: escrever teste unitário de verifyEmail -> auth.controller
+	@ApiOperation({ summary: 'Verificar email' })
+	@ApiQuery({ name: 'token', type: String })
+	@ApiResponse({ status: 200, type: SuccessResponseDTO })
+	@ApiResponse({ status: 400, description: 'Token inválido ou expirado' })
+	@Public()
+	@Get('verify-email')
+	async verifyEmail(@Query('token') token: string) {
+		return await this.authService.verifyEmail(token);
+	}
+
 	@ApiOperation({
 		summary: 'Atualizar Access Token',
 		description: 'Envia o x-refresh-token via Header para obter novos tokens',
