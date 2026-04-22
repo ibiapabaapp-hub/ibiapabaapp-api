@@ -1,12 +1,8 @@
-import { Type } from 'class-transformer';
 import {
 	IsBoolean,
-	IsDate,
 	IsEmail,
-	IsEnum,
 	IsOptional,
 	IsString,
-	MaxDate,
 	MinLength,
 } from 'class-validator';
 

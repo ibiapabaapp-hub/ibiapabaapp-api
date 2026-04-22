@@ -1,14 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import {
-	IsDate,
 	IsEmail,
-	IsEnum,
 	IsString,
 	Matches,
-	MaxDate,
 	MaxLength,
-	MinLength,
+	MinLength
 } from 'class-validator';
 
 export class CreateAccountDTO {
