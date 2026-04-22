@@ -1,4 +1,4 @@
-import { $Enums, category, entity_category } from '@prisma/client';
+import { category, entity_category } from '@prisma/client';
 import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateCategoryDto implements Omit<
