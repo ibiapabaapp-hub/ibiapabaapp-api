@@ -10,10 +10,10 @@ describe('FavoritesController', () => {
 
 	const mockFavorite = {
 		id: 'favorite-1',
-		profile_id: 'profile-1',
+		account_id: 'account-1',
 		city_id: 'city-1',
 		event_id: null,
-		business_profile_id: null,
+		business_id: null,
 	};
 
 	beforeEach(async () => {
@@ -42,10 +42,10 @@ describe('FavoritesController', () => {
 			jest.spyOn(service, 'create').mockResolvedValue(mockFavorite);
 
 			const dto = {
-				profile_id: 'profile-1',
+				account_id: 'account-1',
 				city_id: 'city-1',
 				event_id: null,
-				business_profile_id: null,
+				business_id: null,
 			};
 
 			const result = await controller.create(dto);
@@ -66,13 +66,13 @@ describe('FavoritesController', () => {
 			expect(service.findAll).toHaveBeenCalledWith(undefined);
 		});
 
-		it('should filter favorites by profile_id', async () => {
+		it('should filter favorites by account_id', async () => {
 			const favorites = [mockFavorite];
 			jest.spyOn(service, 'findAll').mockResolvedValue(favorites);
 
-			await controller.findAll('profile-1');
+			await controller.findAll('account-1');
 
-			expect(service.findAll).toHaveBeenCalledWith('profile-1');
+			expect(service.findAll).toHaveBeenCalledWith('account-1');
 		});
 	});
 

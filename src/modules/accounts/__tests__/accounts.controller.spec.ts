@@ -4,6 +4,8 @@ import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
 import { AccountsController } from '../accounts.controller';
 import { AccountsService } from '../accounts.service';
+import { AccountInterestsService } from '../account-interests.service';
+import { SecureAccountDTO } from '../dtos/secure-account-dto';
 import { UpdateAccountDTO } from '../dtos/update-account.dto';
 import { Account } from '../entities/account.entity';
 
@@ -19,7 +21,10 @@ describe('AccountsController', () => {
 					provide: AccountsService,
 					useValue: mockDeep<AccountsService>(),
 				},
-				// AccountInterestsService,
+				{
+					provide: AccountInterestsService,
+					useValue: mockDeep<AccountInterestsService>(),
+				},
 				{
 					provide: PrismaService,
 					useValue: mockDeep<PrismaService>(),
@@ -53,7 +58,7 @@ describe('AccountsController', () => {
 	it('should call accountsService.findOneById on findOneById()', async () => {
 		const user = { id: '1' };
 
-		accountsService.findOneById.mockResolvedValue(user as Account);
+		accountsService.findOneById.mockResolvedValue(user as SecureAccountDTO);
 
 		const result = await controller.findOneById('1');
 

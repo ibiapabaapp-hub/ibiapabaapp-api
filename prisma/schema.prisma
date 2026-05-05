@@ -4,10 +4,10 @@ generator client {
 }
 
 generator dbml {
-  provider = "prisma-dbml-generator"
-  outputName = "ibiapabaappdb_er.dbml"
-  projectName = "IbiapabaAppDB"
+  provider            = "prisma-dbml-generator"
+  outputName          = "ibiapabaappdb_er.dbml"
   projectDatabaseType = "PostgreSQL"
+  projectName         = "IbiapabaAppDB"
 }
 
 datasource db {
@@ -15,7 +15,222 @@ datasource db {
   extensions = [postgis]
 }
 
-// ——— ENUMS ———————————————————————————————————————————————————————————————————————
+model account {
+  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email               String               @unique @db.VarChar(255)
+  password            String               @db.VarChar(255)
+  phone_number        String               @unique @db.VarChar(20)
+  slug                String               @unique @db.VarChar(100)
+  display_name        String               @db.VarChar(150)
+  bio                 String?
+  avatar_url          String?
+  type                account_type         @default(personal)
+  name                String               @db.VarChar(50)
+  active              Boolean              @default(true)
+  is_verified         Boolean              @default(false)
+  created_at          DateTime             @default(now()) @db.Timestamp(6)
+  updated_at          DateTime             @updatedAt @db.Timestamp(6)
+  favorites           account_favorite[]   @relation("AccountFavorites")
+  interests           account_interest[]
+  business            business?
+  events              event[]              @relation("AccountEvents")
+  medias              media[]              @relation("AccountMedias")
+  verification_tokens verification_token[]
+}
+
+model verification_token {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  token      String     @unique @db.VarChar(255)
+  account_id String     @db.Uuid
+  type       token_type
+  expires_at DateTime   @db.Timestamp(6)
+  used_at    DateTime?  @db.Timestamp(6)
+  created_at DateTime   @default(now()) @db.Timestamp(6)
+  account    account    @relation(fields: [account_id], references: [id], onDelete: Cascade)
+
+  @@index([account_id])
+}
+
+model business {
+  id              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  account_id      String              @unique @db.Uuid
+  cnpj            String?             @db.VarChar(20)
+  max_reach_level reach_level         @default(local)
+  created_at      DateTime            @default(now()) @db.Timestamp(6)
+  updated_at      DateTime            @updatedAt @db.Timestamp(6)
+  favorites       account_favorite[]
+  account         account             @relation(fields: [account_id], references: [id], onDelete: Cascade)
+  categories      business_category[]
+  cities          business_city[]
+
+  @@index([account_id])
+}
+
+model city {
+  id            String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug          String                  @unique
+  name          String
+  description   String?
+  cover_img_url String?
+  location      Unsupported("geometry")
+  created_at    DateTime                @default(now())
+  updated_at    DateTime                @updatedAt
+  favorites     account_favorite[]
+  businesses    business_city[]
+  categories    city_category[]
+  events        event_city[]
+  medias        media[]                 @relation("CityMedias")
+
+  @@index([location], type: Gist)
+}
+
+model event {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug             String             @unique @db.VarChar(100)
+  owner_account_id String             @db.Uuid
+  name             String             @db.VarChar(200)
+  description      String?
+  cover_img_url    String?
+  reach_level      reach_level
+  type             event_type         @default(simple)
+  start_date       DateTime
+  end_date         DateTime
+  active           Boolean            @default(true)
+  created_at       DateTime           @default(now()) @db.Timestamp(6)
+  updated_at       DateTime           @updatedAt @db.Timestamp(6)
+  favorites        account_favorite[]
+  owner            account            @relation("AccountEvents", fields: [owner_account_id], references: [id], onDelete: Cascade)
+  categories       event_category[]
+  cities           event_city[]
+  medias           media[]            @relation("EventMedias")
+
+  @@index([owner_account_id])
+}
+
+model media {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  account_id    String?    @db.Uuid
+  city_id       String?    @db.Uuid
+  event_id      String?    @db.Uuid
+  media_type    media_type
+  url           String
+  thumbnail_url String?
+  is_cover      Boolean    @default(false)
+  position      Int        @default(0)
+  created_at    DateTime   @default(now())
+  account       account?   @relation("AccountMedias", fields: [account_id], references: [id], onDelete: Cascade)
+  city          city?      @relation("CityMedias", fields: [city_id], references: [id], onDelete: Cascade)
+  event         event?     @relation("EventMedias", fields: [event_id], references: [id], onDelete: Cascade)
+}
+
+model account_favorite {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  account_id  String    @db.Uuid
+  city_id     String?   @db.Uuid
+  event_id    String?   @db.Uuid
+  business_id String?   @db.Uuid
+  account     account   @relation("AccountFavorites", fields: [account_id], references: [id], onDelete: Cascade)
+  business    business? @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  city        city?     @relation(fields: [city_id], references: [id], onDelete: Cascade)
+  event       event?    @relation(fields: [event_id], references: [id], onDelete: Cascade)
+
+  @@unique([account_id, city_id])
+  @@unique([account_id, event_id])
+  @@unique([account_id, business_id])
+  @@index([account_id])
+}
+
+model account_interest {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  account_id  String   @db.Uuid
+  category_id String   @db.Uuid
+  account     account  @relation(fields: [account_id], references: [id], onDelete: Cascade)
+  category    category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@unique([account_id, category_id])
+}
+
+model category {
+  id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parent_id     String?             @db.Uuid
+  name          String              @unique
+  entities      entity_category[]
+  interests     account_interest[]
+  business_cats business_category[]
+  parent        category?           @relation("category_tree", fields: [parent_id], references: [id])
+  children      category[]          @relation("category_tree")
+  city_cats     city_category[]
+  event_cats    event_category[]
+}
+
+model city_category {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  city_id     String   @db.Uuid
+  category_id String   @db.Uuid
+  category    category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  city        city     @relation(fields: [city_id], references: [id], onDelete: Cascade)
+
+  @@unique([city_id, category_id])
+}
+
+model business_category {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  business_id String   @db.Uuid
+  category_id String   @db.Uuid
+  business    business @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  category    category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@unique([business_id, category_id])
+}
+
+model business_city {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  business_id      String   @db.Uuid
+  city_id          String   @db.Uuid
+  is_headquarter   Boolean  @default(false)
+  address_specific String?
+  business         business @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  city             city     @relation(fields: [city_id], references: [id], onDelete: Cascade)
+}
+
+model event_category {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_id    String   @db.Uuid
+  category_id String   @db.Uuid
+  category    category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  event       event    @relation(fields: [event_id], references: [id], onDelete: Cascade)
+
+  @@unique([event_id, category_id])
+}
+
+model event_city {
+  id               String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_id         String  @db.Uuid
+  city_id          String  @db.Uuid
+  address_specific String? @db.VarChar
+  city             city    @relation(fields: [city_id], references: [id], onDelete: Cascade)
+  event            event   @relation(fields: [event_id], references: [id], onDelete: Cascade)
+}
+
+model lead {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String    @db.VarChar(50)
+  email         String    @unique @db.VarChar(100)
+  phone_number  String    @unique @db.VarChar(20)
+  type          lead_type
+  business_name String?   @db.VarChar(50)
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  updated_at    DateTime? @updatedAt @db.Timestamp(6)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
+}
 
 enum lead_type {
   resident
@@ -23,7 +238,7 @@ enum lead_type {
   business
 }
 
-enum profile_type {
+enum account_type {
   personal
   business
 }
@@ -31,13 +246,6 @@ enum profile_type {
 enum reach_level {
   local
   regional
-}
-
-enum business_role {
-  owner
-  admin
-  editor
-  viewer
 }
 
 enum event_type {
@@ -56,275 +264,7 @@ enum entity_category {
   event
 }
 
-// ——— NÚCLEO DE IDENTIDADE E PERFIS ———————————————————————————————————————————————
-
-model account {
-  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email        String @unique @db.VarChar(255)
-  password     String @db.VarChar(255)
-  phone_number String @unique @db.VarChar(20)
-
-  name        String   @db.VarChar(50)
-  active      Boolean  @default(true)
-  is_verified Boolean  @default(false)
-  created_at  DateTime @default(now()) @db.Timestamp(6)
-  updated_at  DateTime @updatedAt @db.Timestamp(6)
-
-  profiles           account_profile[]
-  verificationTokens verification_token[]
-}
-
-model profile {
-  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug         String       @unique @db.VarChar(100)
-  display_name String       @db.VarChar(150)
-  bio          String?      @db.Text
-  avatar_url   String?      @db.Text
-  type         profile_type
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt @db.Timestamp(6)
-
-  accounts  account_profile[]
-  interests profile_interest[]
-  events    event[]            @relation("ProfileEvents")
-  medias    media[]            @relation("ProfileMedias")
-
-  business          business?
-  profile_favorites profile_favorite[] @relation("FavoritedBusiness")
-  favorited_by      profile_favorite[]
-}
-
-model account_profile {
-  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  account_id String        @db.Uuid
-  profile_id String        @db.Uuid
-  role       business_role
-
-  account account @relation(fields: [account_id], references: [id], onDelete: Cascade)
-  profile profile @relation(fields: [profile_id], references: [id], onDelete: Cascade)
-
-  @@unique([account_id, profile_id])
-  @@index([account_id])
-  @@index([profile_id])
-}
-
-// ——— TOKENS DE VERIFICAÇÃO ———————————————————————————————————————————————————————
 enum token_type {
   verify_email
   reset_password
-}
-
-model verification_token {
-  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  token      String     @unique @db.VarChar(255)
-  account_id String     @db.Uuid
-  type       token_type
-  expires_at DateTime   @db.Timestamp(6)
-  used_at    DateTime?  @db.Timestamp(6)
-  created_at DateTime   @default(now()) @db.Timestamp(6)
-
-  account account @relation(fields: [account_id], references: [id], onDelete: Cascade)
-
-  @@index([account_id])
-}
-
-// ——— NEGÓCIO (BUSINESS) ——————————————————————————————————————————————————————————
-
-model business {
-  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  profile_id String  @unique @db.Uuid
-  profile    profile @relation(fields: [profile_id], references: [id], onDelete: Cascade)
-
-  cnpj            String?     @db.VarChar(20)
-  max_reach_level reach_level @default(local)
-
-  categories business_category[]
-  cities     business_city[]
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt @db.Timestamp(6)
-
-  @@index([profile_id])
-}
-
-// ——— CONTEÚDO E GEOGRAFIA ————————————————————————————————————————————————————————
-
-model city {
-  id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug          String  @unique
-  name          String
-  description   String? @db.Text
-  cover_img_url String?
-
-  location Unsupported("geometry(Point, 4326)")
-
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-
-  categories       city_category[]
-  events           event_city[]
-  businesses       business_city[]
-  medias           media[]            @relation("CityMedias")
-  profileFavorites profile_favorite[]
-
-  @@index([location], type: Gist)
-}
-
-model event {
-  id   String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug String @unique @db.VarChar(100)
-
-  // Dono do evento (Pode ser uma pessoa ou empresa)
-  owner_profile_id String  @db.Uuid
-  owner            profile @relation("ProfileEvents", fields: [owner_profile_id], references: [id], onDelete: Cascade)
-
-  name          String  @db.VarChar(200)
-  description   String? @db.Text
-  cover_img_url String?
-
-  reach_level reach_level
-  type        event_type  @default(simple)
-
-  start_date DateTime
-  end_date   DateTime
-  active     Boolean  @default(true)
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt @db.Timestamp(6)
-
-  categories       event_category[]
-  cities           event_city[]
-  medias           media[]            @relation("EventMedias")
-  profileFavorites profile_favorite[]
-
-  @@index([owner_profile_id])
-}
-
-model media {
-  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-
-  // Polimorfismo opcional: a mídia pertence a qual entidade?
-  profile_id String? @db.Uuid
-  city_id    String? @db.Uuid
-  event_id   String? @db.Uuid
-
-  media_type    media_type
-  url           String
-  thumbnail_url String?
-  is_cover      Boolean    @default(false)
-  position      Int        @default(0)
-
-  profile profile? @relation("ProfileMedias", fields: [profile_id], references: [id], onDelete: Cascade)
-  city    city?    @relation("CityMedias", fields: [city_id], references: [id], onDelete: Cascade)
-  event   event?   @relation("EventMedias", fields: [event_id], references: [id], onDelete: Cascade)
-
-  created_at DateTime @default(now())
-}
-
-// ——— RELAÇÕES N:N E AUXILIARES ———————————————————————————————————————————————————
-
-model profile_interest {
-  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  profile_id  String @db.Uuid
-  category_id String @db.Uuid
-
-  profile  profile  @relation(fields: [profile_id], references: [id], onDelete: Cascade)
-  category category @relation(fields: [category_id], references: [id], onDelete: Cascade)
-
-  @@unique([profile_id, category_id])
-}
-
-model profile_favorite {
-  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  profile_id String @db.Uuid
-
-  city_id             String? @db.Uuid
-  event_id            String? @db.Uuid
-  business_profile_id String? @db.Uuid
-
-  profile  profile  @relation(fields: [profile_id], references: [id], onDelete: Cascade)
-  city     city?    @relation(fields: [city_id], references: [id], onDelete: Cascade)
-  event    event?   @relation(fields: [event_id], references: [id], onDelete: Cascade)
-  business profile? @relation("FavoritedBusiness", fields: [business_profile_id], references: [id], onDelete: Cascade)
-
-  @@unique([profile_id, city_id])
-  @@unique([profile_id, event_id])
-  @@unique([profile_id, business_profile_id])
-}
-
-model category {
-  id        String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  parent_id String?           @db.Uuid
-  name      String            @unique
-  entities  entity_category[]
-
-  parent   category?  @relation("category_tree", fields: [parent_id], references: [id])
-  children category[] @relation("category_tree")
-
-  city_cats     city_category[]
-  business_cats business_category[]
-  event_cats    event_category[]
-  interests     profile_interest[]
-}
-
-model city_category {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  city_id     String   @db.Uuid
-  category_id String   @db.Uuid
-  city        city     @relation(fields: [city_id], references: [id], onDelete: Cascade)
-  category    category @relation(fields: [category_id], references: [id], onDelete: Cascade)
-
-  @@unique([city_id, category_id])
-}
-
-model business_category {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  business_id String   @db.Uuid
-  category_id String   @db.Uuid
-  business    business @relation(fields: [business_id], references: [id], onDelete: Cascade)
-  category    category @relation(fields: [category_id], references: [id], onDelete: Cascade)
-
-  @@unique([business_id, category_id])
-}
-
-model business_city {
-  id               String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  business_id      String  @db.Uuid
-  city_id          String  @db.Uuid
-  is_headquarter   Boolean @default(false)
-  address_specific String? @db.Text
-
-  business business @relation(fields: [business_id], references: [id], onDelete: Cascade)
-  city     city     @relation(fields: [city_id], references: [id], onDelete: Cascade)
-}
-
-model event_category {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  event_id    String   @db.Uuid
-  category_id String   @db.Uuid
-  event       event    @relation(fields: [event_id], references: [id], onDelete: Cascade)
-  category    category @relation(fields: [category_id], references: [id], onDelete: Cascade)
-
-  @@unique([event_id, category_id])
-}
-
-model event_city {
-  id               String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  event_id         String  @db.Uuid
-  city_id          String  @db.Uuid
-  address_specific String? @db.VarChar
-  event            event   @relation(fields: [event_id], references: [id], onDelete: Cascade)
-  city             city    @relation(fields: [city_id], references: [id], onDelete: Cascade)
-}
-
-model lead {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name          String    @db.VarChar(50)
-  email         String    @unique @db.VarChar(100)
-  phone_number  String    @unique @db.VarChar(20)
-  type          lead_type
-  business_name String?   @db.VarChar(50)
-  created_at    DateTime? @default(now()) @db.Timestamp(6)
-  updated_at    DateTime? @updatedAt @db.Timestamp(6)
 }

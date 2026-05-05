@@ -20,7 +20,7 @@ export class SearchService {
 			}),
 			this.prisma.business.findMany({
 				where: {
-					profile: {
+					account: {
 						display_name: {
 							contains: query,
 							mode: 'insensitive',
@@ -30,7 +30,7 @@ export class SearchService {
 				select: {
 					id: true,
 					cnpj: true,
-					profile_id: true,
+					account_id: true,
 					max_reach_level: true,
 					created_at: true,
 					updated_at: true,

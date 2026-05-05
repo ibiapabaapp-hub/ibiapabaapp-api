@@ -4,6 +4,7 @@ import { Resend } from 'resend';
 
 import { EmailStrategy, SendEmailPayload } from './email-strategy.interface';
 
+// TODO: escrever testes unitários de resend.strategy
 @Injectable()
 export class ResendStrategy implements EmailStrategy {
 	private readonly resend: Resend;

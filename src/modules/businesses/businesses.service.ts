@@ -13,13 +13,14 @@ export class BusinessesService {
 		created_at: true,
 		max_reach_level: true,
 		cnpj: true,
-		profile: {
+		account: {
 			select: {
 				id: true,
 				bio: true,
 				slug: true,
 				display_name: true,
 				avatar_url: true,
+				type: true,
 			},
 		},
 		categories: { select: { category: { select: { name: true } } } },
@@ -28,11 +29,12 @@ export class BusinessesService {
 	private mapBusiness(business: any) {
 		return {
 			id: business.id,
-			profile_id: business.profile.id,
-			slug: business.profile.slug,
-			name: business.profile.display_name,
-			bio: business.profile.bio,
-			avatar_url: business.profile.avatar_url,
+			account_id: business.account.id,
+			slug: business.account.slug,
+			name: business.account.display_name,
+			bio: business.account.bio,
+			avatar_url: business.account.avatar_url,
+			type: business.account.type,
 			max_reach_level: business.max_reach_level,
 			cnpj: business.cnpj,
 			categories: business.categories.map((c) => c.category.name),
@@ -42,7 +44,11 @@ export class BusinessesService {
 
 	async create(dto: CreateBusinessDTO) {
 		return await this.prismaService.business.create({
-			data: dto,
+			data: {
+				account_id: dto.account_id,
+				cnpj: dto.cnpj,
+				max_reach_level: dto.max_reach_level,
+			},
 		});
 	}
 

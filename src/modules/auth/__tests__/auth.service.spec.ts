@@ -6,10 +6,13 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { AccountsService } from 'src/modules/accounts/accounts.service';
+import { SecureAccountDTO } from 'src/modules/accounts/dtos/secure-account-dto';
 import { Account } from 'src/modules/accounts/entities/account.entity';
 import { JwtService } from 'src/modules/common/jwt/jwt.service';
 import { PasswordService } from 'src/modules/common/password/password.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
+import { TokenService } from 'src/modules/common/token/token.service';
+import { EmailService } from 'src/modules/email/email.service';
 
 import { AuthService } from '../auth.service';
 import { RegisterDto } from '../dtos/register.dto';
@@ -20,6 +23,8 @@ describe('AuthService', () => {
 	let passwordService: DeepMockProxy<PasswordService>;
 	let jwtService: DeepMockProxy<JwtService>;
 	let usersService: DeepMockProxy<AccountsService>;
+	let _tokenService: DeepMockProxy<TokenService>;
+	let _emailService: DeepMockProxy<EmailService>;
 
 	beforeEach(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -35,6 +40,8 @@ describe('AuthService', () => {
 					provide: AccountsService,
 					useValue: mockDeep<AccountsService>(),
 				},
+				{ provide: TokenService, useValue: mockDeep<TokenService>() },
+				{ provide: EmailService, useValue: mockDeep<EmailService>() },
 			],
 		}).compile();
 
@@ -43,6 +50,8 @@ describe('AuthService', () => {
 		passwordService = module.get(PasswordService);
 		jwtService = module.get(JwtService);
 		usersService = module.get(AccountsService);
+		_tokenService = module.get(TokenService);
+		_emailService = module.get(EmailService);
 
 		jest.clearAllMocks();
 	});
@@ -66,6 +75,12 @@ describe('AuthService', () => {
 				// birth_date: new Date(),
 				created_at: new Date(),
 				updated_at: new Date(),
+				is_verified: false,
+				slug: '',
+				display_name: '',
+				bio: null,
+				avatar_url: null,
+				type: 'business',
 			};
 
 			usersService.findOneByEmail.mockResolvedValue(mockAccount);
@@ -127,10 +142,13 @@ describe('AuthService', () => {
 			const result = await service.register({
 				name: 'John',
 				email: 'test@test.com',
-				birth_date: new Date(),
+				slug: 'john',
+				phone_number: '123',
+				display_name: 'John',
+				// birth_date: new Date(),
 				password: '123',
 				password_confirm: '123',
-			} as RegisterDto);
+			});
 
 			expect(result?.account).not.toHaveProperty('password');
 			expect(usersService.create).toHaveBeenCalled();
@@ -146,7 +164,7 @@ describe('AuthService', () => {
 			});
 			usersService.findOneById.mockResolvedValue({
 				id: '1',
-			} as Account);
+			} as SecureAccountDTO);
 			jwtService.sign.mockReturnValue('token');
 
 			const result = await service.refreshTokens('refresh');

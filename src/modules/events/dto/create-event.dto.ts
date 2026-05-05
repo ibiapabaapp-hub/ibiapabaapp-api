@@ -20,7 +20,7 @@ export class CreateEventDTO {
 		type: String,
 	})
 	@IsUUID('4')
-	owner_profile_id: string;
+	owner_account_id: string;
 
 	@ApiProperty({
 		example: 'Evento Importante',

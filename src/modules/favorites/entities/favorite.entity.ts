@@ -1,9 +1,9 @@
-import { profile_favorite } from '@prisma/client';
+import { account_favorite } from '@prisma/client';
 
-export class Favorite implements profile_favorite {
+export class Favorite implements account_favorite {
 	id: string;
-	profile_id: string;
+	account_id: string;
 	city_id: string | null;
 	event_id: string | null;
-	business_profile_id: string | null;
+	business_id: string | null;
 }

@@ -11,10 +11,7 @@ import { PasswordService } from 'src/modules/common/password/password.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
 import { CreateAccountDTO } from './dtos/create-account.dto';
-import {
-	SecureAccountDTO,
-	SecureAccountWithProfilesDTO,
-} from './dtos/secure-account-dto';
+import { SecureAccountDTO } from './dtos/secure-account-dto';
 import { UpdateAccountDTO } from './dtos/update-account.dto';
 import { Account } from './entities/account.entity';
 
@@ -41,6 +38,12 @@ export class AccountsService {
 				email: data.email.trim(),
 				password: await this.passwordService.hashPassword(data.password),
 				phone_number: data.phone_number,
+				// Profile fields
+				slug: data.slug,
+				display_name: data.display_name,
+				bio: data.bio,
+				avatar_url: data.avatar_url,
+				type: data.type || 'personal',
 			},
 			omit: { password: true },
 		});
@@ -76,16 +79,12 @@ export class AccountsService {
 		const account = await this.prismaService.account.findFirst({
 			where: { id },
 			include: {
-				profiles: {
+				interests: {
 					select: {
-						profile: {
+						category: {
 							select: {
 								id: true,
-								slug: true,
-								display_name: true,
-								bio: true,
-								avatar_url: true,
-								interests: true,
+								name: true,
 							},
 						},
 					},
@@ -98,7 +97,7 @@ export class AccountsService {
 			throw new NotFoundException('User not found');
 		}
 
-		return new SecureAccountWithProfilesDTO(account);
+		return new SecureAccountDTO(account);
 	}
 
 	async findOneById(id: string) {

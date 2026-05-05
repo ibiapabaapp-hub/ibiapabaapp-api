@@ -7,10 +7,16 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoriesService {
-	constructor(private readonly prisma: PrismaService) {}
+	constructor(private readonly prisma: PrismaService) { }
 	create(createCategoryDto: CreateCategoryDto) {
 		return this.prisma.category.create({
 			data: createCategoryDto,
+		});
+	}
+
+	findAll() {
+		return this.prisma.category.findMany({
+			orderBy: { name: 'asc' },
 		});
 	}
 
