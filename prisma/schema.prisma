@@ -3,6 +3,13 @@ generator client {
   previewFeatures = ["postgresqlExtensions"]
 }
 
+generator dbml {
+  provider = "prisma-dbml-generator"
+  outputName = "ibiapabaappdb_er.dbml"
+  projectName = "IbiapabaAppDB"
+  projectDatabaseType = "PostgreSQL"
+}
+
 datasource db {
   provider   = "postgresql"
   extensions = [postgis]
@@ -83,7 +90,9 @@ model profile {
   events    event[]            @relation("ProfileEvents")
   medias    media[]            @relation("ProfileMedias")
 
-  business business?
+  business          business?
+  profile_favorites profile_favorite[] @relation("FavoritedBusiness")
+  favorited_by      profile_favorite[]
 }
 
 model account_profile {
@@ -153,10 +162,11 @@ model city {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  categories city_category[]
-  events     event_city[]
-  businesses business_city[]
-  medias     media[]         @relation("CityMedias")
+  categories       city_category[]
+  events           event_city[]
+  businesses       business_city[]
+  medias           media[]            @relation("CityMedias")
+  profileFavorites profile_favorite[]
 
   @@index([location], type: Gist)
 }
@@ -183,9 +193,10 @@ model event {
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt @db.Timestamp(6)
 
-  categories event_category[]
-  cities     event_city[]
-  medias     media[]          @relation("EventMedias")
+  categories       event_category[]
+  cities           event_city[]
+  medias           media[]            @relation("EventMedias")
+  profileFavorites profile_favorite[]
 
   @@index([owner_profile_id])
 }
@@ -222,6 +233,24 @@ model profile_interest {
   category category @relation(fields: [category_id], references: [id], onDelete: Cascade)
 
   @@unique([profile_id, category_id])
+}
+
+model profile_favorite {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profile_id String @db.Uuid
+
+  city_id             String? @db.Uuid
+  event_id            String? @db.Uuid
+  business_profile_id String? @db.Uuid
+
+  profile  profile  @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+  city     city?    @relation(fields: [city_id], references: [id], onDelete: Cascade)
+  event    event?   @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  business profile? @relation("FavoritedBusiness", fields: [business_profile_id], references: [id], onDelete: Cascade)
+
+  @@unique([profile_id, city_id])
+  @@unique([profile_id, event_id])
+  @@unique([profile_id, business_profile_id])
 }
 
 model category {
