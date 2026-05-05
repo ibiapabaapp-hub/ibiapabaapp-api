@@ -10,9 +10,10 @@ import {
 	HttpCode,
 	HttpStatus,
 } from '@nestjs/common';
-import { ReviewsService } from './reviews.service';
+
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
+import { ReviewsService } from './reviews.service';
 
 @Controller('reviews')
 export class ReviewsController {
@@ -32,11 +33,6 @@ export class ReviewsController {
 		return this.reviewsService.findAll(businessId, eventId);
 	}
 
-	@Get('account/:accountId')
-	findByAccount(@Param('accountId') accountId: string) {
-		return this.reviewsService.findByAccount(accountId);
-	}
-
 	@Get('business/:businessId/average')
 	getBusinessAverage(@Param('businessId') businessId: string) {
 		return this.reviewsService.getAverageRating(businessId);
@@ -45,6 +41,11 @@ export class ReviewsController {
 	@Get('event/:eventId/average')
 	getEventAverage(@Param('eventId') eventId: string) {
 		return this.reviewsService.getAverageRating(undefined, eventId);
+	}
+
+	@Get('account/:accountId')
+	findByAccount(@Param('accountId') accountId: string) {
+		return this.reviewsService.findByAccount(accountId);
 	}
 
 	@Get(':id')

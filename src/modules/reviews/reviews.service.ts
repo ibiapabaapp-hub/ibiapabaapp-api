@@ -1,5 +1,11 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+	Injectable,
+	NotFoundException,
+	ConflictException,
+	BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
+
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 
@@ -25,105 +31,83 @@ export class ReviewsService {
 		},
 	};
 
-	private mapReview(review: any) {
-		return {
-			id: review.id,
-			account_id: review.account_id,
-			business_id: review.business_id,
-			event_id: review.event_id,
-			rating: review.rating,
-			comment: review.comment,
-			created_at: review.created_at,
-			updated_at: review.updated_at,
-			account: review.account,
-		};
-	}
-
 	async create(dto: CreateReviewDto) {
-		// Validate that exactly one entity type is provided
-		const entityCount = [dto.business_id, dto.event_id].filter(Boolean).length;
-		if (entityCount !== 1) {
-			throw new BadRequestException('Deve ser fornecido exatamente um business_id ou event_id');
+		try {
+			const entityCount = [dto.business_id, dto.event_id].filter(
+				Boolean,
+			).length;
+			if (entityCount !== 1) {
+				throw new BadRequestException(
+					'Must provide exactly one business_id or event_id',
+				);
+			}
+
+			if (dto.business_id) {
+				const business = await this.prismaService.business.findUnique({
+					where: { id: dto.business_id },
+				});
+				if (!business) {
+					throw new NotFoundException('Business not found');
+				}
+			}
+
+			if (dto.event_id) {
+				const event = await this.prismaService.event.findUnique({
+					where: { id: dto.event_id },
+				});
+				if (!event) {
+					throw new NotFoundException('Event not found');
+				}
+			}
+
+			const review = await this.prismaService.review.create({
+				data: dto,
+				select: this.select,
+			});
+
+			return review;
+		} catch (error) {
+			if (error.code === 'P2002') {
+				// Unique constraint violation
+				throw new ConflictException(
+					'You have already rated this business/event',
+				);
+			}
+			throw error;
 		}
-
-		// Check if review already exists
-		const existingReview = await this.prismaService.review.findFirst({
-			where: {
-				account_id: dto.account_id,
-				OR: [
-					{ business_id: dto.business_id },
-					{ event_id: dto.event_id },
-				].filter(condition => condition.business_id !== undefined || condition.event_id !== undefined),
-			},
-		});
-
-		if (existingReview) {
-			throw new ConflictException('Você já avaliou este negócio/evento');
-		}
-
-		const review = await this.prismaService.review.create({
-			data: dto,
-			include: {
-				account: {
-					select: {
-						id: true,
-						display_name: true,
-						avatar_url: true,
-					},
-				},
-			},
-		});
-
-		return this.mapReview(review);
 	}
 
 	async findAll(businessId?: string, eventId?: string) {
 		const where: any = {};
-		
+
 		if (businessId) {
 			where.business_id = businessId;
 		}
-		
+
 		if (eventId) {
 			where.event_id = eventId;
 		}
 
 		const reviews = await this.prismaService.review.findMany({
 			where,
-			include: {
-				account: {
-					select: {
-						id: true,
-						display_name: true,
-						avatar_url: true,
-					},
-				},
-			},
+			select: this.select,
 			orderBy: { created_at: 'desc' },
 		});
 
-		return reviews.map(review => this.mapReview(review));
+		return reviews;
 	}
 
 	async findOne(id: string) {
 		const review = await this.prismaService.review.findUnique({
 			where: { id },
-			include: {
-				account: {
-					select: {
-						id: true,
-						display_name: true,
-						avatar_url: true,
-					},
-				},
-			},
+			select: this.select,
 		});
 
 		if (!review) {
-			throw new NotFoundException('Review não encontrada');
+			throw new NotFoundException('Review not found');
 		}
 
-		return this.mapReview(review);
+		return review;
 	}
 
 	async update(id: string, dto: UpdateReviewDto) {
@@ -132,24 +116,16 @@ export class ReviewsService {
 		});
 
 		if (!existingReview) {
-			throw new NotFoundException('Review não encontrada');
+			throw new NotFoundException('Review not found');
 		}
 
 		const updatedReview = await this.prismaService.review.update({
 			where: { id },
 			data: dto,
-			include: {
-				account: {
-					select: {
-						id: true,
-						display_name: true,
-						avatar_url: true,
-					},
-				},
-			},
+			select: this.select,
 		});
 
-		return this.mapReview(updatedReview);
+		return updatedReview;
 	}
 
 	async remove(id: string) {
@@ -158,19 +134,19 @@ export class ReviewsService {
 		});
 
 		if (!existingReview) {
-			throw new NotFoundException('Review não encontrada');
+			throw new NotFoundException('Review not found');
 		}
 
 		await this.prismaService.review.delete({
 			where: { id },
 		});
 
-		return { message: 'Review removida com sucesso' };
+		return { message: 'Review removed successfully' };
 	}
 
 	async getAverageRating(businessId?: string, eventId?: string) {
 		if (!businessId && !eventId) {
-			throw new BadRequestException('Deve ser fornecido business_id ou event_id');
+			throw new BadRequestException('Must provide business_id or event_id');
 		}
 
 		const where: any = {};
@@ -200,18 +176,10 @@ export class ReviewsService {
 	async findByAccount(accountId: string) {
 		const reviews = await this.prismaService.review.findMany({
 			where: { account_id: accountId },
-			include: {
-				account: {
-					select: {
-						id: true,
-						display_name: true,
-						avatar_url: true,
-					},
-				},
-			},
+			select: this.select,
 			orderBy: { created_at: 'desc' },
 		});
 
-		return reviews.map(review => this.mapReview(review));
+		return reviews;
 	}
 }

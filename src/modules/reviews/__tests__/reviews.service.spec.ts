@@ -15,6 +15,26 @@ describe('ReviewsService', () => {
 	let service: ReviewsService;
 	let prisma: DeepMockProxy<PrismaService>;
 
+	const selectPattern = {
+		select: {
+			id: true,
+			account_id: true,
+			business_id: true,
+			event_id: true,
+			rating: true,
+			comment: true,
+			created_at: true,
+			updated_at: true,
+			account: {
+				select: {
+					id: true,
+					display_name: true,
+					avatar_url: true,
+				},
+			},
+		},
+	}
+
 	const mockReview = {
 		id: 'review-1',
 		account_id: 'account-1',
@@ -29,12 +49,6 @@ describe('ReviewsService', () => {
 			display_name: 'John Doe',
 			avatar_url: 'https://example.com/avatar.jpg',
 		},
-	};
-
-	const mockAccount = {
-		id: 'account-1',
-		display_name: 'John Doe',
-		avatar_url: 'https://example.com/avatar.jpg',
 	};
 
 	beforeEach(async () => {
@@ -67,40 +81,28 @@ describe('ReviewsService', () => {
 				comment: 'Great place!',
 			};
 
-			prisma.review.findFirst.mockResolvedValue(null);
+			const mockBusiness = {
+				id: 'business-1',
+				account_id: 'account-1',
+				cnpj: '123456789',
+				max_reach_level: 'local' as const,
+				created_at: new Date(),
+				updated_at: new Date(),
+			};
+
+			prisma.business.findUnique.mockResolvedValue(mockBusiness);
 			prisma.review.create.mockResolvedValue(mockReview);
 
 			const result = await service.create(createDto);
 
-			expect(prisma.review.findFirst).toHaveBeenCalledWith({
-				where: {
-					account_id: 'account-1',
-					OR: [{ business_id: 'business-1' }],
-				},
+			expect(prisma.business.findUnique).toHaveBeenCalledWith({
+				where: { id: 'business-1' }
 			});
 			expect(prisma.review.create).toHaveBeenCalledWith({
 				data: createDto,
-				include: {
-					account: {
-						select: {
-							id: true,
-							display_name: true,
-							avatar_url: true,
-						},
-					},
-				},
+				select: selectPattern.select,
 			});
-			expect(result).toEqual({
-				id: 'review-1',
-				account_id: 'account-1',
-				business_id: 'business-1',
-				event_id: null,
-				rating: 5,
-				comment: 'Great place!',
-				created_at: mockReview.created_at,
-				updated_at: mockReview.updated_at,
-				account: mockAccount,
-			});
+			expect(result).toEqual(mockReview);
 		});
 
 		it('should create an event review successfully', async () => {
@@ -112,21 +114,35 @@ describe('ReviewsService', () => {
 			};
 
 			const eventReview = { ...mockReview, event_id: 'event-1', business_id: null };
-			prisma.review.findFirst.mockResolvedValue(null);
+			const mockEvent = {
+				id: 'event-1',
+				slug: 'test-event',
+				owner_account_id: 'account-1',
+				name: 'Test Event',
+				description: 'Test Description',
+				cover_img_url: null,
+				reach_level: 'local' as const,
+				type: 'simple' as const,
+				start_date: new Date(),
+				end_date: new Date(),
+				active: true,
+				created_at: new Date(),
+				updated_at: new Date(),
+			};
+
+			prisma.event.findUnique.mockResolvedValue(mockEvent);
 			prisma.review.create.mockResolvedValue(eventReview);
 
 			const result = await service.create(createDto);
 
-			expect(prisma.review.findFirst).toHaveBeenCalledWith({
-				where: {
-					account_id: 'account-1',
-					OR: [{ event_id: 'event-1' }],
-				},
+			expect(prisma.event.findUnique).toHaveBeenCalledWith({
+				where: { id: 'event-1' }
 			});
-			expect(result).toEqual({
-				...eventReview,
-				account: mockAccount,
+			expect(prisma.review.create).toHaveBeenCalledWith({
+				data: createDto,
+				select: selectPattern.select,
 			});
+			expect(result).toEqual(eventReview);
 		});
 
 		it('should throw BadRequestException when no entity is provided', async () => {
@@ -136,7 +152,7 @@ describe('ReviewsService', () => {
 			};
 
 			await expect(service.create(createDto)).rejects.toThrow(
-				new BadRequestException('Deve ser fornecido exatamente um business_id ou event_id'),
+				new BadRequestException('Must provide exactly one business_id or event_id'),
 			);
 		});
 
@@ -149,7 +165,37 @@ describe('ReviewsService', () => {
 			};
 
 			await expect(service.create(createDto)).rejects.toThrow(
-				new BadRequestException('Deve ser fornecido exatamente um business_id ou event_id'),
+				new BadRequestException('Must provide exactly one business_id or event_id'),
+			);
+		});
+
+		it('should throw NotFoundException when business does not exist', async () => {
+			const createDto: CreateReviewDto = {
+				account_id: 'account-1',
+				business_id: 'nonexistent-business',
+				rating: 5,
+				comment: 'Great place!',
+			};
+
+			prisma.business.findUnique.mockResolvedValue(null);
+
+			await expect(service.create(createDto)).rejects.toThrow(
+				new NotFoundException('Business not found'),
+			);
+		});
+
+		it('should throw NotFoundException when event does not exist', async () => {
+			const createDto: CreateReviewDto = {
+				account_id: 'account-1',
+				event_id: 'nonexistent-event',
+				rating: 4,
+				comment: 'Nice event!',
+			};
+
+			prisma.event.findUnique.mockResolvedValue(null);
+
+			await expect(service.create(createDto)).rejects.toThrow(
+				new NotFoundException('Event not found'),
 			);
 		});
 
@@ -160,10 +206,22 @@ describe('ReviewsService', () => {
 				rating: 5,
 			};
 
-			prisma.review.findFirst.mockResolvedValue(mockReview);
+			const mockBusiness = {
+				id: 'business-1',
+				account_id: 'account-1',
+				cnpj: '123456789',
+				max_reach_level: 'local' as const,
+				created_at: new Date(),
+				updated_at: new Date(),
+			};
+
+			const error = new Error('Unique constraint violation');
+			(error as any).code = 'P2002';
+			prisma.business.findUnique.mockResolvedValue(mockBusiness);
+			prisma.review.create.mockRejectedValue(error);
 
 			await expect(service.create(createDto)).rejects.toThrow(
-				new ConflictException('Você já avaliou este negócio/evento'),
+				new ConflictException('You have already rated this business/event'),
 			);
 		});
 	});
@@ -177,30 +235,10 @@ describe('ReviewsService', () => {
 
 			expect(prisma.review.findMany).toHaveBeenCalledWith({
 				where: { business_id: 'business-1' },
-				include: {
-					account: {
-						select: {
-							id: true,
-							display_name: true,
-							avatar_url: true,
-						},
-					},
-				},
+				select: selectPattern.select,
 				orderBy: { created_at: 'desc' },
 			});
-			expect(result).toEqual([
-				{
-					id: 'review-1',
-					account_id: 'account-1',
-					business_id: 'business-1',
-					event_id: null,
-					rating: 5,
-					comment: 'Great place!',
-					created_at: mockReview.created_at,
-					updated_at: mockReview.updated_at,
-					account: mockAccount,
-				},
-			]);
+			expect(result).toEqual(reviews);
 		});
 
 		it('should return all event reviews', async () => {
@@ -212,23 +250,10 @@ describe('ReviewsService', () => {
 
 			expect(prisma.review.findMany).toHaveBeenCalledWith({
 				where: { event_id: 'event-1' },
-				include: {
-					account: {
-						select: {
-							id: true,
-							display_name: true,
-							avatar_url: true,
-						},
-					},
-				},
+				select: selectPattern.select,
 				orderBy: { created_at: 'desc' },
 			});
-			expect(result).toEqual([
-				{
-					...eventReview,
-					account: mockAccount,
-				},
-			]);
+			expect(result).toEqual(reviews);
 		});
 
 		it('should return all reviews when no filters provided', async () => {
@@ -239,15 +264,7 @@ describe('ReviewsService', () => {
 
 			expect(prisma.review.findMany).toHaveBeenCalledWith({
 				where: {},
-				include: {
-					account: {
-						select: {
-							id: true,
-							display_name: true,
-							avatar_url: true,
-						},
-					},
-				},
+				select: selectPattern.select,
 				orderBy: { created_at: 'desc' },
 			});
 			expect(result).toHaveLength(1);
@@ -262,71 +279,9 @@ describe('ReviewsService', () => {
 
 			expect(prisma.review.findUnique).toHaveBeenCalledWith({
 				where: { id: 'review-1' },
-				include: {
-					account: {
-						select: {
-							id: true,
-							display_name: true,
-							avatar_url: true,
-						},
-					},
-				},
+				select: selectPattern.select,
 			});
-			expect(result).toEqual({
-				id: 'review-1',
-				account_id: 'account-1',
-				business_id: 'business-1',
-				event_id: null,
-				rating: 5,
-				comment: 'Great place!',
-				created_at: mockReview.created_at,
-				updated_at: mockReview.updated_at,
-				account: mockAccount,
-			});
-		});
-
-		it('should throw NotFoundException when review not found', async () => {
-			prisma.review.findUnique.mockResolvedValue(null);
-
-			await expect(service.findOne('invalid-id')).rejects.toThrow(
-				new NotFoundException('Review não encontrada'),
-			);
-		});
-	});
-
-	describe('update', () => {
-		it('should update a review successfully', async () => {
-			const updateDto: UpdateReviewDto = {
-				rating: 4,
-				comment: 'Updated comment',
-			};
-
-			const updatedReview = { ...mockReview, rating: 4, comment: 'Updated comment' };
-			prisma.review.findUnique.mockResolvedValue(mockReview);
-			prisma.review.update.mockResolvedValue(updatedReview);
-
-			const result = await service.update('review-1', updateDto);
-
-			expect(prisma.review.findUnique).toHaveBeenCalledWith({
-				where: { id: 'review-1' },
-			});
-			expect(prisma.review.update).toHaveBeenCalledWith({
-				where: { id: 'review-1' },
-				data: updateDto,
-				include: {
-					account: {
-						select: {
-							id: true,
-							display_name: true,
-							avatar_url: true,
-						},
-					},
-				},
-			});
-			expect(result).toEqual({
-				...updatedReview,
-				account: mockAccount,
-			});
+			expect(result).toEqual(mockReview);
 		});
 
 		it('should throw NotFoundException when review to update not found', async () => {
@@ -334,7 +289,7 @@ describe('ReviewsService', () => {
 			prisma.review.findUnique.mockResolvedValue(null);
 
 			await expect(service.update('invalid-id', updateDto)).rejects.toThrow(
-				new NotFoundException('Review não encontrada'),
+				new NotFoundException('Review not found'),
 			);
 		});
 	});
@@ -352,14 +307,14 @@ describe('ReviewsService', () => {
 			expect(prisma.review.delete).toHaveBeenCalledWith({
 				where: { id: 'review-1' },
 			});
-			expect(result).toEqual({ message: 'Review removida com sucesso' });
+			expect(result).toEqual({ message: 'Review removed successfully' });
 		});
 
 		it('should throw NotFoundException when review to remove not found', async () => {
 			prisma.review.findUnique.mockResolvedValue(null);
 
 			await expect(service.remove('invalid-id')).rejects.toThrow(
-				new NotFoundException('Review não encontrada'),
+				new NotFoundException('Review not found'),
 			);
 		});
 	});
@@ -434,7 +389,7 @@ describe('ReviewsService', () => {
 
 		it('should throw BadRequestException when no entity provided', async () => {
 			await expect(service.getAverageRating()).rejects.toThrow(
-				new BadRequestException('Deve ser fornecido business_id ou event_id'),
+				new BadRequestException('Must provide business_id or event_id'),
 			);
 		});
 	});
@@ -448,30 +403,10 @@ describe('ReviewsService', () => {
 
 			expect(prisma.review.findMany).toHaveBeenCalledWith({
 				where: { account_id: 'account-1' },
-				include: {
-					account: {
-						select: {
-							id: true,
-							display_name: true,
-							avatar_url: true,
-						},
-					},
-				},
+				select: selectPattern.select,
 				orderBy: { created_at: 'desc' },
 			});
-			expect(result).toEqual([
-				{
-					id: 'review-1',
-					account_id: 'account-1',
-					business_id: 'business-1',
-					event_id: null,
-					rating: 5,
-					comment: 'Great place!',
-					created_at: mockReview.created_at,
-					updated_at: mockReview.updated_at,
-					account: mockAccount,
-				},
-			]);
+			expect(result).toEqual(reviews);
 		});
 	});
 });

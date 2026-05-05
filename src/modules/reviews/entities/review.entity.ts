@@ -1,10 +1,12 @@
-export class Review {
+import { review } from "@prisma/client";
+
+export class Review implements review {
 	id: string;
 	account_id: string;
-	business_id?: string;
-	event_id?: string;
+	business_id: string | null;
+	event_id: string | null;
 	rating: number;
-	comment?: string;
+	comment: string | null;
 	created_at: Date;
 	updated_at: Date;
 }
