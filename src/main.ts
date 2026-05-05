@@ -87,9 +87,9 @@ function initDocs() {
 	const config = new DocumentBuilder()
 		.setTitle('IbiapabaAppAPI')
 		.setDescription(
-			'Ponte entre o IbiapabaApp mobile e web para a persistência de dados',
+			'API RESTful para a plataforma IbiapabaApp com modelo de contas unificado que combina autenticação e perfil em uma única entidade',
 		)
-		.setVersion('1.0')
+		.setVersion('2.0')
 		.build();
 
 	if (process.env.NODE_ENV !== 'production') {

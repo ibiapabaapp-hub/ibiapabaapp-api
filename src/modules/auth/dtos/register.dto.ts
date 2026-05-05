@@ -1,10 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { account_type } from '@prisma/client';
 import {
 	IsEmail,
 	IsString,
 	Matches,
 	MaxLength,
 	MinLength,
+	IsOptional,
+	IsEnum,
 } from 'class-validator';
 
 export class RegisterDto {
@@ -13,11 +16,14 @@ export class RegisterDto {
 	@IsString()
 	name: string;
 
-	@ApiProperty({ example: 'joaosilva' })
-	@MaxLength(50)
+	@ApiProperty({
+		example: 'joaosilva',
+		description: 'Unique slug for the account',
+	})
+	@MaxLength(100)
 	@MinLength(4)
 	@IsString()
-	username: string;
+	slug: string;
 
 	@ApiProperty({ example: 'joao@email.com' })
 	@IsString()
@@ -48,4 +54,31 @@ export class RegisterDto {
 	@IsString()
 	@MinLength(8)
 	password_confirm: string;
+
+	// Profile fields
+	@ApiProperty({
+		example: 'João Silva',
+		description: 'Display name for the account',
+	})
+	@MaxLength(150)
+	@IsString()
+	display_name: string;
+
+	@ApiProperty({
+		example: 'Software developer passionate about technology',
+		required: false,
+	})
+	@IsOptional()
+	@IsString()
+	bio?: string;
+
+	@ApiProperty({ example: 'https://example.com/avatar.jpg', required: false })
+	@IsOptional()
+	@IsString()
+	avatar_url?: string;
+
+	@ApiProperty({ enum: account_type, example: 'personal', required: false })
+	@IsOptional()
+	@IsEnum(account_type)
+	type?: account_type;
 }

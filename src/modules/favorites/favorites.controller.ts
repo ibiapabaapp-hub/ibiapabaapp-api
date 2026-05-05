@@ -15,9 +15,9 @@ import {
 	ApiResponse,
 } from '@nestjs/swagger';
 
-import { FavoritesService } from './favorites.service';
 import { CreateFavoriteDTO } from './dto/create-favorite.dto';
 import { Favorite } from './entities/favorite.entity';
+import { FavoritesService } from './favorites.service';
 
 @Controller({ path: 'favorites', version: '1' })
 export class FavoritesController {
@@ -37,8 +37,8 @@ export class FavoritesController {
 	@ApiOperation({ summary: 'Listar todos os favoritos' })
 	@ApiResponse({ status: 200, type: Favorite, isArray: true })
 	@Get()
-	findAll(@Query('profile_id') profileId?: string) {
-		return this.favoritesService.findAll(profileId);
+	findAll(@Query('account_id') accountId?: string) {
+		return this.favoritesService.findAll(accountId);
 	}
 
 	@ApiBearerAuth()

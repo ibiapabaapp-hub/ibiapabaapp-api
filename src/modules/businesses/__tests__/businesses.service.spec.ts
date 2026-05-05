@@ -26,7 +26,17 @@ describe('BusinessesService', () => {
 			const mockPrismaResponse = [
 				{
 					id: '1',
-					name: 'Empresa A',
+					created_at: new Date(),
+					max_reach_level: 'local',
+					cnpj: '12345678',
+					account: {
+						id: 'account-1',
+						bio: 'Test bio',
+						slug: 'test-business',
+						display_name: 'Test Business',
+						avatar_url: 'http://example.com/avatar.jpg',
+						type: 'business',
+					},
 					categories: [
 						{ category: { name: 'Alimentação' } },
 						{ category: { name: 'Turismo' } },
@@ -40,6 +50,8 @@ describe('BusinessesService', () => {
 			const result = await service.findAll();
 
 			expect(result[0].categories).toEqual(['Alimentação', 'Turismo']);
+			expect(result[0].name).toBe('Test Business');
+			expect(result[0].account_id).toBe('account-1');
 			expect(prisma.business.findMany).toHaveBeenCalledWith(
 				expect.objectContaining({
 					select: expect.anything(),
@@ -58,7 +70,17 @@ describe('BusinessesService', () => {
 		it('should return a single business with flattened categories', async () => {
 			const mockBusiness = {
 				id: '1',
-				name: 'Empresa B',
+				created_at: new Date(),
+				max_reach_level: 'local',
+				cnpj: '12345678',
+				account: {
+					id: 'account-1',
+					bio: 'Test bio',
+					slug: 'test-business',
+					display_name: 'Test Business',
+					avatar_url: 'http://example.com/avatar.jpg',
+					type: 'business',
+				},
 				categories: [{ category: { name: 'Tecnologia' } }],
 			};
 
@@ -68,6 +90,7 @@ describe('BusinessesService', () => {
 			const result = await service.findOne('1');
 
 			expect(result.id).toBe('1');
+			expect(result.name).toBe('Test Business');
 			expect(result.categories).toEqual(['Tecnologia']);
 			expect(prisma.business.findUnique).toHaveBeenCalled();
 		});
@@ -76,10 +99,33 @@ describe('BusinessesService', () => {
 	describe('remove', () => {
 		it('should call prisma delete with correct id', async () => {
 			const id = 'uuid-teste';
-			await service.remove(id);
+			const mockDeletedBusiness = {
+				id: 'uuid-teste',
+				created_at: new Date(),
+				max_reach_level: 'local',
+				cnpj: '12345678',
+				account: {
+					id: 'account-1',
+					bio: 'Test bio',
+					slug: 'test-business',
+					display_name: 'Test Business',
+					avatar_url: 'http://example.com/avatar.jpg',
+					type: 'business',
+				},
+				categories: [],
+			};
+
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			prisma.business.delete.mockResolvedValue(mockDeletedBusiness as any);
+
+			const result = await service.remove(id);
+
 			expect(prisma.business.delete).toHaveBeenCalledWith({
 				where: { id },
+				select: expect.anything(),
 			});
+			expect(result.id).toBe('uuid-teste');
+			expect(result.name).toBe('Test Business');
 		});
 	});
 });

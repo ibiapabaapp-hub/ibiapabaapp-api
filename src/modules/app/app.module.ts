@@ -17,7 +17,6 @@ import { PrismaModule } from '../../modules/common/prisma/prisma.module';
 import { EventsModule } from '../../modules/events/events.module';
 import { LeadsModule } from '../../modules/leads/leads.module';
 import { MediasModule } from '../../modules/medias/medias.module';
-import { ProfilesModule } from '../../modules/profiles/profiles.module';
 import { SearchModule } from '../../modules/search/search.module';
 import { AccountsModule } from '../accounts/accounts.module';
 import { BusinessesModule } from '../businesses/businesses.module';
@@ -69,7 +68,6 @@ import { AppService } from './app.service';
 		EventsModule,
 		FavoritesModule,
 		CategoriesModule,
-		ProfilesModule,
 	],
 	controllers: [AppController],
 	providers: [

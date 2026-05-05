@@ -5,13 +5,10 @@ CREATE EXTENSION IF NOT EXISTS "postgis";
 CREATE TYPE "lead_type" AS ENUM ('resident', 'tourist', 'business');
 
 -- CreateEnum
-CREATE TYPE "profile_type" AS ENUM ('personal', 'business');
+CREATE TYPE "account_type" AS ENUM ('personal', 'business');
 
 -- CreateEnum
 CREATE TYPE "reach_level" AS ENUM ('local', 'regional');
-
--- CreateEnum
-CREATE TYPE "business_role" AS ENUM ('owner', 'admin', 'editor', 'viewer');
 
 -- CreateEnum
 CREATE TYPE "event_type" AS ENUM ('simple', 'featured');
@@ -22,14 +19,23 @@ CREATE TYPE "media_type" AS ENUM ('image', 'video');
 -- CreateEnum
 CREATE TYPE "entity_category" AS ENUM ('city', 'business', 'event');
 
+-- CreateEnum
+CREATE TYPE "token_type" AS ENUM ('verify_email', 'reset_password');
+
 -- CreateTable
 CREATE TABLE "account" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "email" VARCHAR(255) NOT NULL,
     "password" VARCHAR(255) NOT NULL,
     "phone_number" VARCHAR(20) NOT NULL,
+    "slug" VARCHAR(100) NOT NULL,
+    "display_name" VARCHAR(150) NOT NULL,
+    "bio" TEXT,
+    "avatar_url" TEXT,
+    "type" "account_type" NOT NULL DEFAULT 'personal',
     "name" VARCHAR(50) NOT NULL,
     "active" BOOLEAN NOT NULL DEFAULT true,
+    "is_verified" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(6) NOT NULL,
 
@@ -37,33 +43,22 @@ CREATE TABLE "account" (
 );
 
 -- CreateTable
-CREATE TABLE "profile" (
+CREATE TABLE "verification_token" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "slug" VARCHAR(100) NOT NULL,
-    "display_name" VARCHAR(150) NOT NULL,
-    "bio" TEXT,
-    "avatar_url" TEXT,
-    "type" "profile_type" NOT NULL,
-    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL,
-
-    CONSTRAINT "profile_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "account_profile" (
-    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "token" VARCHAR(255) NOT NULL,
     "account_id" UUID NOT NULL,
-    "profile_id" UUID NOT NULL,
-    "role" "business_role" NOT NULL,
+    "type" "token_type" NOT NULL,
+    "expires_at" TIMESTAMP(6) NOT NULL,
+    "used_at" TIMESTAMP(6),
+    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "account_profile_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "verification_token_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "business" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "profile_id" UUID NOT NULL,
+    "account_id" UUID NOT NULL,
     "cnpj" VARCHAR(20),
     "max_reach_level" "reach_level" NOT NULL DEFAULT 'local',
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -79,7 +74,7 @@ CREATE TABLE "city" (
     "name" TEXT NOT NULL,
     "description" TEXT,
     "cover_img_url" TEXT,
-    "location" geometry(Point, 4326) NOT NULL,
+    "location" geometry NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -90,7 +85,7 @@ CREATE TABLE "city" (
 CREATE TABLE "event" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "slug" VARCHAR(100) NOT NULL,
-    "owner_profile_id" UUID NOT NULL,
+    "owner_account_id" UUID NOT NULL,
     "name" VARCHAR(200) NOT NULL,
     "description" TEXT,
     "cover_img_url" TEXT,
@@ -108,7 +103,7 @@ CREATE TABLE "event" (
 -- CreateTable
 CREATE TABLE "media" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "profile_id" UUID,
+    "account_id" UUID,
     "city_id" UUID,
     "event_id" UUID,
     "media_type" "media_type" NOT NULL,
@@ -122,12 +117,23 @@ CREATE TABLE "media" (
 );
 
 -- CreateTable
-CREATE TABLE "profile_interest" (
+CREATE TABLE "account_favorite" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-    "profile_id" UUID NOT NULL,
+    "account_id" UUID NOT NULL,
+    "city_id" UUID,
+    "event_id" UUID,
+    "business_id" UUID,
+
+    CONSTRAINT "account_favorite_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "account_interest" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "account_id" UUID NOT NULL,
     "category_id" UUID NOT NULL,
 
-    CONSTRAINT "profile_interest_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "account_interest_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -209,22 +215,19 @@ CREATE UNIQUE INDEX "account_email_key" ON "account"("email");
 CREATE UNIQUE INDEX "account_phone_number_key" ON "account"("phone_number");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "profile_slug_key" ON "profile"("slug");
+CREATE UNIQUE INDEX "account_slug_key" ON "account"("slug");
 
 -- CreateIndex
-CREATE INDEX "account_profile_account_id_idx" ON "account_profile"("account_id");
+CREATE UNIQUE INDEX "verification_token_token_key" ON "verification_token"("token");
 
 -- CreateIndex
-CREATE INDEX "account_profile_profile_id_idx" ON "account_profile"("profile_id");
+CREATE INDEX "verification_token_account_id_idx" ON "verification_token"("account_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "account_profile_account_id_profile_id_key" ON "account_profile"("account_id", "profile_id");
+CREATE UNIQUE INDEX "business_account_id_key" ON "business"("account_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "business_profile_id_key" ON "business"("profile_id");
-
--- CreateIndex
-CREATE INDEX "business_profile_id_idx" ON "business"("profile_id");
+CREATE INDEX "business_account_id_idx" ON "business"("account_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "city_slug_key" ON "city"("slug");
@@ -236,10 +239,22 @@ CREATE INDEX "city_location_idx" ON "city" USING GIST ("location");
 CREATE UNIQUE INDEX "event_slug_key" ON "event"("slug");
 
 -- CreateIndex
-CREATE INDEX "event_owner_profile_id_idx" ON "event"("owner_profile_id");
+CREATE INDEX "event_owner_account_id_idx" ON "event"("owner_account_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "profile_interest_profile_id_category_id_key" ON "profile_interest"("profile_id", "category_id");
+CREATE INDEX "account_favorite_account_id_idx" ON "account_favorite"("account_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "account_favorite_account_id_city_id_key" ON "account_favorite"("account_id", "city_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "account_favorite_account_id_event_id_key" ON "account_favorite"("account_id", "event_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "account_favorite_account_id_business_id_key" ON "account_favorite"("account_id", "business_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "account_interest_account_id_category_id_key" ON "account_interest"("account_id", "category_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "category_name_key" ON "category"("name");
@@ -260,19 +275,16 @@ CREATE UNIQUE INDEX "lead_email_key" ON "lead"("email");
 CREATE UNIQUE INDEX "lead_phone_number_key" ON "lead"("phone_number");
 
 -- AddForeignKey
-ALTER TABLE "account_profile" ADD CONSTRAINT "account_profile_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "verification_token" ADD CONSTRAINT "verification_token_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "account_profile" ADD CONSTRAINT "account_profile_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "profile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "business" ADD CONSTRAINT "business_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "business" ADD CONSTRAINT "business_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "profile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "event" ADD CONSTRAINT "event_owner_account_id_fkey" FOREIGN KEY ("owner_account_id") REFERENCES "account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "event" ADD CONSTRAINT "event_owner_profile_id_fkey" FOREIGN KEY ("owner_profile_id") REFERENCES "profile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "media" ADD CONSTRAINT "media_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "profile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "media" ADD CONSTRAINT "media_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "media" ADD CONSTRAINT "media_city_id_fkey" FOREIGN KEY ("city_id") REFERENCES "city"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -281,19 +293,31 @@ ALTER TABLE "media" ADD CONSTRAINT "media_city_id_fkey" FOREIGN KEY ("city_id") 
 ALTER TABLE "media" ADD CONSTRAINT "media_event_id_fkey" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "profile_interest" ADD CONSTRAINT "profile_interest_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "profile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "account_favorite" ADD CONSTRAINT "account_favorite_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "profile_interest" ADD CONSTRAINT "profile_interest_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "category"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "account_favorite" ADD CONSTRAINT "account_favorite_business_id_fkey" FOREIGN KEY ("business_id") REFERENCES "business"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "account_favorite" ADD CONSTRAINT "account_favorite_city_id_fkey" FOREIGN KEY ("city_id") REFERENCES "city"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "account_favorite" ADD CONSTRAINT "account_favorite_event_id_fkey" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "account_interest" ADD CONSTRAINT "account_interest_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "account_interest" ADD CONSTRAINT "account_interest_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "category"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "category" ADD CONSTRAINT "category_parent_id_fkey" FOREIGN KEY ("parent_id") REFERENCES "category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "city_category" ADD CONSTRAINT "city_category_city_id_fkey" FOREIGN KEY ("city_id") REFERENCES "city"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "city_category" ADD CONSTRAINT "city_category_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "category"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "city_category" ADD CONSTRAINT "city_category_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "category"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "city_category" ADD CONSTRAINT "city_category_city_id_fkey" FOREIGN KEY ("city_id") REFERENCES "city"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "business_category" ADD CONSTRAINT "business_category_business_id_fkey" FOREIGN KEY ("business_id") REFERENCES "business"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -308,13 +332,13 @@ ALTER TABLE "business_city" ADD CONSTRAINT "business_city_business_id_fkey" FORE
 ALTER TABLE "business_city" ADD CONSTRAINT "business_city_city_id_fkey" FOREIGN KEY ("city_id") REFERENCES "city"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "event_category" ADD CONSTRAINT "event_category_event_id_fkey" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "event_category" ADD CONSTRAINT "event_category_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "category"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "event_city" ADD CONSTRAINT "event_city_event_id_fkey" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "event_category" ADD CONSTRAINT "event_category_event_id_fkey" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "event_city" ADD CONSTRAINT "event_city_city_id_fkey" FOREIGN KEY ("city_id") REFERENCES "city"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "event_city" ADD CONSTRAINT "event_city_event_id_fkey" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE CASCADE ON UPDATE CASCADE;

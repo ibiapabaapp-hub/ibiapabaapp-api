@@ -9,7 +9,20 @@ export class EventsService {
 	constructor(private readonly prismaService: PrismaService) {}
 
 	async create(dto: CreateEventDTO) {
-		return await this.prismaService.event.create({ data: dto });
+		return await this.prismaService.event.create({
+			data: {
+				owner_account_id: dto.owner_account_id,
+				name: dto.name,
+				description: dto.description,
+				cover_img_url: dto.cover_img_url,
+				slug: dto.slug,
+				type: dto.type,
+				active: dto.active,
+				reach_level: dto.reach_level,
+				start_date: dto.start_date,
+				end_date: dto.end_date,
+			} as any,
+		});
 	}
 
 	async findAll() {
@@ -17,6 +30,15 @@ export class EventsService {
 			include: {
 				categories: {
 					select: { category: { select: { name: true } } },
+				},
+				owner: {
+					select: {
+						id: true,
+						slug: true,
+						display_name: true,
+						avatar_url: true,
+						type: true,
+					},
 				},
 			},
 			orderBy: { name: 'asc' },
@@ -34,6 +56,15 @@ export class EventsService {
 			include: {
 				categories: {
 					select: { category: { select: { name: true } } },
+				},
+				owner: {
+					select: {
+						id: true,
+						slug: true,
+						display_name: true,
+						avatar_url: true,
+						type: true,
+					},
 				},
 			},
 		});

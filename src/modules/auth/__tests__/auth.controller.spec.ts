@@ -10,6 +10,7 @@ import {
 } from '../dtos/check-unique-field.dto';
 import { LoginDto } from '../dtos/login.dto';
 import { RegisterDto } from '../dtos/register.dto';
+import { AuthResponseDto } from '../dtos/auth-response.dto';
 
 describe('AuthController', () => {
 	let controller: AuthController;
@@ -44,13 +45,7 @@ describe('AuthController', () => {
 			refreshToken: 'refresh',
 		};
 
-		service.login.mockResolvedValue(
-			response as {
-				account: Account;
-				accessToken: string;
-				refreshToken: string;
-			},
-		);
+		service.login.mockResolvedValue(response as AuthResponseDto);
 
 		const result = await controller.login(dto as LoginDto);
 
@@ -72,13 +67,7 @@ describe('AuthController', () => {
 			refreshToken: 'refresh',
 		};
 
-		service.register.mockResolvedValue(
-			response as {
-				account: Account;
-				accessToken: string;
-				refreshToken: string;
-			},
-		);
+		service.register.mockResolvedValue(response as AuthResponseDto);
 
 		const result = await controller.register(dto as RegisterDto);
 
@@ -95,11 +84,7 @@ describe('AuthController', () => {
 		};
 
 		service.refreshTokens.mockResolvedValue(
-			response as {
-				account: Account;
-				accessToken: string;
-				refreshToken: string;
-			},
+			response as AuthResponseDto,
 		);
 
 		const result = await controller.refresh(token);
@@ -140,12 +125,12 @@ describe('AuthController', () => {
 
 		it('should return available false when value is taken', async () => {
 			const dto: CheckUniqueDto = {
-				field: 'accountname',
-				value: 'john',
+				field: 'email',
+				value: 'test@test.com',
 			};
 
 			const response: CheckUniqueResponse = {
-				field: 'accountname',
+				field: 'email',
 				value: 'john',
 				available: false,
 			};
@@ -155,8 +140,8 @@ describe('AuthController', () => {
 			const result = await controller.checkUnique(dto);
 
 			expect(service.isUniqueAvailable).toHaveBeenCalledWith(
-				'accountname',
-				'john',
+				'email',
+				'test@test.com',
 			);
 			expect(result.available).toBe(false);
 		});

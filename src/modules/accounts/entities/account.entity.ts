@@ -1,4 +1,4 @@
-import { account } from '@prisma/client';
+import { account, account_type } from '@prisma/client';
 
 export class Account implements account {
 	id: string;
@@ -12,4 +12,11 @@ export class Account implements account {
 	active: boolean;
 	created_at: Date;
 	updated_at: Date;
+
+	// Merged profile fields
+	slug: string;
+	display_name: string;
+	bio: string | null;
+	avatar_url: string | null;
+	type: account_type;
 }

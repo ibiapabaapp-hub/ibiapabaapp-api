@@ -1,8 +1,8 @@
-import { $Enums, media } from '@prisma/client';
+import { $Enums } from '@prisma/client';
 import { JsonValue } from '@prisma/client/runtime/client';
 
-export class Media implements media {
-	profile_id: string | null;
+export class Media {
+	account_id: string | null;
 	id: string;
 	city_id: string | null;
 	event_id: string | null;

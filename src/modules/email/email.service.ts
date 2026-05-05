@@ -8,6 +8,7 @@ import { resetPasswordTemplate } from './templates/reset-password.template';
 import { testEmailTemplate } from './templates/test.template';
 import { verifyEmailTemplate } from './templates/verify-email.template';
 
+// TODO: escrever testes unitários de email.service
 @Injectable()
 export class EmailService {
 	constructor(

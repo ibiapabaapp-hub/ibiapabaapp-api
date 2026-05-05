@@ -48,12 +48,12 @@ describe('Auth (e2e)', () => {
 
 	const testAccount = {
 		name: 'Test User',
-		username: 'testuser',
+		slug: 'testuser',
 		email: 'test@example.com',
+		phone_number: '+5585999999999',
 		password: 'Password123!',
 		password_confirm: 'Password123!',
-		birth_date: '1990-01-01T00:00:00.000Z',
-		phone_number: '+5585999999999',
+		display_name: 'Test User',
 	};
 
 	describe('POST /register', () => {

@@ -15,8 +15,8 @@ API RESTful desenvolvida com NestJS para a plataforma IbiapabaApp, conectando ap
 ## Funcionalidades
 
 - **Autenticação e Autorização**: Registro, login/logout com JWT, refresh tokens e autenticação por cookies seguros.
-- **Gestão de Contas**: CRUD completo de contas de usuários com validação robusta.
-- **Perfis Personalizados**: Perfis pessoais e empresariais com controle de permissões (owner, admin, editor, viewer).
+- **Gestão de Contas Unificada**: Modelo único que combina dados de autenticação e perfil (slug, display_name, bio, avatar_url, type).
+- **Contas Personalizadas**: Contas pessoais e empresariais com interesses e preferências.
 - **Cidades**: Cadastro de cidades com localização geográfica (PostGIS), imagens de capa e categorias.
 - **Negócios (Businesses)**: Gestão de estabelecimentos comerciais com CNPJ, categorias, múltiplas localizações e reach level.
 - **Eventos**: Criação e gerenciamento de eventos com datas, tipo (simple/featured), localização e categorias.
@@ -24,6 +24,8 @@ API RESTful desenvolvida com NestJS para a plataforma IbiapabaApp, conectando ap
 - **Leads**: Captura e gestão de leads (residentes, turistas, empresários).
 - **Mídia**: Upload e gestão de imagens/vídeos usando Cloudflare R2 CDN.
 - **Busca**: Pesquisa unificada por cidades, negócios e eventos.
+- **Favoritos**: Sistema de favoritos para cidades, eventos e negócios.
+- **Interesses**: Gestão de interesses por categoria para contas.
 - **Documentação**: API documentada com Swagger (disponível em ambiente de desenvolvimento).
 
 ## Stack Principal
@@ -40,14 +42,14 @@ API RESTful desenvolvida com NestJS para a plataforma IbiapabaApp, conectando ap
 
 O projeto utiliza PostgreSQL com Prisma como ORM. Principais entidades:
 
-- **account**: Usuários da plataforma com email, telefone e senha hasheada.
-- **profile**: Perfis pessoais ou empresariais com slug único, nome de exibição e biografia.
-- **account_profile**: Relação many-to-many entre contas e perfis com roles (owner, admin, editor, viewer).
-- **business**: Extensão de perfil para funcionalidades empresariais (CNPJ, reach level).
+- **account**: Modelo unificado que combina dados de autenticação e perfil (email, telefone, senha, slug, display_name, bio, avatar_url, type).
+- **business**: Negócios associados a contas do tipo business (CNPJ, reach level, account_id).
 - **city**: Cidades com localização geográfica (Point PostGIS), capa e descrição.
-- **event**: Eventos com datas, tipo, owner e localização.
-- **media**: Mídia polimórfica associada a perfis, cidades ou eventos.
+- **event**: Eventos com datas, tipo, owner (account_id) e localização.
+- **media**: Mídia associada a contas, cidades ou eventos.
 - **category**: Categorias hierárquicas para classificação de entidades.
+- **account_interest**: Interesses de contas em categorias de negócios e eventos.
+- **account_favorite**: Favoritos de contas (cidades, eventos, negócios).
 - **lead**: Leads capturados através de formulários (residentes, turistas, empresários).
 
 ## Rotas e Endpoints
@@ -65,17 +67,10 @@ O projeto utiliza PostgreSQL com Prisma como ORM. Principais entidades:
 
 - `GET /accounts` - Listar todas as contas (paginado)
 - `GET /accounts/:id` - Obter conta por ID
-- `PATCH /accounts/:id` - Atualizar conta
+- `PATCH /accounts/:id` - Atualizar conta (incluindo campos de perfil)
 - `DELETE /accounts/:id` - Remover conta
-
-### Perfis (`/api/v1/profiles`)
-
-- `POST /profiles` - Criar novo perfil (accountId vem do JWT)
-- `GET /profiles` - Listar perfis da conta autenticada
-- `GET /profiles/:id` - Obter perfil por ID (accountId vem do JWT)
-- `PATCH /profiles/:id` - Atualizar perfil (accountId vem do JWT)
-- `DELETE /profiles/:id` - Remover perfil (accountId vem do JWT)
-- `POST /profiles/:id/interests` - Adicionar interesses ao perfil (accountId vem do JWT)
+- `GET /accounts/:id/interests` - Obter interesses da conta
+- `PATCH /accounts/:id/interests` - Atualizar interesses da conta
 
 > **Nota**: O `accountId` é extraído automaticamente do token JWT no header `Authorization`. Não é necessário passá-lo via path, query ou body.
 
@@ -234,15 +229,15 @@ O projeto segue a arquitetura modular do NestJS:
 ```
 src/
 ├── modules/
-│   ├── accounts/      - Gestão de contas
+│   ├── accounts/      - Gestão de contas unificadas
 │   ├── auth/          - Autenticação e JWT
 │   ├── businesses/    - Negócios/Estabelecimentos
 │   ├── categories/    - Categorias hierárquicas
 │   ├── cities/        - Cidades com geolocalização
 │   ├── events/        - Eventos
+│   ├── favorites/     - Sistema de favoritos
 │   ├── leads/         - Leads e contato
 │   ├── medias/        - Upload e gestão de mídia
-│   ├── profiles/      - Perfis de usuário
 │   ├── search/        - Busca unificada
 │   └── app/           - Módulo raiz
 ├── common/            - Componentes compartilhados

@@ -9,8 +9,6 @@ import { Injectable, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
-import { Media } from './entities/media.entity';
-
 @UseInterceptors(
 	FileInterceptor('file', {
 		limits: {
@@ -77,16 +75,16 @@ export class MediasService {
 		return `${process.env.R2_PUBLIC_URL}/${key}`;
 	}
 
-	async getMediaByCity(id: string): Promise<Media[]> {
+	async getMediaByCity(id: string): Promise<any[]> {
 		return this.prismaService.media.findMany({
 			where: { city_id: id },
 			orderBy: [{ is_cover: 'desc' }, { position: 'asc' }],
 		});
 	}
 
-	async getMediaByBusiness(id: string) {
+	async getMediaByAccount(id: string) {
 		return this.prismaService.media.findMany({
-			where: { profile_id: id },
+			where: { account_id: id },
 			orderBy: [{ is_cover: 'desc' }, { position: 'asc' }],
 		});
 	}

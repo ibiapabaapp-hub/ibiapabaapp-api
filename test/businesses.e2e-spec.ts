@@ -11,12 +11,14 @@ import { reach_level } from '@prisma/client';
 import { BusinessesModule } from 'src/modules/businesses/businesses.module';
 import { PrismaModule } from 'src/modules/common/prisma/prisma.module';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
+import { PasswordService } from 'src/modules/common/password/password.service';
 import request from 'supertest';
 
 describe('Companies (e2e)', () => {
 	let app: INestApplication;
 	let prisma: PrismaService;
-	const BASE_PATH = '/api/v1/companies';
+	let passwordService: PasswordService;
+	const BASE_PATH = '/api/v1/businesses';
 
 	beforeAll(async () => {
 		const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -25,6 +27,7 @@ describe('Companies (e2e)', () => {
 				PrismaModule,
 				BusinessesModule,
 			],
+			providers: [PasswordService],
 		}).compile();
 
 		app = moduleFixture.createNestApplication();
@@ -35,14 +38,17 @@ describe('Companies (e2e)', () => {
 		);
 
 		prisma = moduleFixture.get<PrismaService>(PrismaService);
+		passwordService = moduleFixture.get<PasswordService>(PasswordService);
 		await app.init();
 	});
 
 	afterEach(async () => {
 		// A ordem aqui é importante se não usar CASCADE,
 		// mas o TRUNCATE com CASCADE limpa as tabelas N-N automaticamente.
+		await prisma.$executeRaw`TRUNCATE TABLE "business_category" RESTART IDENTITY CASCADE`;
 		await prisma.$executeRaw`TRUNCATE TABLE "business" RESTART IDENTITY CASCADE`;
 		await prisma.$executeRaw`TRUNCATE TABLE "category" RESTART IDENTITY CASCADE`;
+		await prisma.$executeRaw`TRUNCATE TABLE "account" RESTART IDENTITY CASCADE`;
 	});
 
 	afterAll(async () => {
@@ -50,19 +56,53 @@ describe('Companies (e2e)', () => {
 		await app.close();
 	});
 
+	// Helper function to create a business account
+	const createBusinessAccount = async (slug: string, name: string) => {
+		return await prisma.account.create({
+			data: {
+				id: crypto.randomUUID(),
+				email: `business-${slug}@test.com`,
+				password: await passwordService.hashPassword('password123'),
+				phone_number: `+5588${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`,
+				name,
+				slug,
+				display_name: name,
+				type: 'business',
+				is_verified: true,
+				active: true,
+			},
+		});
+	};
+
+	// Helper function to create business-category relationship
+	const createBusinessCategory = async (businessId: string, categoryId: string) => {
+		return await prisma.business_category.create({
+			data: {
+				business_id: businessId,
+				category_id: categoryId,
+			},
+		});
+	};
+
 	it('GET /companies -> deve listar empresas com seus nomes de categorias mapeados', async () => {
 		// 1. Criar Categoria
-		await prisma.category.create({
+		const category = await prisma.category.create({
 			data: { name: 'Alimentação' },
 		});
 
-		// 2. Criar Empresa
-		await prisma.business.create({
+		// 2. Criar Account do tipo Business
+		const businessAccount = await createBusinessAccount('pousada', 'Restaurante Serra');
+
+		// 3. Criar Empresa
+		const business = await prisma.business.create({
 			data: {
-				profile_id: 'pousada',
+				account_id: businessAccount.id,
 				max_reach_level: reach_level.local,
 			},
 		});
+
+		// 4. Criar relacionamento Business-Category
+		await createBusinessCategory(business.id, category.id);
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const res = await request(app.getHttpServer()).get(BASE_PATH).expect(200);
@@ -76,15 +116,22 @@ describe('Companies (e2e)', () => {
 	});
 
 	it('GET /companies/:id -> deve retornar os detalhes da empresa e categorias', async () => {
-		await prisma.category.create({
+		const category = await prisma.category.create({
 			data: { name: 'Hotelaria' },
 		});
+
+		// Criar Account do tipo Business
+		const businessAccount = await createBusinessAccount('pousada-hotel', 'Hotel Serra');
+
 		const business = await prisma.business.create({
 			data: {
-				profile_id: 'pousada',
+				account_id: businessAccount.id,
 				max_reach_level: reach_level.local,
 			},
 		});
+
+		// Criar relacionamento Business-Category
+		await createBusinessCategory(business.id, category.id);
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const res = await request(app.getHttpServer())

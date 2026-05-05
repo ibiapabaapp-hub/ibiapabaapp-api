@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
-import { UpdateInterestsDTO } from './dto/update-interests.dto';
+import { UpdateInterestsDTO } from './dtos/update-interests.dto';
 
 interface InterestCategory {
 	id: string;
@@ -11,18 +11,18 @@ interface InterestCategory {
 	entities: string[];
 }
 
-export interface ProfileInterestsResult {
+export interface AccountInterestsResult {
 	businesses: { id: string; name: string }[];
 	events: { id: string; name: string }[];
 }
 
 @Injectable()
-export class ProfileInterestsService {
+export class AccountInterestsService {
 	constructor(private readonly prismaService: PrismaService) {}
 
-	async findAllByProfileId(profileId: string): Promise<ProfileInterestsResult> {
-		const interests = await this.prismaService.profile_interest.findMany({
-			where: { profile_id: profileId },
+	async findAllByAccountId(accountId: string): Promise<AccountInterestsResult> {
+		const interests = await this.prismaService.account_interest.findMany({
+			where: { account_id: accountId },
 			include: {
 				category: {
 					select: {
@@ -50,34 +50,35 @@ export class ProfileInterestsService {
 		return { businesses, events };
 	}
 
-	async upsert(accountId: string, profileId: string, dto: UpdateInterestsDTO) {
-		const accountProfile = await this.prismaService.account_profile.findFirst({
-			where: { account_id: accountId, profile_id: profileId },
+	async upsert(accountId: string, dto: UpdateInterestsDTO) {
+		// Verify account exists
+		const account = await this.prismaService.account.findUnique({
+			where: { id: accountId },
 		});
 
-		if (!accountProfile) {
-			throw new NotFoundException('Profile not found');
+		if (!account) {
+			throw new NotFoundException('Account not found');
 		}
 
 		const businessesData = (dto.businesses || []).map((bInterest) => ({
 			id: randomUUID(),
-			profile_id: profileId,
+			account_id: accountId,
 			category_id: bInterest,
 		}));
 
 		const eventsData = (dto.events || []).map((eInterest) => ({
 			id: randomUUID(),
-			profile_id: profileId,
+			account_id: accountId,
 			category_id: eInterest,
 		}));
 
 		await this.prismaService.$transaction([
-			this.prismaService.profile_interest.deleteMany({
-				where: { profile_id: profileId },
+			this.prismaService.account_interest.deleteMany({
+				where: { account_id: accountId },
 			}),
 			...(businessesData.length > 0
 				? [
-						this.prismaService.profile_interest.createMany({
+						this.prismaService.account_interest.createMany({
 							data: businessesData,
 							skipDuplicates: true,
 						}),
@@ -85,7 +86,7 @@ export class ProfileInterestsService {
 				: []),
 			...(eventsData.length > 0
 				? [
-						this.prismaService.profile_interest.createMany({
+						this.prismaService.account_interest.createMany({
 							data: eventsData,
 							skipDuplicates: true,
 						}),
@@ -93,9 +94,9 @@ export class ProfileInterestsService {
 				: []),
 		]);
 
-		const updatedInterests = await this.prismaService.profile_interest.findMany(
+		const updatedInterests = await this.prismaService.account_interest.findMany(
 			{
-				where: { profile_id: profileId },
+				where: { account_id: accountId },
 				select: { category_id: true },
 			},
 		);

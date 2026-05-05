@@ -1,7 +1,7 @@
-import { $Enums, business } from '@prisma/client';
+import { $Enums } from '@prisma/client';
 
-export class CreateBusinessDTO implements business {
-	profile_id: string;
+export class CreateBusinessDTO {
+	account_id: string;
 	max_reach_level: $Enums.reach_level;
 	id: string;
 	slug: string;

@@ -138,9 +138,9 @@ describe('AccountsService', () => {
 				password: 'hashed-password',
 			};
 
-			const updated = {
+			const updated: Account = {
 				id: '1',
-				username: 'testuser',
+				// username: 'testuser',
 				email: 'test@example.com',
 				phone_number: '123456789',
 				password: 'new-hash',
@@ -148,6 +148,12 @@ describe('AccountsService', () => {
 				active: true,
 				created_at: new Date(),
 				updated_at: new Date(),
+				is_verified: false,
+				slug: '',
+				display_name: '',
+				bio: null,
+				avatar_url: null,
+				type: 'business',
 			};
 
 			prisma.account.findUnique.mockResolvedValue(existing as Account);
@@ -178,7 +184,7 @@ describe('AccountsService', () => {
 			passwordService.verifyPassword.mockResolvedValue(false);
 
 			await expect(
-				service.update('1', { password: 'wrong' } as Account),
+				service.update('1', { password: 'wrong' } as UpdateAccountDTO),
 			).rejects.toThrow(UnauthorizedException);
 		});
 
@@ -186,7 +192,7 @@ describe('AccountsService', () => {
 			prisma.account.findUnique.mockResolvedValue(null);
 
 			await expect(
-				service.update('1', { password: '123' } as Account),
+				service.update('1', { password: '123' } as UpdateAccountDTO),
 			).rejects.toThrow(NotFoundException);
 		});
 
@@ -194,7 +200,7 @@ describe('AccountsService', () => {
 			prisma.account.findUnique.mockResolvedValue({ id: '1' } as Account);
 
 			await expect(
-				service.update('1', { name: 'New Name' } as Account),
+				service.update('1', { name: 'New Name' } as UpdateAccountDTO),
 			).rejects.toThrow(BadRequestException);
 		});
 	});
