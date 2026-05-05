@@ -15,6 +15,7 @@ export class BusinessesService {
 		cnpj: true,
 		profile: {
 			select: {
+				id: true,
 				bio: true,
 				slug: true,
 				display_name: true,
@@ -27,6 +28,7 @@ export class BusinessesService {
 	private mapBusiness(business: any) {
 		return {
 			id: business.id,
+			profile_id: business.profile.id,
 			slug: business.profile.slug,
 			name: business.profile.display_name,
 			bio: business.profile.bio,
