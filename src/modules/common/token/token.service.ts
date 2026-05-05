@@ -1,6 +1,7 @@
 import * as crypto from 'crypto';
 
 import { Injectable } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { token_type } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -57,5 +58,18 @@ export class TokenService {
 
 			return record.account_id;
 		});
+	}
+
+	@Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+	async deleteInvalidTokens() {
+		const deletedTokens = await this.prisma.verification_token.deleteMany({
+			where: {
+				expires_at: { lt: new Date() },
+				used_at: { not: null },
+			},
+		});
+		console.log(
+			`CronJob::[TokenService/deleteInvalidTokens](${new Date().toISOString()}) -> ${deletedTokens.count} tokens deleted`,
+		);
 	}
 }

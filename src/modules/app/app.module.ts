@@ -3,6 +3,7 @@ import { join } from 'path';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from 'src/modules/auth/auth.module';
@@ -21,6 +22,7 @@ import { SearchModule } from '../../modules/search/search.module';
 import { AccountsModule } from '../accounts/accounts.module';
 import { BusinessesModule } from '../businesses/businesses.module';
 import { ThrottlerBehindProxyGuard } from '../common/guards/throttler-behind-proxy-guard';
+import { FavoritesModule } from '../favorites/favorites.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -44,6 +46,7 @@ import { AppService } from './app.service';
 				},
 			],
 		}),
+		ScheduleModule.forRoot(),
 		...(process.env.NODE_ENV === 'development'
 			? [
 					ServeStaticModule.forRoot({
@@ -64,6 +67,7 @@ import { AppService } from './app.service';
 		MediasModule,
 		BusinessesModule,
 		EventsModule,
+		FavoritesModule,
 		CategoriesModule,
 		ProfilesModule,
 	],
