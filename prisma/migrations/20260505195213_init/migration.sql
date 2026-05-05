@@ -208,6 +208,20 @@ CREATE TABLE "lead" (
     CONSTRAINT "lead_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "review" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "account_id" UUID NOT NULL,
+    "business_id" UUID,
+    "event_id" UUID,
+    "rating" SMALLINT NOT NULL,
+    "comment" TEXT,
+    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(6) NOT NULL,
+
+    CONSTRAINT "review_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "account_email_key" ON "account"("email");
 
@@ -273,6 +287,27 @@ CREATE UNIQUE INDEX "lead_email_key" ON "lead"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "lead_phone_number_key" ON "lead"("phone_number");
+
+-- CreateIndex
+CREATE INDEX "review_business_id_idx" ON "review"("business_id");
+
+-- CreateIndex
+CREATE INDEX "review_event_id_idx" ON "review"("event_id");
+
+-- CreateIndex
+CREATE INDEX "review_business_id_rating_idx" ON "review"("business_id", "rating");
+
+-- CreateIndex
+CREATE INDEX "review_event_id_rating_idx" ON "review"("event_id", "rating");
+
+-- CreateIndex
+CREATE INDEX "review_created_at_idx" ON "review"("created_at");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "review_account_id_business_id_key" ON "review"("account_id", "business_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "review_account_id_event_id_key" ON "review"("account_id", "event_id");
 
 -- AddForeignKey
 ALTER TABLE "verification_token" ADD CONSTRAINT "verification_token_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -342,3 +377,12 @@ ALTER TABLE "event_city" ADD CONSTRAINT "event_city_city_id_fkey" FOREIGN KEY ("
 
 -- AddForeignKey
 ALTER TABLE "event_city" ADD CONSTRAINT "event_city_event_id_fkey" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "review" ADD CONSTRAINT "review_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "review" ADD CONSTRAINT "review_business_id_fkey" FOREIGN KEY ("business_id") REFERENCES "business"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "review" ADD CONSTRAINT "review_event_id_fkey" FOREIGN KEY ("event_id") REFERENCES "event"("id") ON DELETE CASCADE ON UPDATE CASCADE;

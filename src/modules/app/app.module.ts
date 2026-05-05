@@ -22,6 +22,7 @@ import { AccountsModule } from '../accounts/accounts.module';
 import { BusinessesModule } from '../businesses/businesses.module';
 import { ThrottlerBehindProxyGuard } from '../common/guards/throttler-behind-proxy-guard';
 import { FavoritesModule } from '../favorites/favorites.module';
+import { ReviewsModule } from '../reviews/reviews.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -48,13 +49,13 @@ import { AppService } from './app.service';
 		ScheduleModule.forRoot(),
 		...(process.env.NODE_ENV === 'development'
 			? [
-					ServeStaticModule.forRoot({
-						rootPath: join(process.cwd(), 'public'),
-						serveStaticOptions: {
-							fallthrough: false,
-						},
-					}),
-				]
+				ServeStaticModule.forRoot({
+					rootPath: join(process.cwd(), 'public'),
+					serveStaticOptions: {
+						fallthrough: false,
+					},
+				}),
+			]
 			: []),
 		PrismaModule,
 		AuthModule,
@@ -67,6 +68,7 @@ import { AppService } from './app.service';
 		BusinessesModule,
 		EventsModule,
 		FavoritesModule,
+		ReviewsModule,
 		CategoriesModule,
 	],
 	controllers: [AppController],
@@ -86,4 +88,4 @@ import { AppService } from './app.service';
 		},
 	],
 })
-export class AppModule {}
+export class AppModule { }
