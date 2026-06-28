@@ -7,10 +7,10 @@ export class AuthResponseDto {
 	account: SecureAccountDTO;
 
 	@ApiProperty({ example: 'eyJhbGciOiJIUzI1...' })
-	accessToken: string;
+	access_token: string;
 
 	@ApiProperty({ example: 'eyJhbGciOiJIUzI1...' })
-	refreshToken: string;
+	refresh_token: string;
 
 	constructor(partial: any) {
 		const account = instanceToPlain(new SecureAccountDTO(partial.account));
