@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
+import { EmailService } from 'src/modules/email/email.service';
 import request from 'supertest';
 import { App } from 'supertest/types';
 
@@ -24,7 +25,10 @@ describe('Auth (e2e)', () => {
 				PrismaModule,
 				AuthModule,
 			],
-		}).compile();
+		})
+			.overrideProvider(EmailService)
+			.useValue({ sendVerificationEmail: jest.fn().mockResolvedValue(undefined) })
+			.compile();
 
 		app = moduleFixture.createNestApplication();
 		app.setGlobalPrefix('/api');

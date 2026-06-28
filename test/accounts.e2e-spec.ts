@@ -120,16 +120,15 @@ describe('Accounts (e2e)', () => {
 			expect(res.body).not.toHaveProperty('password');
 		});
 
-		it('should return 401 if current password is wrong', async () => {
-			const account = await createMockAccount('auth-fail@test.com');
+		it('should return 400 if no password is provided', async () => {
+			const account = await createMockAccount('no-password@test.com');
 
 			await request(app.getHttpServer())
 				.patch(`${BASE_PATH}/${account.id}`)
 				.send({
 					name: 'Fail',
-					password: 'wrong_password',
 				})
-				.expect(401);
+				.expect(400);
 		});
 	});
 

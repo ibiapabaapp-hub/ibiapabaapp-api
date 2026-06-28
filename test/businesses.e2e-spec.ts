@@ -73,15 +73,12 @@ describe('Companies (e2e)', () => {
 		});
 	};
 
-	// Helper function to create business-category relationship
-	const createBusinessCategory = async (
-		businessId: string,
-		categoryId: string,
-	) => {
-		return await prisma.business_category.create({
+	// Helper function to create a business
+	const createBusiness = async (accountId: string) => {
+		return await prisma.business.create({
 			data: {
-				business_id: businessId,
-				category_id: categoryId,
+				account: { connect: { id: accountId } },
+				max_reach_level: reach_level.local,
 			},
 		});
 	};
@@ -99,15 +96,15 @@ describe('Companies (e2e)', () => {
 		);
 
 		// 3. Criar Empresa
-		const business = await prisma.business.create({
-			data: {
-				account_id: businessAccount.id,
-				max_reach_level: reach_level.local,
-			},
-		});
+		const business = await createBusiness(businessAccount.id);
 
 		// 4. Criar relacionamento Business-Category
-		await createBusinessCategory(business.id, category.id);
+		await prisma.business_category.create({
+			data: {
+				business_id: business.id,
+				category_id: category.id,
+			},
+		});
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const res = await request(app.getHttpServer()).get(BASE_PATH).expect(200);
@@ -131,15 +128,15 @@ describe('Companies (e2e)', () => {
 			'Hotel Serra',
 		);
 
-		const business = await prisma.business.create({
-			data: {
-				account_id: businessAccount.id,
-				max_reach_level: reach_level.local,
-			},
-		});
+		const business = await createBusiness(businessAccount.id);
 
 		// Criar relacionamento Business-Category
-		await createBusinessCategory(business.id, category.id);
+		await prisma.business_category.create({
+			data: {
+				business_id: business.id,
+				category_id: category.id,
+			},
+		});
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const res = await request(app.getHttpServer())
