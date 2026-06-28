@@ -5,9 +5,9 @@ generator client {
 
 generator dbml {
   provider            = "prisma-dbml-generator"
-  outputName          = "ibiapabaappdb_er.dbml"
+  outputName          = "ibivibe_er.dbml"
   projectDatabaseType = "PostgreSQL"
-  projectName         = "IbiapabaAppDB"
+  projectName         = "IbiVibeDB"
 }
 
 datasource db {
@@ -15,15 +15,31 @@ datasource db {
   extensions = [postgis]
 }
 
+model account_oauth {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  account_id   String         @db.Uuid
+  provider     oauth_provider
+  provider_uid String         @db.VarChar(255)
+  email        String         @db.VarChar(255)
+  created_at   DateTime       @default(now()) @db.Timestamp(6)
+  updated_at   DateTime       @updatedAt @db.Timestamp(6)
+  account      account        @relation(fields: [account_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider, provider_uid])
+  @@unique([provider, email])
+  @@index([account_id])
+}
+
 model account {
   id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email               String               @unique @db.VarChar(255)
-  password            String               @db.VarChar(255)
-  phone_number        String               @unique @db.VarChar(20)
-  slug                String               @unique @db.VarChar(100)
+  password            String?              @db.VarChar(255)
+  phone_number        String?              @unique @db.VarChar(20)
+  slug                String?              @unique @db.VarChar(100)
   display_name        String               @db.VarChar(150)
   bio                 String?
   avatar_url          String?
+  gender              gender?
   type                account_type         @default(personal)
   name                String               @db.VarChar(50)
   active              Boolean              @default(true)
@@ -36,7 +52,8 @@ model account {
   events              event[]              @relation("AccountEvents")
   medias              media[]              @relation("AccountMedias")
   verification_tokens verification_token[]
-  reviews          review[]             @relation("AccountReviews")
+  reviews             review[]             @relation("AccountReviews")
+  oauth_accounts      account_oauth[]
 }
 
 model verification_token {
@@ -52,20 +69,21 @@ model verification_token {
   @@index([account_id])
 }
 
+// TODO: enriquecer business
 model business {
-  id              String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  account_id      String              @unique @db.Uuid
-  cnpj            String?             @db.VarChar(20)
-  max_reach_level reach_level         @default(local)
-  created_at      DateTime            @default(now()) @db.Timestamp(6)
-  updated_at      DateTime            @updatedAt @db.Timestamp(6)
-  favorites       account_favorite[]
-  account         account             @relation(fields: [account_id], references: [id], onDelete: Cascade)
-  categories      business_category[]
-  cities          business_city[]
-  reviews      review[]            @relation("BusinessReviews")
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  owner_account_id String              @unique @db.Uuid
+  cnpj             String?             @db.VarChar(20)
+  max_reach_level  reach_level         @default(local)
+  created_at       DateTime            @default(now()) @db.Timestamp(6)
+  updated_at       DateTime            @updatedAt @db.Timestamp(6)
+  favorites        account_favorite[]
+  account          account             @relation(fields: [owner_account_id], references: [id], onDelete: Cascade)
+  categories       business_category[]
+  cities           business_city[]
+  reviews          review[]            @relation("BusinessReviews")
 
-  @@index([account_id])
+  @@index([owner_account_id])
 }
 
 model city {
@@ -105,7 +123,7 @@ model event {
   categories       event_category[]
   cities           event_city[]
   medias           media[]            @relation("EventMedias")
-  reviews       review[]           @relation("EventReviews")
+  reviews          review[]           @relation("EventReviews")
 
   @@index([owner_account_id])
 }
@@ -236,9 +254,9 @@ model review {
   created_at  DateTime @default(now()) @db.Timestamp(6)
   updated_at  DateTime @updatedAt @db.Timestamp(6)
 
-  account    account   @relation("AccountReviews", fields: [account_id], references: [id], onDelete: Cascade)
-  business   business? @relation("BusinessReviews", fields: [business_id], references: [id], onDelete: Cascade)
-  event      event?    @relation("EventReviews", fields: [event_id], references: [id], onDelete: Cascade)
+  account  account   @relation("AccountReviews", fields: [account_id], references: [id], onDelete: Cascade)
+  business business? @relation("BusinessReviews", fields: [business_id], references: [id], onDelete: Cascade)
+  event    event?    @relation("EventReviews", fields: [event_id], references: [id], onDelete: Cascade)
 
   @@unique([account_id, business_id])
   @@unique([account_id, event_id])
@@ -255,9 +273,20 @@ enum lead_type {
   business
 }
 
+enum oauth_provider {
+  google
+}
+
 enum account_type {
   personal
   business
+}
+
+enum gender {
+  male
+  female
+  non_binary
+  prefer_not_to_say
 }
 
 enum reach_level {

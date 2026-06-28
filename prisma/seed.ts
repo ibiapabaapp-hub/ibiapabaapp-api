@@ -309,6 +309,7 @@ async function main() {
 						display_name: userData.name,
 						bio: userData.bio,
 						avatar_url: userData.avatar_url,
+						gender: 'male',
 						type: userData.type || 'personal',
 					},
 					create: {
@@ -370,7 +371,7 @@ async function main() {
 					},
 					create: {
 						id: crypto.randomUUID(),
-						email: `business-${bizData.slug}@ibiapabaapp.local`,
+						email: `business-${bizData.slug}@ibivibe.local`,
 						password: await hashPassword('temp-password'),
 						phone_number: `+5588${Math.floor(Math.random() * 100000000)
 							.toString()
@@ -388,13 +389,13 @@ async function main() {
 
 				// Cria registro business
 				const business = await tx.business.upsert({
-					where: { account_id: businessAccount.id },
+					where: { owner_account_id: businessAccount.id },
 					update: {
 						cnpj: bizData.cnpj,
 						max_reach_level: bizData.max_reach_level,
 					},
 					create: {
-						account_id: businessAccount.id,
+						owner_account_id: businessAccount.id,
 						cnpj: bizData.cnpj,
 						max_reach_level: bizData.max_reach_level,
 					},
@@ -683,14 +684,16 @@ async function main() {
 
 				// Favorite de business
 				if (favData.business_slug) {
-					const businessAccountId = businessAccountMap.get(favData.business_slug);
+					const businessAccountId = businessAccountMap.get(
+						favData.business_slug,
+					);
 					if (!businessAccountId) {
 						console.warn(
 							`  ⚠️  Business "${favData.business_slug}" não encontrado para favorito.`,
 						);
 					} else {
 						const business = await tx.business.findUnique({
-							where: { account_id: businessAccountId },
+							where: { owner_account_id: businessAccountId },
 						});
 						if (business) {
 							await tx.account_favorite.upsert({
