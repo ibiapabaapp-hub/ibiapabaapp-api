@@ -4,11 +4,14 @@ import {
 	ExceptionFilter,
 	HttpException,
 	InternalServerErrorException,
+	Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
 @Catch()
 export class GlobalExceptionsFilter implements ExceptionFilter {
+	private readonly logger = new Logger(GlobalExceptionsFilter.name);
+
 	catch(exception: unknown, host: ArgumentsHost) {
 		const ctx = host.switchToHttp();
 		const response = ctx.getResponse<Response>();
@@ -31,9 +34,9 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
 			path: request.url,
 		};
 
-		console.error(
+		this.logger.error(
 			`[ERROR at ${fullResponse.timestamp} in ${fullResponse.path}]`,
-			exception,
+			exception instanceof Error ? exception.stack : exception,
 		);
 
 		response.status(status).json(fullResponse);

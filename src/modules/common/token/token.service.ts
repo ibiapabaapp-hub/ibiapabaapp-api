@@ -10,7 +10,7 @@ import { TOKEN_EXPIRY } from './token.constants';
 // TODO: escrever testes unitários de token.service
 @Injectable()
 export class TokenService {
-	constructor(private readonly prisma: PrismaService) {}
+	constructor(private readonly prismaService: PrismaService) {}
 
 	private hash(token: string): string {
 		return crypto.createHash('sha256').update(token).digest('hex');
@@ -23,7 +23,7 @@ export class TokenService {
 		const expiresAt = new Date();
 		expiresAt.setSeconds(expiresAt.getSeconds() + TOKEN_EXPIRY[type]);
 
-		await this.prisma.verification_token.create({
+		await this.prismaService.verification_token.create({
 			data: {
 				token: hashedToken,
 				account_id: accountId,
@@ -41,7 +41,7 @@ export class TokenService {
 	): Promise<string> {
 		const hashedToken = this.hash(rawToken);
 
-		return this.prisma.$transaction(async (tx) => {
+		return this.prismaService.$transaction(async (tx) => {
 			const record = await tx.verification_token.findUnique({
 				where: { token: hashedToken },
 			});
@@ -62,7 +62,7 @@ export class TokenService {
 
 	@Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
 	async deleteInvalidTokens() {
-		const deletedTokens = await this.prisma.verification_token.deleteMany({
+		const deletedTokens = await this.prismaService.verification_token.deleteMany({
 			where: {
 				expires_at: { lt: new Date() },
 				used_at: { not: null },
