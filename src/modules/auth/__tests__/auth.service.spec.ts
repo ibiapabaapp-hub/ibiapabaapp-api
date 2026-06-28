@@ -4,9 +4,8 @@ import {
 	UnauthorizedException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { account } from '@prisma/client';
-
+import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { AccountsService } from 'src/modules/accounts/accounts.service';
 import { SecureAccountDTO } from 'src/modules/accounts/dtos/secure-account-dto';
 import { JwtService } from 'src/modules/common/jwt/jwt.service';
@@ -95,10 +94,7 @@ describe('AuthService', () => {
 				'test@test.com',
 				true,
 			);
-			expect(verifyPassword).toHaveBeenCalledWith(
-				passwordInDb,
-				rawPassword,
-			);
+			expect(verifyPassword).toHaveBeenCalledWith(passwordInDb, rawPassword);
 			expect(jwtService.sign).toHaveBeenCalledTimes(2);
 			expect(result.account).not.toHaveProperty('password');
 			expect(result.access_token).toBe('token');

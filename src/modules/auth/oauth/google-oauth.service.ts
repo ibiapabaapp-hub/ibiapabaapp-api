@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	UnauthorizedException,
+} from '@nestjs/common';
 import { OAuth2Client } from 'google-auth-library';
 import { JwtService } from 'src/modules/common/jwt/jwt.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
@@ -126,7 +130,7 @@ export class GoogleOAuthService {
 			name: string;
 			avatar_url?: string;
 		};
-        
+
 		try {
 			tempData = this.jwtService.verify(dto.temp_token, this.TEMP_TOKEN_SECRET);
 		} catch {

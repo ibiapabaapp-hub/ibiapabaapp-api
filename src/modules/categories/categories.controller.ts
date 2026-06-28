@@ -27,7 +27,7 @@ import { Category } from './entities/category.entity';
 
 @Controller({ path: 'categories', version: '1' })
 export class CategoriesController {
-	constructor(private readonly categoriesService: CategoriesService) { }
+	constructor(private readonly categoriesService: CategoriesService) {}
 
 	@ApiOperation({ summary: 'Obtém todas as categorias' })
 	@ApiResponse({ status: 200, type: Category, isArray: true })

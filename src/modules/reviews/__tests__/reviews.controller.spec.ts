@@ -1,9 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
-import { ReviewsController } from '../reviews.controller';
-import { ReviewsService } from '../reviews.service';
+
 import { CreateReviewDto } from '../dto/create-review.dto';
 import { UpdateReviewDto } from '../dto/update-review.dto';
+import { ReviewsController } from '../reviews.controller';
+import { ReviewsService } from '../reviews.service';
 
 describe('ReviewsController', () => {
 	let controller: ReviewsController;
@@ -135,7 +136,10 @@ describe('ReviewsController', () => {
 
 			const result = await controller.getEventAverage('event-1');
 
-			expect(service.getAverageRating).toHaveBeenCalledWith(undefined, 'event-1');
+			expect(service.getAverageRating).toHaveBeenCalledWith(
+				undefined,
+				'event-1',
+			);
 			expect(result).toEqual(averageRating);
 		});
 	});

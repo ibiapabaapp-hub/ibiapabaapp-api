@@ -5,11 +5,10 @@ import {
 	Injectable,
 	NotFoundException,
 } from '@nestjs/common';
+import { account } from '@prisma/client';
 import { PaginationDto } from 'src/modules/common/dtos/pagination.dto';
 import { hashPassword } from 'src/modules/common/password/password.util';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
-
-import { account } from '@prisma/client';
 
 import { CreateAccountDTO } from './dtos/create-account.dto';
 import { SecureAccountDTO } from './dtos/secure-account-dto';

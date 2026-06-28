@@ -7,9 +7,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
-import { ReviewsService } from '../reviews.service';
 import { CreateReviewDto } from '../dto/create-review.dto';
 import { UpdateReviewDto } from '../dto/update-review.dto';
+import { ReviewsService } from '../reviews.service';
 
 describe('ReviewsService', () => {
 	let service: ReviewsService;
@@ -33,7 +33,7 @@ describe('ReviewsService', () => {
 				},
 			},
 		},
-	}
+	};
 
 	const mockReview = {
 		id: 'review-1',
@@ -96,7 +96,7 @@ describe('ReviewsService', () => {
 			const result = await service.create(createDto);
 
 			expect(prisma.business.findUnique).toHaveBeenCalledWith({
-				where: { id: 'business-1' }
+				where: { id: 'business-1' },
 			});
 			expect(prisma.review.create).toHaveBeenCalledWith({
 				data: createDto,
@@ -113,7 +113,11 @@ describe('ReviewsService', () => {
 				comment: 'Nice event!',
 			};
 
-			const eventReview = { ...mockReview, event_id: 'event-1', business_id: null };
+			const eventReview = {
+				...mockReview,
+				event_id: 'event-1',
+				business_id: null,
+			};
 			const mockEvent = {
 				id: 'event-1',
 				slug: 'test-event',
@@ -136,7 +140,7 @@ describe('ReviewsService', () => {
 			const result = await service.create(createDto);
 
 			expect(prisma.event.findUnique).toHaveBeenCalledWith({
-				where: { id: 'event-1' }
+				where: { id: 'event-1' },
 			});
 			expect(prisma.review.create).toHaveBeenCalledWith({
 				data: createDto,
@@ -152,7 +156,9 @@ describe('ReviewsService', () => {
 			};
 
 			await expect(service.create(createDto)).rejects.toThrow(
-				new BadRequestException('Must provide exactly one business_id or event_id'),
+				new BadRequestException(
+					'Must provide exactly one business_id or event_id',
+				),
 			);
 		});
 
@@ -165,7 +171,9 @@ describe('ReviewsService', () => {
 			};
 
 			await expect(service.create(createDto)).rejects.toThrow(
-				new BadRequestException('Must provide exactly one business_id or event_id'),
+				new BadRequestException(
+					'Must provide exactly one business_id or event_id',
+				),
 			);
 		});
 
@@ -242,7 +250,11 @@ describe('ReviewsService', () => {
 		});
 
 		it('should return all event reviews', async () => {
-			const eventReview = { ...mockReview, event_id: 'event-1', business_id: null };
+			const eventReview = {
+				...mockReview,
+				event_id: 'event-1',
+				business_id: null,
+			};
 			const reviews = [eventReview];
 			prisma.review.findMany.mockResolvedValue(reviews);
 

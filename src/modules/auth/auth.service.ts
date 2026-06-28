@@ -5,7 +5,6 @@ import {
 	UnauthorizedException,
 } from '@nestjs/common';
 import { account } from '@prisma/client';
-
 import { AccountsService } from 'src/modules/accounts/accounts.service';
 import { JwtService } from 'src/modules/common/jwt/jwt.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
@@ -14,7 +13,6 @@ import { extractBearerTokenFromString } from 'src/utils/extract-bearer-token';
 import { verifyPassword } from '../common/password/password.util';
 import { TokenService } from '../common/token/token.service';
 import { EmailService } from '../email/email.service';
-
 import {
 	AuthResponseDto,
 	CheckUniqueResponseDto,
@@ -37,10 +35,7 @@ export class AuthService {
 		const { email, password } = loginDto;
 
 		const account = await this.accountService.findOneByEmail(email, true);
-		const isPasswordValid = await verifyPassword(
-			account.password!,
-			password,
-		);
+		const isPasswordValid = await verifyPassword(account.password!, password);
 		if (!isPasswordValid) {
 			throw new UnauthorizedException({
 				message: 'Invalid credentials',

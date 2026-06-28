@@ -20,7 +20,11 @@ export class EmailService {
 		this.from = from;
 	}
 
-	private async send(payload: { to: string; subject: string; html: string }): Promise<void> {
+	private async send(payload: {
+		to: string;
+		subject: string;
+		html: string;
+	}): Promise<void> {
 		const { error } = await this.resend.emails.send({
 			from: this.from,
 			...payload,

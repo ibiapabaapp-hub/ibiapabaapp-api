@@ -3,7 +3,6 @@ import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
-import { GoogleOAuthService } from '../oauth/google-oauth.service';
 import {
 	CheckUniqueDto,
 	CheckUniqueResponse,
@@ -11,6 +10,7 @@ import {
 import { AuthResponseDto } from '../dtos/manual-auth/auth-response.dto';
 import { LoginDto } from '../dtos/manual-auth/login.dto';
 import { RegisterDto } from '../dtos/manual-auth/register.dto';
+import { GoogleOAuthService } from '../oauth/google-oauth.service';
 
 describe('AuthController', () => {
 	let controller: AuthController;

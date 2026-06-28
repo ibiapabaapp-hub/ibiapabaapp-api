@@ -62,12 +62,13 @@ export class TokenService {
 
 	@Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
 	async deleteInvalidTokens() {
-		const deletedTokens = await this.prismaService.verification_token.deleteMany({
-			where: {
-				expires_at: { lt: new Date() },
-				used_at: { not: null },
-			},
-		});
+		const deletedTokens =
+			await this.prismaService.verification_token.deleteMany({
+				where: {
+					expires_at: { lt: new Date() },
+					used_at: { not: null },
+				},
+			});
 		console.log(
 			`CronJob::[TokenService/deleteInvalidTokens](${new Date().toISOString()}) -> ${deletedTokens.count} tokens deleted`,
 		);

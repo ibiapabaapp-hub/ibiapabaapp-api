@@ -9,12 +9,7 @@ import { AuthService } from './auth.service';
 import { GoogleOAuthService } from './oauth/google-oauth.service';
 
 @Module({
-	imports: [
-		JwtModule,
-		AccountsModule,
-		EmailModule,
-		TokenModule,
-	],
+	imports: [JwtModule, AccountsModule, EmailModule, TokenModule],
 	controllers: [AuthController],
 	providers: [AuthService, GoogleOAuthService],
 })

@@ -49,13 +49,13 @@ import { AppService } from './app.service';
 		ScheduleModule.forRoot(),
 		...(process.env.NODE_ENV === 'development'
 			? [
-				ServeStaticModule.forRoot({
-					rootPath: join(process.cwd(), 'public'),
-					serveStaticOptions: {
-						fallthrough: false,
-					},
-				}),
-			]
+					ServeStaticModule.forRoot({
+						rootPath: join(process.cwd(), 'public'),
+						serveStaticOptions: {
+							fallthrough: false,
+						},
+					}),
+				]
 			: []),
 		PrismaModule,
 		AuthModule,
@@ -88,4 +88,4 @@ import { AppService } from './app.service';
 		},
 	],
 })
-export class AppModule { }
+export class AppModule {}

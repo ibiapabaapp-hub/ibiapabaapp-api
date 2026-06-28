@@ -3,9 +3,9 @@ import { account } from '@prisma/client';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
+import { AccountInterestsService } from '../account-interests.service';
 import { AccountsController } from '../accounts.controller';
 import { AccountsService } from '../accounts.service';
-import { AccountInterestsService } from '../account-interests.service';
 import { SecureAccountDTO } from '../dtos/secure-account-dto';
 import { UpdateAccountDTO } from '../dtos/update-account.dto';
 

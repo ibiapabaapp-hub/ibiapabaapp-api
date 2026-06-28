@@ -1,4 +1,4 @@
-import { review } from "@prisma/client";
+import { review } from '@prisma/client';
 
 export class Review implements review {
 	id: string;
