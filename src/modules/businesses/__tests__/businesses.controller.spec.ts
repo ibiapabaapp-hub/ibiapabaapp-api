@@ -31,7 +31,7 @@ describe('BusinessesController', () => {
 
 	it('should call service.create with correct data', async () => {
 		const dto: CreateBusinessDTO = {
-			profile_id: 'test',
+			account_id: 'test',
 			slug: 'empresa-teste',
 			id: '',
 			cnpj: null,
@@ -51,8 +51,8 @@ describe('BusinessesController', () => {
 		expect(service.findAll).toHaveBeenCalled();
 	});
 
-	it('should call mediasService.getMediaByBusiness', async () => {
+	it('should call mediasService.getMediaByAccount', async () => {
 		await controller.getBusinessMedia('uuid');
-		expect(mediasService.getMediaByBusiness).toHaveBeenCalledWith('uuid');
+		expect(mediasService.getMediaByAccount).toHaveBeenCalledWith('uuid');
 	});
 });

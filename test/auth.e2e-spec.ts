@@ -7,6 +7,7 @@ import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthModule } from 'src/modules/auth/auth.module';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
+import { EmailService } from 'src/modules/email/email.service';
 import request from 'supertest';
 import { App } from 'supertest/types';
 
@@ -24,7 +25,12 @@ describe('Auth (e2e)', () => {
 				PrismaModule,
 				AuthModule,
 			],
-		}).compile();
+		})
+			.overrideProvider(EmailService)
+			.useValue({
+				sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
+			})
+			.compile();
 
 		app = moduleFixture.createNestApplication();
 		app.setGlobalPrefix('/api');
@@ -48,12 +54,12 @@ describe('Auth (e2e)', () => {
 
 	const testAccount = {
 		name: 'Test User',
-		username: 'testuser',
+		slug: 'testuser',
 		email: 'test@example.com',
+		phone_number: '+5585999999999',
 		password: 'Password123!',
 		password_confirm: 'Password123!',
-		birth_date: '1990-01-01T00:00:00.000Z',
-		phone_number: '+5585999999999',
+		display_name: 'Test User',
 	};
 
 	describe('POST /register', () => {
@@ -79,7 +85,7 @@ describe('Auth (e2e)', () => {
 				})
 				.expect(201);
 
-			expect(res.body).toHaveProperty('accessToken');
+			expect(res.body).toHaveProperty('access_token');
 		});
 	});
 

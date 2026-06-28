@@ -1,8 +1,8 @@
-import { event, event_type, reach_level } from '@prisma/client';
+import { event_type, reach_level } from '@prisma/client';
 
-export class Event implements event {
+export class Event {
 	id: string;
-	owner_profile_id: string;
+	owner_account_id: string;
 
 	name: string;
 	slug: string;

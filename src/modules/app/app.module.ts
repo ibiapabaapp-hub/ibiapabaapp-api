@@ -17,12 +17,12 @@ import { PrismaModule } from '../../modules/common/prisma/prisma.module';
 import { EventsModule } from '../../modules/events/events.module';
 import { LeadsModule } from '../../modules/leads/leads.module';
 import { MediasModule } from '../../modules/medias/medias.module';
-import { ProfilesModule } from '../../modules/profiles/profiles.module';
 import { SearchModule } from '../../modules/search/search.module';
 import { AccountsModule } from '../accounts/accounts.module';
 import { BusinessesModule } from '../businesses/businesses.module';
 import { ThrottlerBehindProxyGuard } from '../common/guards/throttler-behind-proxy-guard';
 import { FavoritesModule } from '../favorites/favorites.module';
+import { ReviewsModule } from '../reviews/reviews.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -68,8 +68,8 @@ import { AppService } from './app.service';
 		BusinessesModule,
 		EventsModule,
 		FavoritesModule,
+		ReviewsModule,
 		CategoriesModule,
-		ProfilesModule,
 	],
 	controllers: [AppController],
 	providers: [

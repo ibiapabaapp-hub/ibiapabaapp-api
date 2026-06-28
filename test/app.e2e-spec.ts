@@ -37,7 +37,7 @@ describe('App (e2e)', () => {
 			await request(app.getHttpServer())
 				.get('/api/v1')
 				.expect(200)
-				.expect({ message: 'Hello IbiapabaApp!' });
+				.expect({ message: 'Hello IbiVibe!' });
 		});
 	});
 });

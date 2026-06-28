@@ -11,10 +11,10 @@ describe('FavoritesService', () => {
 
 	const mockFavorite = {
 		id: 'favorite-1',
-		profile_id: 'profile-1',
+		account_id: 'account-1',
 		city_id: 'city-1',
 		event_id: null,
-		business_profile_id: null,
+		business_id: null,
 	};
 
 	beforeEach(async () => {
@@ -40,35 +40,39 @@ describe('FavoritesService', () => {
 
 	describe('create', () => {
 		it('should create a favorite for a city', async () => {
-			prisma.profile_favorite.create.mockResolvedValue(mockFavorite);
-			prisma.profile_favorite.findFirst.mockResolvedValue(null);
+			prisma.account_favorite.create.mockResolvedValue(mockFavorite);
+			prisma.account_favorite.findFirst.mockResolvedValue(null);
 
 			const dto = {
-				profile_id: 'profile-1',
+				account_id: 'account-1',
 				city_id: 'city-1',
 				event_id: null,
-				business_profile_id: null,
+				business_id: null,
 			};
 
 			const result = await service.create(dto);
 
 			expect(result).toEqual(mockFavorite);
-			expect(prisma.profile_favorite.create).toHaveBeenCalledWith({
+			expect(prisma.account_favorite.create).toHaveBeenCalledWith({
 				data: dto,
 				select: expect.any(Object),
 			});
 		});
 
 		it('should create a favorite for an event', async () => {
-			const eventFavorite = { ...mockFavorite, city_id: null, event_id: 'event-1' };
-			prisma.profile_favorite.create.mockResolvedValue(eventFavorite);
-			prisma.profile_favorite.findFirst.mockResolvedValue(null);
-
-			const dto = {
-				profile_id: 'profile-1',
+			const eventFavorite = {
+				...mockFavorite,
 				city_id: null,
 				event_id: 'event-1',
-				business_profile_id: null,
+			};
+			prisma.account_favorite.create.mockResolvedValue(eventFavorite);
+			prisma.account_favorite.findFirst.mockResolvedValue(null);
+
+			const dto = {
+				account_id: 'account-1',
+				city_id: null,
+				event_id: 'event-1',
+				business_id: null,
 			};
 
 			const result = await service.create(dto);
@@ -77,15 +81,20 @@ describe('FavoritesService', () => {
 		});
 
 		it('should create a favorite for a business', async () => {
-			const businessFavorite = { ...mockFavorite, city_id: null, event_id: null, business_profile_id: 'business-1' };
-			prisma.profile_favorite.create.mockResolvedValue(businessFavorite);
-			prisma.profile_favorite.findFirst.mockResolvedValue(null);
-
-			const dto = {
-				profile_id: 'profile-1',
+			const businessFavorite = {
+				...mockFavorite,
 				city_id: null,
 				event_id: null,
-				business_profile_id: 'business-1',
+				business_id: 'business-1',
+			};
+			prisma.account_favorite.create.mockResolvedValue(businessFavorite);
+			prisma.account_favorite.findFirst.mockResolvedValue(null);
+
+			const dto = {
+				account_id: 'account-1',
+				city_id: null,
+				event_id: null,
+				business_id: 'business-1',
 			};
 
 			const result = await service.create(dto);
@@ -95,23 +104,23 @@ describe('FavoritesService', () => {
 
 		it('should throw error if no entity is provided', async () => {
 			const dto = {
-				profile_id: 'profile-1',
+				account_id: 'account-1',
 				city_id: null,
 				event_id: null,
-				business_profile_id: null,
+				business_id: null,
 			};
 
 			await expect(service.create(dto)).rejects.toThrow(
-				'Deve ser fornecido pelo menos uma entidade (city_id, event_id ou business_profile_id)',
+				'Deve ser fornecido pelo menos uma entidade (city_id, event_id ou business_id)',
 			);
 		});
 
 		it('should throw error if multiple entities are provided', async () => {
 			const dto = {
-				profile_id: 'profile-1',
+				account_id: 'account-1',
 				city_id: 'city-1',
 				event_id: 'event-1',
-				business_profile_id: null,
+				business_id: null,
 			};
 
 			await expect(service.create(dto)).rejects.toThrow(
@@ -120,28 +129,30 @@ describe('FavoritesService', () => {
 		});
 
 		it('should throw ConflictException if already favorited', async () => {
-			prisma.profile_favorite.findFirst.mockResolvedValue(mockFavorite);
+			prisma.account_favorite.findFirst.mockResolvedValue(mockFavorite);
 
 			const dto = {
-				profile_id: 'profile-1',
+				account_id: 'account-1',
 				city_id: 'city-1',
 				event_id: null,
-				business_profile_id: null,
+				business_id: null,
 			};
 
-			await expect(service.create(dto)).rejects.toThrow('Este item já foi favoritado por este perfil');
+			await expect(service.create(dto)).rejects.toThrow(
+				'Este item já foi favoritado por esta conta',
+			);
 		});
 	});
 
 	describe('findAll', () => {
 		it('should return an array of favorites', async () => {
 			const favorites = [mockFavorite, { ...mockFavorite, id: 'favorite-2' }];
-			prisma.profile_favorite.findMany.mockResolvedValue(favorites);
+			prisma.account_favorite.findMany.mockResolvedValue(favorites);
 
 			const result = await service.findAll();
 
 			expect(result).toEqual(favorites);
-			expect(prisma.profile_favorite.findMany).toHaveBeenCalledWith({
+			expect(prisma.account_favorite.findMany).toHaveBeenCalledWith({
 				where: {},
 				select: expect.any(Object),
 			});
@@ -149,12 +160,12 @@ describe('FavoritesService', () => {
 
 		it('should filter favorites by profile_id', async () => {
 			const favorites = [mockFavorite];
-			prisma.profile_favorite.findMany.mockResolvedValue(favorites);
+			prisma.account_favorite.findMany.mockResolvedValue(favorites);
 
-			await service.findAll('profile-1');
+			await service.findAll('account-1');
 
-			expect(prisma.profile_favorite.findMany).toHaveBeenCalledWith({
-				where: { profile_id: 'profile-1' },
+			expect(prisma.account_favorite.findMany).toHaveBeenCalledWith({
+				where: { account_id: 'account-1' },
 				select: expect.any(Object),
 			});
 		});
@@ -162,19 +173,19 @@ describe('FavoritesService', () => {
 
 	describe('findOne', () => {
 		it('should return a favorite by id', async () => {
-			prisma.profile_favorite.findUnique.mockResolvedValue(mockFavorite);
+			prisma.account_favorite.findUnique.mockResolvedValue(mockFavorite);
 
 			const result = await service.findOne('favorite-1');
 
 			expect(result).toEqual(mockFavorite);
-			expect(prisma.profile_favorite.findUnique).toHaveBeenCalledWith({
+			expect(prisma.account_favorite.findUnique).toHaveBeenCalledWith({
 				where: { id: 'favorite-1' },
 				select: expect.any(Object),
 			});
 		});
 
 		it('should throw NotFoundException when favorite not found', async () => {
-			prisma.profile_favorite.findUnique.mockResolvedValue(null);
+			prisma.account_favorite.findUnique.mockResolvedValue(null);
 
 			await expect(service.findOne('non-existent')).rejects.toThrow(
 				NotFoundException,
@@ -184,19 +195,19 @@ describe('FavoritesService', () => {
 
 	describe('remove', () => {
 		it('should delete a favorite', async () => {
-			prisma.profile_favorite.delete.mockResolvedValue(mockFavorite);
+			prisma.account_favorite.delete.mockResolvedValue(mockFavorite);
 
 			const result = await service.remove('favorite-1');
 
 			expect(result).toEqual(mockFavorite);
-			expect(prisma.profile_favorite.delete).toHaveBeenCalledWith({
+			expect(prisma.account_favorite.delete).toHaveBeenCalledWith({
 				where: { id: 'favorite-1' },
 				select: expect.any(Object),
 			});
 		});
 
 		it('should throw NotFoundException when favorite to delete not found', async () => {
-			prisma.profile_favorite.delete.mockRejectedValue(new Error('Not found'));
+			prisma.account_favorite.delete.mockRejectedValue(new Error('Not found'));
 
 			await expect(service.remove('non-existent')).rejects.toThrow();
 		});
@@ -204,36 +215,36 @@ describe('FavoritesService', () => {
 
 	describe('removeByCity', () => {
 		it('should remove favorite by profile and city', async () => {
-			prisma.profile_favorite.deleteMany.mockResolvedValue({} as any);
+			prisma.account_favorite.deleteMany.mockResolvedValue({} as any);
 
-			await service.removeByCity('profile-1', 'city-1');
+			await service.removeByCity('account-1', 'city-1');
 
-			expect(prisma.profile_favorite.deleteMany).toHaveBeenCalledWith({
-				where: { profile_id: 'profile-1', city_id: 'city-1' },
+			expect(prisma.account_favorite.deleteMany).toHaveBeenCalledWith({
+				where: { account_id: 'account-1', city_id: 'city-1' },
 			});
 		});
 	});
 
 	describe('removeByEvent', () => {
 		it('should remove favorite by profile and event', async () => {
-			prisma.profile_favorite.deleteMany.mockResolvedValue({} as any);
+			prisma.account_favorite.deleteMany.mockResolvedValue({} as any);
 
-			await service.removeByEvent('profile-1', 'event-1');
+			await service.removeByEvent('account-1', 'event-1');
 
-			expect(prisma.profile_favorite.deleteMany).toHaveBeenCalledWith({
-				where: { profile_id: 'profile-1', event_id: 'event-1' },
+			expect(prisma.account_favorite.deleteMany).toHaveBeenCalledWith({
+				where: { account_id: 'account-1', event_id: 'event-1' },
 			});
 		});
 	});
 
 	describe('removeByBusiness', () => {
 		it('should remove favorite by profile and business', async () => {
-			prisma.profile_favorite.deleteMany.mockResolvedValue({} as any);
+			prisma.account_favorite.deleteMany.mockResolvedValue({} as any);
 
-			await service.removeByBusiness('profile-1', 'business-1');
+			await service.removeByBusiness('account-1', 'business-1');
 
-			expect(prisma.profile_favorite.deleteMany).toHaveBeenCalledWith({
-				where: { profile_id: 'profile-1', business_profile_id: 'business-1' },
+			expect(prisma.account_favorite.deleteMany).toHaveBeenCalledWith({
+				where: { account_id: 'account-1', business_id: 'business-1' },
 			});
 		});
 	});

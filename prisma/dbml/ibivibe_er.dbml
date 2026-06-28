@@ -1,0 +1,358 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Project "IbiVibeDB" {
+  database_type: 'PostgreSQL'
+  Note: ''
+}
+
+Table account_oauth {
+  id String [pk]
+  account_id String [not null]
+  provider oauth_provider [not null]
+  provider_uid String [not null]
+  email String [not null]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+  account account [not null]
+
+  indexes {
+    (provider, provider_uid) [unique]
+    (provider, email) [unique]
+  }
+}
+
+Table account {
+  id String [pk]
+  email String [unique, not null]
+  password String
+  phone_number String [unique]
+  slug String [unique]
+  display_name String [not null]
+  bio String
+  avatar_url String
+  gender gender
+  type account_type [not null, default: 'personal']
+  name String [not null]
+  active Boolean [not null, default: true]
+  is_verified Boolean [not null, default: false]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+  favorites account_favorite [not null]
+  interests account_interest [not null]
+  business business
+  events event [not null]
+  medias media [not null]
+  verification_tokens verification_token [not null]
+  reviews review [not null]
+  oauth_accounts account_oauth [not null]
+}
+
+Table verification_token {
+  id String [pk]
+  token String [unique, not null]
+  account_id String [not null]
+  type token_type [not null]
+  expires_at DateTime [not null]
+  used_at DateTime
+  created_at DateTime [default: `now()`, not null]
+  account account [not null]
+}
+
+Table business {
+  id String [pk]
+  owner_account_id String [unique, not null]
+  cnpj String
+  max_reach_level reach_level [not null, default: 'local']
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+  favorites account_favorite [not null]
+  account account [not null]
+  categories business_category [not null]
+  cities business_city [not null]
+  reviews review [not null]
+}
+
+Table city {
+  id String [pk]
+  slug String [unique, not null]
+  name String [not null]
+  description String
+  cover_img_url String
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+  favorites account_favorite [not null]
+  businesses business_city [not null]
+  categories city_category [not null]
+  events event_city [not null]
+  medias media [not null]
+}
+
+Table event {
+  id String [pk]
+  slug String [unique, not null]
+  owner_account_id String [not null]
+  name String [not null]
+  description String
+  cover_img_url String
+  reach_level reach_level [not null]
+  type event_type [not null, default: 'simple']
+  start_date DateTime [not null]
+  end_date DateTime [not null]
+  active Boolean [not null, default: true]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+  favorites account_favorite [not null]
+  owner account [not null]
+  categories event_category [not null]
+  cities event_city [not null]
+  medias media [not null]
+  reviews review [not null]
+}
+
+Table media {
+  id String [pk]
+  account_id String
+  city_id String
+  event_id String
+  media_type media_type [not null]
+  url String [not null]
+  thumbnail_url String
+  is_cover Boolean [not null, default: false]
+  position Int [not null, default: 0]
+  created_at DateTime [default: `now()`, not null]
+  account account
+  city city
+  event event
+}
+
+Table account_favorite {
+  id String [pk]
+  account_id String [not null]
+  city_id String
+  event_id String
+  business_id String
+  account account [not null]
+  business business
+  city city
+  event event
+
+  indexes {
+    (account_id, city_id) [unique]
+    (account_id, event_id) [unique]
+    (account_id, business_id) [unique]
+  }
+}
+
+Table account_interest {
+  id String [pk]
+  account_id String [not null]
+  category_id String [not null]
+  account account [not null]
+  category category [not null]
+
+  indexes {
+    (account_id, category_id) [unique]
+  }
+}
+
+Table category {
+  id String [pk]
+  parent_id String
+  name String [unique, not null]
+  entities entity_category[] [not null]
+  interests account_interest [not null]
+  business_cats business_category [not null]
+  parent category
+  children category [not null]
+  city_cats city_category [not null]
+  event_cats event_category [not null]
+}
+
+Table city_category {
+  id String [pk]
+  city_id String [not null]
+  category_id String [not null]
+  category category [not null]
+  city city [not null]
+
+  indexes {
+    (city_id, category_id) [unique]
+  }
+}
+
+Table business_category {
+  id String [pk]
+  business_id String [not null]
+  category_id String [not null]
+  business business [not null]
+  category category [not null]
+
+  indexes {
+    (business_id, category_id) [unique]
+  }
+}
+
+Table business_city {
+  id String [pk]
+  business_id String [not null]
+  city_id String [not null]
+  is_headquarter Boolean [not null, default: false]
+  address_specific String
+  business business [not null]
+  city city [not null]
+}
+
+Table event_category {
+  id String [pk]
+  event_id String [not null]
+  category_id String [not null]
+  category category [not null]
+  event event [not null]
+
+  indexes {
+    (event_id, category_id) [unique]
+  }
+}
+
+Table event_city {
+  id String [pk]
+  event_id String [not null]
+  city_id String [not null]
+  address_specific String
+  city city [not null]
+  event event [not null]
+}
+
+Table lead {
+  id String [pk]
+  name String [not null]
+  email String [unique, not null]
+  phone_number String [unique, not null]
+  type lead_type [not null]
+  business_name String
+  created_at DateTime [default: `now()`]
+  updated_at DateTime
+}
+
+Table review {
+  id String [pk]
+  account_id String [not null]
+  business_id String
+  event_id String
+  rating Int [not null]
+  comment String
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+  account account [not null]
+  business business
+  event event
+
+  indexes {
+    (account_id, business_id) [unique]
+    (account_id, event_id) [unique]
+  }
+}
+
+Enum lead_type {
+  resident
+  tourist
+  business
+}
+
+Enum oauth_provider {
+  google
+}
+
+Enum account_type {
+  personal
+  business
+}
+
+Enum gender {
+  male
+  female
+  non_binary
+  prefer_not_to_say
+}
+
+Enum reach_level {
+  local
+  regional
+}
+
+Enum event_type {
+  simple
+  featured
+}
+
+Enum media_type {
+  image
+  video
+}
+
+Enum entity_category {
+  city
+  business
+  event
+}
+
+Enum token_type {
+  verify_email
+  reset_password
+}
+
+Ref: account_oauth.account_id > account.id [delete: Cascade]
+
+Ref: verification_token.account_id > account.id [delete: Cascade]
+
+Ref: business.owner_account_id - account.id [delete: Cascade]
+
+Ref: event.owner_account_id > account.id [delete: Cascade]
+
+Ref: media.account_id > account.id [delete: Cascade]
+
+Ref: media.city_id > city.id [delete: Cascade]
+
+Ref: media.event_id > event.id [delete: Cascade]
+
+Ref: account_favorite.account_id > account.id [delete: Cascade]
+
+Ref: account_favorite.business_id > business.id [delete: Cascade]
+
+Ref: account_favorite.city_id > city.id [delete: Cascade]
+
+Ref: account_favorite.event_id > event.id [delete: Cascade]
+
+Ref: account_interest.account_id > account.id [delete: Cascade]
+
+Ref: account_interest.category_id > category.id [delete: Cascade]
+
+Ref: category.parent_id - category.id
+
+Ref: city_category.category_id > category.id [delete: Cascade]
+
+Ref: city_category.city_id > city.id [delete: Cascade]
+
+Ref: business_category.business_id > business.id [delete: Cascade]
+
+Ref: business_category.category_id > category.id [delete: Cascade]
+
+Ref: business_city.business_id > business.id [delete: Cascade]
+
+Ref: business_city.city_id > city.id [delete: Cascade]
+
+Ref: event_category.category_id > category.id [delete: Cascade]
+
+Ref: event_category.event_id > event.id [delete: Cascade]
+
+Ref: event_city.city_id > city.id [delete: Cascade]
+
+Ref: event_city.event_id > event.id [delete: Cascade]
+
+Ref: review.account_id > account.id [delete: Cascade]
+
+Ref: review.business_id > business.id [delete: Cascade]
+
+Ref: review.event_id > event.id [delete: Cascade]

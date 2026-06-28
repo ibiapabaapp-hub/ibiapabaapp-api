@@ -16,14 +16,19 @@ import {
 } from '@nestjs/swagger';
 
 import { PaginationDto } from '../common/dtos/pagination.dto';
+import { AccountInterestsService } from './account-interests.service';
 import { AccountsService } from './accounts.service';
 import { SecureAccountDTO } from './dtos/secure-account-dto';
 import { UpdateAccountDTO } from './dtos/update-account.dto';
+import { UpdateInterestsDTO } from './dtos/update-interests.dto';
 
 // TODO: modificações de segurança devido a falta de user_roles
 @Controller({ path: 'accounts', version: '1' })
 export class AccountsController {
-	constructor(private readonly accountsService: AccountsService) {}
+	constructor(
+		private readonly accountsService: AccountsService,
+		private readonly accountInterestsService: AccountInterestsService,
+	) {}
 
 	// ─── GET: /accounts ─────────────────────────────────────────────────────────────
 	@ApiBearerAuth()
@@ -62,5 +67,28 @@ export class AccountsController {
 	@Delete(':id')
 	remove(@Param('id') id: string) {
 		return this.accountsService.remove(id);
+	}
+
+	// ─── GET: /accounts/:id/interests ──────────────────────────────────────────────────
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Obter interesses de uma conta' })
+	@ApiParam({ name: 'id', description: 'UUID da conta' })
+	@ApiResponse({ status: 200, description: 'Interesses da conta' })
+	@Get(':id/interests')
+	findInterests(@Param('id', ParseUUIDPipe) id: string) {
+		return this.accountInterestsService.findAllByAccountId(id);
+	}
+
+	// ─── PATCH: /accounts/:id/interests ─────────────────────────────────────────────────
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Atualizar interesses de uma conta' })
+	@ApiParam({ name: 'id', description: 'UUID da conta' })
+	@ApiResponse({ status: 200, description: 'Interesses atualizados' })
+	@Patch(':id/interests')
+	updateInterests(
+		@Param('id', ParseUUIDPipe) id: string,
+		@Body() updateInterestsDto: UpdateInterestsDTO,
+	) {
+		return this.accountInterestsService.upsert(id, updateInterestsDto);
 	}
 }

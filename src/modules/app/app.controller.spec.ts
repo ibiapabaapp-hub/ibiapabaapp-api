@@ -16,9 +16,9 @@ describe('AppController', () => {
 	});
 
 	describe('root', () => {
-		it('should return "Hello IbiapabaApp!"', () => {
+		it('should return "Hello IbiVibe!"', () => {
 			expect(appController.getHello()).toStrictEqual({
-				message: 'Hello IbiapabaApp!',
+				message: 'Hello IbiVibe!',
 			});
 		});
 	});

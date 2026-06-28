@@ -29,6 +29,14 @@ import { Category } from './entities/category.entity';
 export class CategoriesController {
 	constructor(private readonly categoriesService: CategoriesService) {}
 
+	@ApiOperation({ summary: 'Obtém todas as categorias' })
+	@ApiResponse({ status: 200, type: Category, isArray: true })
+	@Public()
+	@Get()
+	findAll() {
+		return this.categoriesService.findAll();
+	}
+
 	@ApiOperation({ summary: 'Obtém todas as categorias-pai' })
 	@ApiResponse({ status: 200, type: Category, isArray: true })
 	@ApiQuery({

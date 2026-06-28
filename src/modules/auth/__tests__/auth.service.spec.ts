@@ -4,45 +4,53 @@ import {
 	UnauthorizedException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { account } from '@prisma/client';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { AccountsService } from 'src/modules/accounts/accounts.service';
-import { Account } from 'src/modules/accounts/entities/account.entity';
+import { SecureAccountDTO } from 'src/modules/accounts/dtos/secure-account-dto';
 import { JwtService } from 'src/modules/common/jwt/jwt.service';
-import { PasswordService } from 'src/modules/common/password/password.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
+import { TokenService } from 'src/modules/common/token/token.service';
+import { EmailService } from 'src/modules/email/email.service';
 
 import { AuthService } from '../auth.service';
-import { RegisterDto } from '../dtos/register.dto';
+import { RegisterDto } from '../dtos/manual-auth/register.dto';
+
+jest.mock('src/modules/common/password/password.util', () => ({
+	verifyPassword: jest.fn(),
+}));
+
+import { verifyPassword } from 'src/modules/common/password/password.util';
 
 describe('AuthService', () => {
 	let service: AuthService;
 	let prisma: DeepMockProxy<PrismaService>;
-	let passwordService: DeepMockProxy<PasswordService>;
 	let jwtService: DeepMockProxy<JwtService>;
 	let usersService: DeepMockProxy<AccountsService>;
+	let _tokenService: DeepMockProxy<TokenService>;
+	let _emailService: DeepMockProxy<EmailService>;
 
 	beforeEach(async () => {
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
 				AuthService,
 				{ provide: PrismaService, useValue: mockDeep<PrismaService>() },
-				{
-					provide: PasswordService,
-					useValue: mockDeep<PasswordService>(),
-				},
 				{ provide: JwtService, useValue: mockDeep<JwtService>() },
 				{
 					provide: AccountsService,
 					useValue: mockDeep<AccountsService>(),
 				},
+				{ provide: TokenService, useValue: mockDeep<TokenService>() },
+				{ provide: EmailService, useValue: mockDeep<EmailService>() },
 			],
 		}).compile();
 
 		service = module.get<AuthService>(AuthService);
 		prisma = module.get(PrismaService);
-		passwordService = module.get(PasswordService);
 		jwtService = module.get(JwtService);
 		usersService = module.get(AccountsService);
+		_tokenService = module.get(TokenService);
+		_emailService = module.get(EmailService);
 
 		jest.clearAllMocks();
 	});
@@ -63,13 +71,18 @@ describe('AuthService', () => {
 				name: 'Test',
 				phone_number: '123',
 				active: true,
-				// birth_date: new Date(),
 				created_at: new Date(),
 				updated_at: new Date(),
+				is_verified: false,
+				slug: '',
+				display_name: '',
+				bio: null,
+				avatar_url: null,
+				type: 'business',
 			};
 
 			usersService.findOneByEmail.mockResolvedValue(mockAccount);
-			passwordService.verifyPassword.mockResolvedValue(true);
+			(verifyPassword as jest.Mock).mockResolvedValue(true);
 			jwtService.sign.mockReturnValue('token');
 
 			const result = await service.login({
@@ -81,23 +94,20 @@ describe('AuthService', () => {
 				'test@test.com',
 				true,
 			);
-			expect(passwordService.verifyPassword).toHaveBeenCalledWith(
-				passwordInDb,
-				rawPassword,
-			);
+			expect(verifyPassword).toHaveBeenCalledWith(passwordInDb, rawPassword);
 			expect(jwtService.sign).toHaveBeenCalledTimes(2);
 			expect(result.account).not.toHaveProperty('password');
-			expect(result.accessToken).toBe('token');
-			expect(result.refreshToken).toBe('token');
+			expect(result.access_token).toBe('token');
+			expect(result.refresh_token).toBe('token');
 		});
 
 		it('should throw UnauthorizedException if password is invalid', async () => {
 			usersService.findOneByEmail.mockResolvedValue({
 				id: '1',
 				password: 'hashed',
-			} as Account);
+			} as account);
 
-			passwordService.verifyPassword.mockResolvedValue(false);
+			(verifyPassword as jest.Mock).mockResolvedValue(false);
 
 			await expect(
 				service.login({ email: 'a', password: 'b' }),
@@ -119,7 +129,7 @@ describe('AuthService', () => {
 			const mockCreatedAccount = {
 				id: '1',
 				name: 'John',
-			} as Account;
+			} as account;
 
 			usersService.create.mockResolvedValue(mockCreatedAccount);
 			jwtService.sign.mockReturnValue('token');
@@ -127,15 +137,18 @@ describe('AuthService', () => {
 			const result = await service.register({
 				name: 'John',
 				email: 'test@test.com',
-				birth_date: new Date(),
+				slug: 'john',
+				phone_number: '123',
+				display_name: 'John',
+				// birth_date: new Date(),
 				password: '123',
 				password_confirm: '123',
-			} as RegisterDto);
+			});
 
 			expect(result?.account).not.toHaveProperty('password');
 			expect(usersService.create).toHaveBeenCalled();
 			expect(jwtService.sign).toHaveBeenCalledTimes(2);
-			expect(result?.accessToken).toBe('token');
+			expect(result?.access_token).toBe('token');
 		});
 	});
 
@@ -146,14 +159,14 @@ describe('AuthService', () => {
 			});
 			usersService.findOneById.mockResolvedValue({
 				id: '1',
-			} as Account);
+			} as SecureAccountDTO);
 			jwtService.sign.mockReturnValue('token');
 
 			const result = await service.refreshTokens('refresh');
 
 			expect(jwtService.verify).toHaveBeenCalledWith('refresh');
 			expect(jwtService.sign).toHaveBeenCalledTimes(2);
-			expect(result.accessToken).toBe('token');
+			expect(result.access_token).toBe('token');
 		});
 
 		it('should throw UnauthorizedException if user not found', async () => {

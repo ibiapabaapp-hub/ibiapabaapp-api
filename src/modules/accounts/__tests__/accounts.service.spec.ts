@@ -2,22 +2,24 @@ import {
 	BadRequestException,
 	InternalServerErrorException,
 	NotFoundException,
-	UnauthorizedException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { account as AccountPrisma } from '@prisma/client';
+import { account } from '@prisma/client';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
-import { PasswordService } from 'src/modules/common/password/password.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
 import { AccountsService } from '../accounts.service';
 import { UpdateAccountDTO } from '../dtos/update-account.dto';
-import { Account } from '../entities/account.entity';
+
+jest.mock('src/modules/common/password/password.util', () => ({
+	hashPassword: jest.fn().mockResolvedValue('hashed-password'),
+}));
+
+import { hashPassword } from 'src/modules/common/password/password.util';
 
 describe('AccountsService', () => {
 	let service: AccountsService;
 	let prisma: DeepMockProxy<PrismaService>;
-	let passwordService: DeepMockProxy<PasswordService>;
 
 	beforeEach(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -27,16 +29,11 @@ describe('AccountsService', () => {
 					provide: PrismaService,
 					useValue: mockDeep<PrismaService>(),
 				},
-				{
-					provide: PasswordService,
-					useValue: mockDeep<PasswordService>(),
-				},
 			],
 		}).compile();
 
 		service = module.get<AccountsService>(AccountsService);
 		prisma = module.get(PrismaService);
-		passwordService = module.get(PasswordService);
 
 		jest.clearAllMocks();
 	});
@@ -48,7 +45,7 @@ describe('AccountsService', () => {
 	describe('findAll', () => {
 		it('should return accounts with pagination', async () => {
 			const accounts = [{ id: '1' }];
-			prisma.account.findMany.mockResolvedValue(accounts as AccountPrisma[]);
+			prisma.account.findMany.mockResolvedValue(accounts as account[]);
 
 			const result = await service.findAll({ limit: 10, offset: 0 });
 
@@ -64,7 +61,7 @@ describe('AccountsService', () => {
 	describe('findOneById', () => {
 		it('should return a account if found', async () => {
 			const account = { id: '1' };
-			prisma.account.findFirst.mockResolvedValue(account as Account);
+			prisma.account.findFirst.mockResolvedValue(account as account);
 
 			const result = await service.findOneById('1');
 
@@ -94,7 +91,7 @@ describe('AccountsService', () => {
 			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			const { password, ...accountWithoutPassword } = mock;
 			prisma.account.findFirst.mockResolvedValue(
-				accountWithoutPassword as AccountPrisma,
+				accountWithoutPassword as account,
 			);
 
 			const result = await service.findOneByEmail('test@example.com');
@@ -108,7 +105,7 @@ describe('AccountsService', () => {
 		});
 
 		it('should return a account with password when getPassword is true', async () => {
-			prisma.account.findFirst.mockResolvedValue(mock as AccountPrisma);
+			prisma.account.findFirst.mockResolvedValue(mock as account);
 
 			const result = await service.findOneByEmail('test@example.com', true);
 
@@ -138,9 +135,8 @@ describe('AccountsService', () => {
 				password: 'hashed-password',
 			};
 
-			const updated = {
+			const updated: Account = {
 				id: '1',
-				username: 'testuser',
 				email: 'test@example.com',
 				phone_number: '123456789',
 				password: 'new-hash',
@@ -148,12 +144,17 @@ describe('AccountsService', () => {
 				active: true,
 				created_at: new Date(),
 				updated_at: new Date(),
+				is_verified: false,
+				slug: '',
+				display_name: '',
+				bio: null,
+				avatar_url: null,
+				type: 'business',
 			};
 
-			prisma.account.findUnique.mockResolvedValue(existing as Account);
-			passwordService.verifyPassword.mockResolvedValue(true);
-			passwordService.hashPassword.mockResolvedValue('new-hash');
-			prisma.account.update.mockResolvedValue(updated as Account);
+			prisma.account.findUnique.mockResolvedValue(existing as account);
+			(hashPassword as jest.Mock).mockResolvedValue('new-hash');
+			prisma.account.update.mockResolvedValue(updated as account);
 
 			const result = await service.update('1', {
 				name: 'Updated',
@@ -164,37 +165,24 @@ describe('AccountsService', () => {
 			expect(prisma.account.findUnique).toHaveBeenCalledWith({
 				where: { id: '1' },
 			});
-			expect(passwordService.verifyPassword).toHaveBeenCalled();
+			expect(hashPassword).toHaveBeenCalled();
 			expect(prisma.account.update).toHaveBeenCalled();
 			expect(result).toEqual(updated);
-		});
-
-		it('should throw UnauthorizedException if password is invalid', async () => {
-			prisma.account.findUnique.mockResolvedValue({
-				id: '1',
-				password: 'hashed',
-			} as Account);
-
-			passwordService.verifyPassword.mockResolvedValue(false);
-
-			await expect(
-				service.update('1', { password: 'wrong' } as Account),
-			).rejects.toThrow(UnauthorizedException);
 		});
 
 		it('should throw NotFoundException if account does not exist', async () => {
 			prisma.account.findUnique.mockResolvedValue(null);
 
 			await expect(
-				service.update('1', { password: '123' } as Account),
+				service.update('1', { password: '123' } as UpdateAccountDTO),
 			).rejects.toThrow(NotFoundException);
 		});
 
 		it('should throw BadRequestException if password is missing in DTO', async () => {
-			prisma.account.findUnique.mockResolvedValue({ id: '1' } as Account);
+			prisma.account.findUnique.mockResolvedValue({ id: '1' } as account);
 
 			await expect(
-				service.update('1', { name: 'New Name' } as Account),
+				service.update('1', { name: 'New Name' } as UpdateAccountDTO),
 			).rejects.toThrow(BadRequestException);
 		});
 	});
@@ -203,8 +191,8 @@ describe('AccountsService', () => {
 		it('should delete a account if it exists', async () => {
 			const account = { id: '1' };
 
-			prisma.account.findFirst.mockResolvedValue(account as Account);
-			prisma.account.delete.mockResolvedValue(account as Account);
+			prisma.account.findFirst.mockResolvedValue(account as account);
+			prisma.account.delete.mockResolvedValue(account as account);
 
 			const result = await service.remove('1');
 
@@ -225,7 +213,7 @@ describe('AccountsService', () => {
 		});
 
 		it('should throw InternalServerErrorException on database failure', async () => {
-			prisma.account.findFirst.mockResolvedValue({ id: '1' } as Account);
+			prisma.account.findFirst.mockResolvedValue({ id: '1' } as account);
 			prisma.account.delete.mockRejectedValue(
 				new InternalServerErrorException('Delete failed'),
 			);

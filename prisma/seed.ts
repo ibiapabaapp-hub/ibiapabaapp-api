@@ -41,6 +41,9 @@ interface UserEntry {
 	birth_date: string;
 	role: string;
 	interests: string[];
+	bio?: string;
+	avatar_url?: string;
+	type?: 'personal' | 'business';
 }
 
 interface BusinessCityRef {
@@ -105,12 +108,20 @@ interface LeadEntry {
 	business_name: string | null;
 }
 
+interface FavoriteEntry {
+	user_email: string;
+	city_slug?: string;
+	event_slug?: string;
+	business_slug?: string;
+}
+
 interface GeneralData {
 	cities: CityEntry[];
 	users: UserEntry[];
 	businesses: BusinessEntry[];
 	events: EventEntry[];
 	leads: LeadEntry[];
+	favorites: FavoriteEntry[];
 }
 
 interface CategoriesData {
@@ -276,7 +287,7 @@ async function main() {
 
 			console.log(`  ✅ ${cityMap.size} cidades processadas.`);
 
-			// ─── 3. CONTAS DE USUÁRIO (users → account + profile pessoal) ───
+			// ─── 3. CONTAS DE USUÁRIO (unificado account + profile) ───
 
 			console.log('\n👤 Seeding usuários...');
 
@@ -286,7 +297,7 @@ async function main() {
 			for (const userData of data.users) {
 				const hashedPassword = await hashPassword(userData.password);
 
-				// Cria account
+				// Cria account unificado com campos do perfil
 				const account = await tx.account.upsert({
 					where: { email: userData.email },
 					update: {
@@ -294,6 +305,12 @@ async function main() {
 						password: hashedPassword,
 						phone_number: userData.phone_number,
 						is_verified: true,
+						slug: userData.username,
+						display_name: userData.name,
+						bio: userData.bio,
+						avatar_url: userData.avatar_url,
+						gender: 'male',
+						type: userData.type || 'personal',
 					},
 					create: {
 						name: userData.name,
@@ -301,39 +318,17 @@ async function main() {
 						password: hashedPassword,
 						phone_number: userData.phone_number,
 						is_verified: true,
+						slug: userData.username,
+						display_name: userData.name,
+						bio: userData.bio,
+						avatar_url: userData.avatar_url,
+						type: userData.type || 'personal',
 					},
 				});
 
 				accountMap.set(userData.email, account.id);
 
-				// Cria perfil pessoal
-				const profile = await tx.profile.upsert({
-					where: { slug: userData.username },
-					update: { display_name: userData.name },
-					create: {
-						slug: userData.username,
-						display_name: userData.name,
-						type: 'personal',
-					},
-				});
-
-				// Vincula conta ao perfil
-				await tx.account_profile.upsert({
-					where: {
-						account_id_profile_id: {
-							account_id: account.id,
-							profile_id: profile.id,
-						},
-					},
-					update: {},
-					create: {
-						account_id: account.id,
-						profile_id: profile.id,
-						role: 'owner',
-					},
-				});
-
-				// Interesses do usuário
+				// Interesses do usuário (agora account_interest)
 				for (const interestName of userData.interests) {
 					const catId = categoryMap.get(interestName);
 					if (!catId) {
@@ -343,15 +338,15 @@ async function main() {
 						continue;
 					}
 
-					await tx.profile_interest.upsert({
+					await tx.account_interest.upsert({
 						where: {
-							profile_id_category_id: {
-								profile_id: profile.id,
+							account_id_category_id: {
+								account_id: account.id,
 								category_id: catId,
 							},
 						},
 						update: {},
-						create: { profile_id: profile.id, category_id: catId },
+						create: { account_id: account.id, category_id: catId },
 					});
 				}
 			}
@@ -362,42 +357,51 @@ async function main() {
 
 			console.log('\n🏢 Seeding empresas...');
 
-			// slug -> profile id do business
-			const businessProfileMap = new Map<string, string>();
+			// slug -> account id do business
+			const businessAccountMap = new Map<string, string>();
 
 			for (const bizData of data.businesses) {
-				// Cria perfil do tipo business
-				const profile = await tx.profile.upsert({
+				// Cria account do tipo business
+				const businessAccount = await tx.account.upsert({
 					where: { slug: bizData.slug },
 					update: {
 						display_name: bizData.name,
 						bio: bizData.description,
+						type: 'business',
 					},
 					create: {
+						id: crypto.randomUUID(),
+						email: `business-${bizData.slug}@ibivibe.local`,
+						password: await hashPassword('temp-password'),
+						phone_number: `+5588${Math.floor(Math.random() * 100000000)
+							.toString()
+							.padStart(8, '0')}`,
+						name: bizData.name,
 						slug: bizData.slug,
 						display_name: bizData.name,
 						bio: bizData.description,
 						type: 'business',
+						is_verified: true,
 					},
 				});
 
-				businessProfileMap.set(bizData.slug, profile.id);
+				businessAccountMap.set(bizData.slug, businessAccount.id);
 
 				// Cria registro business
 				const business = await tx.business.upsert({
-					where: { profile_id: profile.id },
+					where: { owner_account_id: businessAccount.id },
 					update: {
 						cnpj: bizData.cnpj,
 						max_reach_level: bizData.max_reach_level,
 					},
 					create: {
-						profile_id: profile.id,
+						owner_account_id: businessAccount.id,
 						cnpj: bizData.cnpj,
 						max_reach_level: bizData.max_reach_level,
 					},
 				});
 
-				// Vincula usuários ao perfil do business
+				// Vincula usuários à conta do business (se houver)
 				for (const userRef of bizData.users) {
 					const accountId = accountMap.get(userRef.email);
 					if (!accountId) {
@@ -407,20 +411,12 @@ async function main() {
 						continue;
 					}
 
-					await tx.account_profile.upsert({
-						where: {
-							account_id_profile_id: {
-								account_id: accountId,
-								profile_id: profile.id,
-							},
-						},
-						update: { role: userRef.role as any },
-						create: {
-							account_id: accountId,
-							profile_id: profile.id,
-							role: userRef.role as any,
-						},
-					});
+					// No novo modelo, não há mais account_profile
+					// Os usuários são vinculados através de outras relações (se necessário)
+					// ou através de permissões específicas da aplicação
+					console.log(
+						`  ℹ️  Usuário "${userRef.email}" associado ao business "${bizData.slug}" (sem vinculo direto no schema)`,
+					);
 				}
 
 				// Categorias do business
@@ -478,11 +474,11 @@ async function main() {
 					}
 				}
 
-				// Mídias do business (vinculadas ao profile)
+				// Mídias do business (vinculadas à account)
 				for (const media of bizData.medias) {
 					await tx.media.create({
 						data: {
-							profile_id: profile.id,
+							account_id: businessAccount.id,
 							media_type: media.media_type,
 							url: media.url,
 							is_cover: media.is_cover,
@@ -491,7 +487,7 @@ async function main() {
 				}
 			}
 
-			console.log(`  ✅ ${businessProfileMap.size} businesses processados.`);
+			console.log(`  ✅ ${businessAccountMap.size} businesses processados.`);
 
 			// ─── 5. EVENTOS ─────────────────────────────────────────────────
 
@@ -500,35 +496,29 @@ async function main() {
 			let eventCount = 0;
 
 			for (const evData of data.events) {
-				// Determina o owner: business profile ou user profile
-				let ownerProfileId: string | undefined;
+				// Determina o owner: business account ou user account
+				let ownerAccountId: string | undefined;
 
 				if (evData.business_slug) {
-					ownerProfileId = businessProfileMap.get(evData.business_slug);
-					if (!ownerProfileId) {
+					ownerAccountId = businessAccountMap.get(evData.business_slug);
+					if (!ownerAccountId) {
 						console.warn(
 							`  ⚠️  Business "${evData.business_slug}" não encontrado para evento "${evData.slug}". Pulando.`,
 						);
 						continue;
 					}
 				} else if (evData.user_email) {
-					// Busca o perfil pessoal do usuário pelo slug (username)
-					const userData = data.users.find(
-						(u) => u.email === evData.user_email,
-					);
-					if (!userData) {
+					// Busca a account do usuário pelo email
+					ownerAccountId = accountMap.get(evData.user_email);
+					if (!ownerAccountId) {
 						console.warn(
 							`  ⚠️  Usuário "${evData.user_email}" não encontrado para evento "${evData.slug}". Pulando.`,
 						);
 						continue;
 					}
-					const profile = await tx.profile.findUnique({
-						where: { slug: userData.username },
-					});
-					ownerProfileId = profile?.id;
 				}
 
-				if (!ownerProfileId) {
+				if (!ownerAccountId) {
 					console.warn(
 						`  ⚠️  Owner não resolvido para evento "${evData.slug}". Pulando.`,
 					);
@@ -549,7 +539,7 @@ async function main() {
 					},
 					create: {
 						slug: evData.slug,
-						owner_profile_id: ownerProfileId,
+						owner_account_id: ownerAccountId,
 						name: evData.name,
 						description: evData.description,
 						cover_img_url: evData.cover_img_url,
@@ -625,7 +615,109 @@ async function main() {
 
 			console.log(`  ✅ ${eventCount} eventos processados.`);
 
-			// ─── 6. LEADS ───────────────────────────────────────────────────
+			// ─── 6. FAVORITES ────────────────────────────────────────────────
+
+			console.log('\n❤️  Seeding favoritos...');
+
+			let favoriteCount = 0;
+
+			for (const favData of data.favorites) {
+				const accountId = accountMap.get(favData.user_email);
+				if (!accountId) {
+					console.warn(
+						`  ⚠️  Conta "${favData.user_email}" não encontrada para favorito. Pulando.`,
+					);
+					continue;
+				}
+
+				// Favorite de cidade
+				if (favData.city_slug) {
+					const cityId = cityMap.get(favData.city_slug);
+					if (!cityId) {
+						console.warn(
+							`  ⚠️  Cidade "${favData.city_slug}" não encontrada para favorito.`,
+						);
+					} else {
+						await tx.account_favorite.upsert({
+							where: {
+								account_id_city_id: {
+									account_id: accountId,
+									city_id: cityId,
+								},
+							},
+							update: {},
+							create: {
+								account_id: accountId,
+								city_id: cityId,
+							},
+						});
+						favoriteCount++;
+					}
+				}
+
+				// Favorite de evento
+				if (favData.event_slug) {
+					const event = await tx.event.findUnique({
+						where: { slug: favData.event_slug },
+					});
+					if (!event) {
+						console.warn(
+							`  ⚠️  Evento "${favData.event_slug}" não encontrado para favorito.`,
+						);
+					} else {
+						await tx.account_favorite.upsert({
+							where: {
+								account_id_event_id: {
+									account_id: accountId,
+									event_id: event.id,
+								},
+							},
+							update: {},
+							create: {
+								account_id: accountId,
+								event_id: event.id,
+							},
+						});
+						favoriteCount++;
+					}
+				}
+
+				// Favorite de business
+				if (favData.business_slug) {
+					const businessAccountId = businessAccountMap.get(
+						favData.business_slug,
+					);
+					if (!businessAccountId) {
+						console.warn(
+							`  ⚠️  Business "${favData.business_slug}" não encontrado para favorito.`,
+						);
+					} else {
+						const business = await tx.business.findUnique({
+							where: { owner_account_id: businessAccountId },
+						});
+						if (business) {
+							await tx.account_favorite.upsert({
+								where: {
+									account_id_business_id: {
+										account_id: accountId,
+										business_id: business.id,
+									},
+								},
+								update: {},
+								create: {
+									account_id: accountId,
+									business_id: business.id,
+								},
+							});
+							favoriteCount++;
+						}
+					}
+				}
+			}
+
+			console.log(`  ✅ ${favoriteCount} favoritos processados.`);
+
+			// ─── 7. LEADS ─────────────────────────────────────────────────────
 
 			console.log('\n📋 Seeding leads...');
 

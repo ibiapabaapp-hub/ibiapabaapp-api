@@ -13,22 +13,20 @@ export class FavoritesService {
 
 	private readonly select = {
 		id: true,
-		profile_id: true,
+		account_id: true,
 		city_id: true,
 		event_id: true,
-		business_profile_id: true,
+		business_id: true,
 	};
 
 	async create(dto: CreateFavoriteDTO) {
 		// Ensure exactly one entity type is provided
-		const entityCount = [
-			dto.city_id,
-			dto.event_id,
-			dto.business_profile_id,
-		].filter(Boolean).length;
+		const entityCount = [dto.city_id, dto.event_id, dto.business_id].filter(
+			Boolean,
+		).length;
 		if (entityCount === 0) {
 			throw new Error(
-				'Deve ser fornecido pelo menos uma entidade (city_id, event_id ou business_profile_id)',
+				'Deve ser fornecido pelo menos uma entidade (city_id, event_id ou business_id)',
 			);
 		}
 		if (entityCount > 1) {
@@ -36,35 +34,31 @@ export class FavoritesService {
 		}
 
 		// Check for existing favorite to avoid duplicates
-		const existing = await this.prismaService.profile_favorite.findFirst({
+		const existing = await this.prismaService.account_favorite.findFirst({
 			where: {
-				profile_id: dto.profile_id,
+				account_id: dto.account_id,
 				OR: [
 					dto.city_id ? { city_id: dto.city_id } : undefined,
 					dto.event_id ? { event_id: dto.event_id } : undefined,
-					dto.business_profile_id
-						? { business_profile_id: dto.business_profile_id }
-						: undefined,
+					dto.business_id ? { business_id: dto.business_id } : undefined,
 				].filter(Boolean) as object[],
 			},
 		});
 
 		if (existing) {
-			throw new ConflictException(
-				'Este item já foi favoritado por este perfil',
-			);
+			throw new ConflictException('Este item já foi favoritado por esta conta');
 		}
 
-		return await this.prismaService.profile_favorite.create({
+		return await this.prismaService.account_favorite.create({
 			data: dto,
 			select: this.select,
 		});
 	}
 
-	async findAll(profileId?: string) {
-		const where = profileId ? { profile_id: profileId } : {};
+	async findAll(accountId?: string) {
+		const where = accountId ? { account_id: accountId } : {};
 
-		const favorites = await this.prismaService.profile_favorite.findMany({
+		const favorites = await this.prismaService.account_favorite.findMany({
 			where,
 			select: this.select,
 		});
@@ -73,7 +67,7 @@ export class FavoritesService {
 	}
 
 	async findOne(id: string) {
-		const favorite = await this.prismaService.profile_favorite.findUnique({
+		const favorite = await this.prismaService.account_favorite.findUnique({
 			where: { id },
 			select: this.select,
 		});
@@ -85,27 +79,27 @@ export class FavoritesService {
 		return favorite;
 	}
 
-	async findByProfileAndCity(profileId: string, cityId: string) {
-		const favorite = await this.prismaService.profile_favorite.findFirst({
-			where: { profile_id: profileId, city_id: cityId },
+	async findByAccountAndCity(accountId: string, cityId: string) {
+		const favorite = await this.prismaService.account_favorite.findFirst({
+			where: { account_id: accountId, city_id: cityId },
 			select: this.select,
 		});
 
 		return favorite;
 	}
 
-	async findByProfileAndEvent(profileId: string, eventId: string) {
-		const favorite = await this.prismaService.profile_favorite.findFirst({
-			where: { profile_id: profileId, event_id: eventId },
+	async findByAccountAndEvent(accountId: string, eventId: string) {
+		const favorite = await this.prismaService.account_favorite.findFirst({
+			where: { account_id: accountId, event_id: eventId },
 			select: this.select,
 		});
 
 		return favorite;
 	}
 
-	async findByProfileAndBusiness(profileId: string, businessProfileId: string) {
-		const favorite = await this.prismaService.profile_favorite.findFirst({
-			where: { profile_id: profileId, business_profile_id: businessProfileId },
+	async findByAccountAndBusiness(accountId: string, businessId: string) {
+		const favorite = await this.prismaService.account_favorite.findFirst({
+			where: { account_id: accountId, business_id: businessId },
 			select: this.select,
 		});
 
@@ -113,7 +107,7 @@ export class FavoritesService {
 	}
 
 	async remove(id: string) {
-		const favorite = await this.prismaService.profile_favorite.delete({
+		const favorite = await this.prismaService.account_favorite.delete({
 			where: { id },
 			select: this.select,
 		});
@@ -121,21 +115,21 @@ export class FavoritesService {
 		return favorite;
 	}
 
-	async removeByCity(profileId: string, cityId: string) {
-		await this.prismaService.profile_favorite.deleteMany({
-			where: { profile_id: profileId, city_id: cityId },
+	async removeByCity(accountId: string, cityId: string) {
+		await this.prismaService.account_favorite.deleteMany({
+			where: { account_id: accountId, city_id: cityId },
 		});
 	}
 
-	async removeByEvent(profileId: string, eventId: string) {
-		await this.prismaService.profile_favorite.deleteMany({
-			where: { profile_id: profileId, event_id: eventId },
+	async removeByEvent(accountId: string, eventId: string) {
+		await this.prismaService.account_favorite.deleteMany({
+			where: { account_id: accountId, event_id: eventId },
 		});
 	}
 
-	async removeByBusiness(profileId: string, businessProfileId: string) {
-		await this.prismaService.profile_favorite.deleteMany({
-			where: { profile_id: profileId, business_profile_id: businessProfileId },
+	async removeByBusiness(accountId: string, businessId: string) {
+		await this.prismaService.account_favorite.deleteMany({
+			where: { account_id: accountId, business_id: businessId },
 		});
 	}
 }

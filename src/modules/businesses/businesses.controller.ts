@@ -84,6 +84,6 @@ export class BusinessesController {
 	@ApiResponse({ status: 200, type: Media, isArray: true })
 	@Get(':id/media')
 	async getBusinessMedia(@Param('id') id: string) {
-		return this.mediasService.getMediaByBusiness(id);
+		return this.mediasService.getMediaByAccount(id);
 	}
 }

@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
-import { Account } from 'src/modules/accounts/entities/account.entity';
 
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
@@ -8,8 +7,10 @@ import {
 	CheckUniqueDto,
 	CheckUniqueResponse,
 } from '../dtos/check-unique-field.dto';
-import { LoginDto } from '../dtos/login.dto';
-import { RegisterDto } from '../dtos/register.dto';
+import { AuthResponseDto } from '../dtos/manual-auth/auth-response.dto';
+import { LoginDto } from '../dtos/manual-auth/login.dto';
+import { RegisterDto } from '../dtos/manual-auth/register.dto';
+import { GoogleOAuthService } from '../oauth/google-oauth.service';
 
 describe('AuthController', () => {
 	let controller: AuthController;
@@ -22,6 +23,10 @@ describe('AuthController', () => {
 				{
 					provide: AuthService,
 					useValue: mockDeep<AuthService>(),
+				},
+				{
+					provide: GoogleOAuthService,
+					useValue: mockDeep<GoogleOAuthService>(),
 				},
 			],
 		}).compile();
@@ -40,17 +45,11 @@ describe('AuthController', () => {
 		const dto = { email: 'test@test.com', password: '123' };
 		const response = {
 			account: { id: '1' },
-			accessToken: 'access',
-			refreshToken: 'refresh',
+			access_token: 'access',
+			refresh_token: 'refresh',
 		};
 
-		service.login.mockResolvedValue(
-			response as {
-				account: Account;
-				accessToken: string;
-				refreshToken: string;
-			},
-		);
+		service.login.mockResolvedValue(response as AuthResponseDto);
 
 		const result = await controller.login(dto as LoginDto);
 
@@ -68,17 +67,11 @@ describe('AuthController', () => {
 
 		const response = {
 			account: { id: '1' },
-			accessToken: 'access',
-			refreshToken: 'refresh',
+			access_token: 'access',
+			refresh_token: 'refresh',
 		};
 
-		service.register.mockResolvedValue(
-			response as {
-				account: Account;
-				accessToken: string;
-				refreshToken: string;
-			},
-		);
+		service.register.mockResolvedValue(response as AuthResponseDto);
 
 		const result = await controller.register(dto as RegisterDto);
 
@@ -90,17 +83,11 @@ describe('AuthController', () => {
 		const token = 'refresh';
 		const response = {
 			account: { id: '1' },
-			accessToken: 'new-access',
-			refreshToken: 'new-refresh',
+			access_token: 'new-access',
+			refresh_token: 'new-refresh',
 		};
 
-		service.refreshTokens.mockResolvedValue(
-			response as {
-				account: Account;
-				accessToken: string;
-				refreshToken: string;
-			},
-		);
+		service.refreshTokens.mockResolvedValue(response as AuthResponseDto);
 
 		const result = await controller.refresh(token);
 
@@ -140,12 +127,12 @@ describe('AuthController', () => {
 
 		it('should return available false when value is taken', async () => {
 			const dto: CheckUniqueDto = {
-				field: 'accountname',
-				value: 'john',
+				field: 'email',
+				value: 'test@test.com',
 			};
 
 			const response: CheckUniqueResponse = {
-				field: 'accountname',
+				field: 'email',
 				value: 'john',
 				available: false,
 			};
@@ -155,8 +142,8 @@ describe('AuthController', () => {
 			const result = await controller.checkUnique(dto);
 
 			expect(service.isUniqueAvailable).toHaveBeenCalledWith(
-				'accountname',
-				'john',
+				'email',
+				'test@test.com',
 			);
 			expect(result.available).toBe(false);
 		});
