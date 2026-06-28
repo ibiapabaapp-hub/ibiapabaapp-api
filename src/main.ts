@@ -85,9 +85,9 @@ if (process.env.NODE_ENV !== 'test') {
 
 function initDocs() {
 	const config = new DocumentBuilder()
-		.setTitle('IbiapabaAppAPI')
+		.setTitle('IbiVibeAPI')
 		.setDescription(
-			'API RESTful para a plataforma IbiapabaApp com modelo de contas unificado que combina autenticação e perfil em uma única entidade',
+			'API RESTful para a plataforma IbiVibe com modelo de contas unificado que combina autenticação e perfil em uma única entidade',
 		)
 		.setVersion('2.0')
 		.build();
@@ -106,7 +106,7 @@ function initDocs() {
 }
 
 function showBootstrapLogs() {
-	console.log(pc.bold('IbiapabaApp API'));
+	console.log(pc.bold('IbiVibe API'));
 	console.log(
 		`  🚀 Running on ${pc.greenBright('http://localhost:' + process.env.PORT)}`,
 	);

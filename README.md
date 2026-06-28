@@ -1,4 +1,4 @@
-# API IbiapabaApp
+# API IbiVibe
 
 <div>
   <img src='https://img.shields.io/badge/nestjs-%23E0234E.svg?style=for-the-badge&logo=nestjs&logoColor=white' alt='NestJS'>
@@ -10,7 +10,7 @@
   <img src='https://img.shields.io/badge/Cloudflare_R2-F38020?style=for-the-badge&logo=cloudflare&logoColor=white' alt='Cloudflare R2'>
 </div>
 
-API RESTful desenvolvida com NestJS para a plataforma IbiapabaApp, conectando aplicações mobile e web para gestão de cidades, negócios, eventos e conteúdo multimídia na região do Ibiapaba.
+API RESTful desenvolvida com NestJS para a plataforma IbiVibe, conectando aplicações mobile e web para gestão de cidades, negócios, eventos e conteúdo multimídia na região do Ibiapaba.
 
 ## Funcionalidades
 
@@ -128,8 +128,8 @@ O projeto utiliza PostgreSQL com Prisma como ORM. Principais entidades:
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/1manuelc/ibiapabaapp-api.git
-cd ibiapabaapp-api
+git clone https://github.com/1manuelc/ibivibe-api.git
+cd ibivibe-api
 ```
 
 ### 2. Instalar dependências
@@ -153,14 +153,14 @@ SECRET_KEY="sua-chave-secreta-aqui"
 
 DB_USER="seu-usuario"
 DB_PASSWORD="sua-senha"
-DB_NAME="ibiapabaapp"
+DB_NAME="ibivibe"
 DB_PORT="5432"
-DATABASE_URL="postgresql://usuario:senha@localhost:5432/ibiapabaapp"
+DATABASE_URL="postgresql://usuario:senha@localhost:5432/ibivibe"
 
 R2_ENDPOINT="https://..."
 R2_ACCESS_KEY="..."
 R2_SECRET_KEY="..."
-R2_BUCKET="ibiapabaapp-media"
+R2_BUCKET="ibivibe-media"
 R2_PUBLIC_URL="https://cdn.seudominio.com.br"
 ```
 
