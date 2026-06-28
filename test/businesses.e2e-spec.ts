@@ -9,15 +9,14 @@ import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { reach_level } from '@prisma/client';
 import { BusinessesModule } from 'src/modules/businesses/businesses.module';
+import { hashPassword } from 'src/modules/common/password/password.util';
 import { PrismaModule } from 'src/modules/common/prisma/prisma.module';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
-import { PasswordService } from 'src/modules/common/password/password.service';
 import request from 'supertest';
 
 describe('Companies (e2e)', () => {
 	let app: INestApplication;
 	let prisma: PrismaService;
-	let passwordService: PasswordService;
 	const BASE_PATH = '/api/v1/businesses';
 
 	beforeAll(async () => {
@@ -27,7 +26,6 @@ describe('Companies (e2e)', () => {
 				PrismaModule,
 				BusinessesModule,
 			],
-			providers: [PasswordService],
 		}).compile();
 
 		app = moduleFixture.createNestApplication();
@@ -38,7 +36,6 @@ describe('Companies (e2e)', () => {
 		);
 
 		prisma = moduleFixture.get<PrismaService>(PrismaService);
-		passwordService = moduleFixture.get<PasswordService>(PasswordService);
 		await app.init();
 	});
 
@@ -62,8 +59,10 @@ describe('Companies (e2e)', () => {
 			data: {
 				id: crypto.randomUUID(),
 				email: `business-${slug}@test.com`,
-				password: await passwordService.hashPassword('password123'),
-				phone_number: `+5588${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`,
+				password: await hashPassword('password123'),
+				phone_number: `+5588${Math.floor(Math.random() * 100000000)
+					.toString()
+					.padStart(8, '0')}`,
 				name,
 				slug,
 				display_name: name,
@@ -75,7 +74,10 @@ describe('Companies (e2e)', () => {
 	};
 
 	// Helper function to create business-category relationship
-	const createBusinessCategory = async (businessId: string, categoryId: string) => {
+	const createBusinessCategory = async (
+		businessId: string,
+		categoryId: string,
+	) => {
 		return await prisma.business_category.create({
 			data: {
 				business_id: businessId,
@@ -91,7 +93,10 @@ describe('Companies (e2e)', () => {
 		});
 
 		// 2. Criar Account do tipo Business
-		const businessAccount = await createBusinessAccount('pousada', 'Restaurante Serra');
+		const businessAccount = await createBusinessAccount(
+			'pousada',
+			'Restaurante Serra',
+		);
 
 		// 3. Criar Empresa
 		const business = await prisma.business.create({
@@ -121,7 +126,10 @@ describe('Companies (e2e)', () => {
 		});
 
 		// Criar Account do tipo Business
-		const businessAccount = await createBusinessAccount('pousada-hotel', 'Hotel Serra');
+		const businessAccount = await createBusinessAccount(
+			'pousada-hotel',
+			'Hotel Serra',
+		);
 
 		const business = await prisma.business.create({
 			data: {

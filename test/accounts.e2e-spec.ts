@@ -5,11 +5,11 @@ import {
 } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import { AccountInterestsService } from 'src/modules/accounts/account-interests.service';
 import { AccountsController } from 'src/modules/accounts/accounts.controller';
 import { AccountsService } from 'src/modules/accounts/accounts.service';
-import { AccountInterestsService } from 'src/modules/accounts/account-interests.service';
 import { JwtService } from 'src/modules/common/jwt/jwt.service';
-import { PasswordService } from 'src/modules/common/password/password.service';
+import { hashPassword } from 'src/modules/common/password/password.util';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 import request from 'supertest';
 import { App } from 'supertest/types';
@@ -19,14 +19,13 @@ import { PrismaModule } from '../src/modules/common/prisma/prisma.module';
 describe('Accounts (e2e)', () => {
 	let app: INestApplication<App>;
 	let prisma: PrismaService;
-	let passwordService: PasswordService;
 	const BASE_PATH = '/api/v1/accounts';
 
 	beforeAll(async () => {
 		const moduleFixture: TestingModule = await Test.createTestingModule({
 			imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule],
 			controllers: [AccountsController],
-			providers: [AccountsService, AccountInterestsService, PasswordService, JwtService],
+			providers: [AccountsService, AccountInterestsService, JwtService],
 		}).compile();
 
 		app = moduleFixture.createNestApplication();
@@ -37,14 +36,11 @@ describe('Accounts (e2e)', () => {
 		);
 
 		prisma = moduleFixture.get<PrismaService>(PrismaService);
-		passwordService = moduleFixture.get<PasswordService>(PasswordService);
 
 		await app.init();
 	});
 
 	beforeEach(async () => {
-		await prisma.account.deleteMany();
-		await prisma.account.deleteMany();
 		await prisma.account.deleteMany();
 	});
 
@@ -60,7 +56,7 @@ describe('Accounts (e2e)', () => {
 		return prisma.account.create({
 			data: {
 				email,
-				password: await passwordService.hashPassword('password123'),
+				password: await hashPassword('password123'),
 				phone_number:
 					phoneNumber ||
 					`+55859${Math.floor(Math.random() * 90000000 + 10000000)}`,

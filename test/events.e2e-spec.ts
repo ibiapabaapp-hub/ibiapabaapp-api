@@ -7,9 +7,9 @@ import {
 } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import { hashPassword } from 'src/modules/common/password/password.util';
 import { PrismaModule } from 'src/modules/common/prisma/prisma.module';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
-import { PasswordService } from 'src/modules/common/password/password.service';
 import { Event } from 'src/modules/events/entities/event.entity';
 import { EventsModule } from 'src/modules/events/events.module';
 import request from 'supertest';
@@ -18,7 +18,6 @@ import { App } from 'supertest/types';
 describe('Events (e2e)', () => {
 	let app: INestApplication<App>;
 	let prisma: PrismaService;
-	let passwordService: PasswordService;
 	const BASE_PATH = '/api/v1/events';
 
 	beforeAll(async () => {
@@ -28,7 +27,6 @@ describe('Events (e2e)', () => {
 				PrismaModule,
 				EventsModule,
 			],
-			providers: [PasswordService],
 		}).compile();
 
 		app = moduleFixture.createNestApplication();
@@ -37,7 +35,6 @@ describe('Events (e2e)', () => {
 		app.enableVersioning({ type: VersioningType.URI });
 
 		prisma = moduleFixture.get<PrismaService>(PrismaService);
-		passwordService = moduleFixture.get<PasswordService>(PasswordService);
 
 		app.useGlobalPipes(
 			new ValidationPipe({ whitelist: true, transform: true }),
@@ -62,8 +59,10 @@ describe('Events (e2e)', () => {
 			data: {
 				id: crypto.randomUUID(),
 				email: `event-${slug}@test.com`,
-				password: await passwordService.hashPassword('password123'),
-				phone_number: `+5588${Math.floor(Math.random() * 100000000).toString().padStart(8, '0')}`,
+				password: await hashPassword('password123'),
+				phone_number: `+5588${Math.floor(Math.random() * 100000000)
+					.toString()
+					.padStart(8, '0')}`,
 				name,
 				slug,
 				display_name: name,
@@ -118,7 +117,10 @@ describe('Events (e2e)', () => {
 
 	it('GET /events/:id -> returns one event by id', async () => {
 		const eventId = '550e8400-e29b-41d4-a716-446655440000';
-		const eventAccount = await createEventAccount('event-owner-2', 'Event Owner 2');
+		const eventAccount = await createEventAccount(
+			'event-owner-2',
+			'Event Owner 2',
+		);
 
 		await prisma.$executeRaw`
       INSERT INTO "event" (id, name, slug, description, start_date, end_date, type, reach_level, active, owner_account_id, created_at, updated_at) 
@@ -168,7 +170,10 @@ describe('Events (e2e)', () => {
 
 	it('PATCH /events/:id -> updates an event', async () => {
 		const eventId = '770e8400-e29b-41d4-a716-446655440002';
-		const eventAccount = await createEventAccount('event-owner-3', 'Event Owner 3');
+		const eventAccount = await createEventAccount(
+			'event-owner-3',
+			'Event Owner 3',
+		);
 
 		await prisma.$executeRaw`
       INSERT INTO "event" (id, name, slug, description, start_date, end_date, type, reach_level, active, owner_account_id, created_at, updated_at) 
@@ -193,7 +198,10 @@ describe('Events (e2e)', () => {
 
 	it('DELETE /events/:id -> deletes an event', async () => {
 		const eventId = '880e8400-e29b-41d4-a716-446655440003';
-		const eventAccount = await createEventAccount('event-owner-4', 'Event Owner 4');
+		const eventAccount = await createEventAccount(
+			'event-owner-4',
+			'Event Owner 4',
+		);
 
 		await prisma.$executeRaw`
       INSERT INTO "event" (id, name, slug, description, start_date, end_date, type, reach_level, active, owner_account_id, created_at, updated_at) 
