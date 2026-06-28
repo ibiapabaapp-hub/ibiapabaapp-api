@@ -27,7 +27,9 @@ describe('Auth (e2e)', () => {
 			],
 		})
 			.overrideProvider(EmailService)
-			.useValue({ sendVerificationEmail: jest.fn().mockResolvedValue(undefined) })
+			.useValue({
+				sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
+			})
 			.compile();
 
 		app = moduleFixture.createNestApplication();
