@@ -40,27 +40,13 @@ jobs:
   test-e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgis/postgis:16-3.4
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: ibivibe_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U test"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     env:
-      DATABASE_URL: postgresql://test:test@localhost:5432/ibivibe_test
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
       NODE_ENV: test
       PORT: 3000
-      SECRET_KEY: test-secret-key
-      RESEND_API_KEY: re_test
-      EMAIL_FROM: test@ibivibe.com
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
