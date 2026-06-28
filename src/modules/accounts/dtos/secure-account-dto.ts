@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { account_type } from '@prisma/client';
-import { Exclude, Expose } from 'class-transformer';
+import { Expose } from 'class-transformer';
 
 export class SecureAccountDTO {
 	@ApiProperty({
@@ -90,9 +90,8 @@ export class SecureAccountDTO {
 	@Expose()
 	type: account_type;
 
-	@Exclude() password?: string;
-
 	constructor(partial: any) {
-		Object.assign(this, partial);
+		const { password: _, ...rest } = partial;
+		Object.assign(this, rest);
 	}
 }

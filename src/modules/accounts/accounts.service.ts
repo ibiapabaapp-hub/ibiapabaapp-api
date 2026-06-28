@@ -4,39 +4,29 @@ import {
 	BadRequestException,
 	Injectable,
 	NotFoundException,
-	UnauthorizedException,
 } from '@nestjs/common';
 import { PaginationDto } from 'src/modules/common/dtos/pagination.dto';
-import { PasswordService } from 'src/modules/common/password/password.service';
+import { hashPassword } from 'src/modules/common/password/password.util';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
+
+import { account } from '@prisma/client';
 
 import { CreateAccountDTO } from './dtos/create-account.dto';
 import { SecureAccountDTO } from './dtos/secure-account-dto';
 import { UpdateAccountDTO } from './dtos/update-account.dto';
-import { Account } from './entities/account.entity';
 
 @Injectable()
 export class AccountsService {
-	constructor(
-		private readonly prismaService: PrismaService,
-		private readonly passwordService: PasswordService,
-	) {}
+	constructor(private readonly prismaService: PrismaService) {}
 
 	async create(data: CreateAccountDTO) {
-		if (data.password !== data.password_confirm) {
-			throw new BadRequestException({
-				message: 'Password and password confirmation must be equal',
-				code: 'password_mismatch',
-			});
-		}
-
 		const account = await this.prismaService.account.create({
 			data: {
 				id: randomUUID(),
 				name: data.name,
 				// birth_date: data.birth_date,
 				email: data.email.trim(),
-				password: await this.passwordService.hashPassword(data.password),
+				password: await hashPassword(data.password),
 				phone_number: data.phone_number,
 				// Profile fields
 				slug: data.slug,
@@ -139,24 +129,15 @@ export class AccountsService {
 			throw new BadRequestException('Current password is required for updates');
 		}
 
-		const isPasswordValid = await this.passwordService.verifyPassword(
-			accountExists.password,
-			updateUserDto.password,
-		);
-
-		if (!isPasswordValid) {
-			throw new UnauthorizedException('Invalid credentials');
-		}
-
 		const { password, ...rest } = updateUserDto;
 
-		const dataToUpdate: Partial<Account> = {
+		const dataToUpdate: Partial<account> = {
 			...rest,
 			updated_at: new Date(),
 		};
 
 		if (password) {
-			dataToUpdate.password = await this.passwordService.hashPassword(password);
+			dataToUpdate.password = await hashPassword(password);
 		}
 
 		return this.prismaService.account.update({
