@@ -45,7 +45,7 @@ export class BusinessesService {
 	async create(dto: CreateBusinessDTO) {
 		return await this.prismaService.business.create({
 			data: {
-				account_id: dto.account_id,
+				owner_account_id: dto.account_id,
 				cnpj: dto.cnpj,
 				max_reach_level: dto.max_reach_level,
 			},

@@ -5,41 +5,30 @@ import {
 	PutObjectCommand,
 	S3Client,
 } from '@aws-sdk/client-s3';
-import { Injectable, UseInterceptors } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
-@UseInterceptors(
-	FileInterceptor('file', {
-		limits: {
-			fileSize: 20 * 1024 * 1024,
-		},
-		fileFilter: (req, file, cb) => {
-			if (
-				file.mimetype.startsWith('image/') ||
-				file.mimetype.startsWith('video/')
-			) {
-				cb(null, true);
-			} else {
-				cb(new Error('Invalid file type'), false);
-			}
-		},
-	}),
-)
-// TODO: testar MediasService
 @Injectable()
 export class MediasService {
-	private s3: S3Client;
+	private readonly s3: S3Client;
+	private readonly bucket: string;
+	private readonly publicUrl: string;
 
-	constructor(private readonly prismaService: PrismaService) {
+	constructor(
+		private readonly prismaService: PrismaService,
+		private readonly config: ConfigService,
+	) {
 		this.s3 = new S3Client({
 			region: 'auto',
-			endpoint: process.env.R2_ENDPOINT!,
+			endpoint: config.getOrThrow('R2_ENDPOINT'),
 			credentials: {
-				accessKeyId: process.env.R2_ACCESS_KEY!,
-				secretAccessKey: process.env.R2_SECRET_KEY!,
+				accessKeyId: config.getOrThrow('R2_ACCESS_KEY'),
+				secretAccessKey: config.getOrThrow('R2_SECRET_KEY'),
 			},
 		});
+		this.bucket = config.getOrThrow('R2_BUCKET');
+		this.publicUrl = config.getOrThrow('R2_PUBLIC_URL');
 	}
 
 	async upload(file: Express.Multer.File) {
@@ -47,7 +36,7 @@ export class MediasService {
 
 		await this.s3.send(
 			new PutObjectCommand({
-				Bucket: process.env.R2_BUCKET!,
+				Bucket: this.bucket,
 				Key: key,
 				Body: file.buffer,
 				ContentType: file.mimetype,
@@ -56,14 +45,14 @@ export class MediasService {
 
 		return {
 			key,
-			url: `${process.env.R2_PUBLIC_URL}/${key}`,
+			url: `${this.publicUrl}/${key}`,
 		};
 	}
 
 	async delete(key: string) {
 		await this.s3.send(
 			new DeleteObjectCommand({
-				Bucket: process.env.R2_BUCKET,
+				Bucket: this.bucket,
 				Key: key,
 			}),
 		);
@@ -72,7 +61,7 @@ export class MediasService {
 	}
 
 	getPublicUrl(key: string) {
-		return `${process.env.R2_PUBLIC_URL}/${key}`;
+		return `${this.publicUrl}/${key}`;
 	}
 
 	async getMediaByCity(id: string): Promise<any[]> {

@@ -5,11 +5,11 @@ import { SearchResponseDto } from './entities/search-result.entity';
 
 @Injectable()
 export class SearchService {
-	constructor(private readonly prisma: PrismaService) {}
+	constructor(private readonly prismaService: PrismaService) {}
 
 	async search(query: string): Promise<SearchResponseDto> {
 		const [cities, businesses, events] = await Promise.all([
-			this.prisma.city.findMany({
+			this.prismaService.city.findMany({
 				where: {
 					name: {
 						contains: query,
@@ -18,7 +18,7 @@ export class SearchService {
 				},
 				take: 10,
 			}),
-			this.prisma.business.findMany({
+			this.prismaService.business.findMany({
 				where: {
 					account: {
 						display_name: {
@@ -30,14 +30,13 @@ export class SearchService {
 				select: {
 					id: true,
 					cnpj: true,
-					account_id: true,
 					max_reach_level: true,
 					created_at: true,
 					updated_at: true,
 				},
 				take: 10,
 			}),
-			this.prisma.event.findMany({
+			this.prismaService.event.findMany({
 				where: {
 					name: {
 						contains: query,

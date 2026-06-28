@@ -7,21 +7,21 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Injectable()
 export class CategoriesService {
-	constructor(private readonly prisma: PrismaService) { }
+	constructor(private readonly prismaService: PrismaService) { }
 	create(createCategoryDto: CreateCategoryDto) {
-		return this.prisma.category.create({
+		return this.prismaService.category.create({
 			data: createCategoryDto,
 		});
 	}
 
 	findAll() {
-		return this.prisma.category.findMany({
+		return this.prismaService.category.findMany({
 			orderBy: { name: 'asc' },
 		});
 	}
 
 	async findParents(entity?: entity_category) {
-		return this.prisma.category.findMany({
+		return this.prismaService.category.findMany({
 			where: {
 				parent_id: null,
 				...(entity && {
@@ -49,7 +49,7 @@ export class CategoriesService {
 	}
 
 	async findChildren(parentId: string, entity?: entity_category) {
-		return this.prisma.category.findMany({
+		return this.prismaService.category.findMany({
 			where: {
 				parent_id: parentId,
 				...(entity && { entities: { has: entity } }),
@@ -64,7 +64,7 @@ export class CategoriesService {
 	}
 
 	async findOne(id: string) {
-		const category = await this.prisma.category.findFirst({
+		const category = await this.prismaService.category.findFirst({
 			where: { id },
 		});
 
@@ -77,7 +77,7 @@ export class CategoriesService {
 
 	async update(id: string, updateCategoryDto: UpdateCategoryDto) {
 		await this.findOne(id);
-		return await this.prisma.category.update({
+		return await this.prismaService.category.update({
 			where: { id },
 			data: updateCategoryDto,
 		});
@@ -85,7 +85,7 @@ export class CategoriesService {
 
 	async remove(id: string) {
 		await this.findOne(id);
-		return await this.prisma.category.delete({
+		return await this.prismaService.category.delete({
 			where: { id },
 		});
 	}
