@@ -2,20 +2,37 @@
 //// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 //// ------------------------------------------------------
 
-Project "IbiapabaAppDB" {
+Project "IbiVibeDB" {
   database_type: 'PostgreSQL'
   Note: ''
+}
+
+Table account_oauth {
+  id String [pk]
+  account_id String [not null]
+  provider oauth_provider [not null]
+  provider_uid String [not null]
+  email String [not null]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+  account account [not null]
+
+  indexes {
+    (provider, provider_uid) [unique]
+    (provider, email) [unique]
+  }
 }
 
 Table account {
   id String [pk]
   email String [unique, not null]
-  password String [not null]
-  phone_number String [unique, not null]
-  slug String [unique, not null]
+  password String
+  phone_number String [unique]
+  slug String [unique]
   display_name String [not null]
   bio String
   avatar_url String
+  gender gender
   type account_type [not null, default: 'personal']
   name String [not null]
   active Boolean [not null, default: true]
@@ -28,6 +45,8 @@ Table account {
   events event [not null]
   medias media [not null]
   verification_tokens verification_token [not null]
+  reviews review [not null]
+  oauth_accounts account_oauth [not null]
 }
 
 Table verification_token {
@@ -43,7 +62,7 @@ Table verification_token {
 
 Table business {
   id String [pk]
-  account_id String [unique, not null]
+  owner_account_id String [unique, not null]
   cnpj String
   max_reach_level reach_level [not null, default: 'local']
   created_at DateTime [default: `now()`, not null]
@@ -52,6 +71,7 @@ Table business {
   account account [not null]
   categories business_category [not null]
   cities business_city [not null]
+  reviews review [not null]
 }
 
 Table city {
@@ -88,6 +108,7 @@ Table event {
   categories event_category [not null]
   cities event_city [not null]
   medias media [not null]
+  reviews review [not null]
 }
 
 Table media {
@@ -215,14 +236,23 @@ Table lead {
   updated_at DateTime
 }
 
-Table spatial_ref_sys {
-  srid Int [pk]
-  auth_name String
-  auth_srid Int
-  srtext String
-  proj4text String
+Table review {
+  id String [pk]
+  account_id String [not null]
+  business_id String
+  event_id String
+  rating Int [not null]
+  comment String
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+  account account [not null]
+  business business
+  event event
 
-  Note: 'This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.'
+  indexes {
+    (account_id, business_id) [unique]
+    (account_id, event_id) [unique]
+  }
 }
 
 Enum lead_type {
@@ -231,9 +261,20 @@ Enum lead_type {
   business
 }
 
+Enum oauth_provider {
+  google
+}
+
 Enum account_type {
   personal
   business
+}
+
+Enum gender {
+  male
+  female
+  non_binary
+  prefer_not_to_say
 }
 
 Enum reach_level {
@@ -262,9 +303,11 @@ Enum token_type {
   reset_password
 }
 
+Ref: account_oauth.account_id > account.id [delete: Cascade]
+
 Ref: verification_token.account_id > account.id [delete: Cascade]
 
-Ref: business.account_id - account.id [delete: Cascade]
+Ref: business.owner_account_id - account.id [delete: Cascade]
 
 Ref: event.owner_account_id > account.id [delete: Cascade]
 
@@ -307,3 +350,9 @@ Ref: event_category.event_id > event.id [delete: Cascade]
 Ref: event_city.city_id > city.id [delete: Cascade]
 
 Ref: event_city.event_id > event.id [delete: Cascade]
+
+Ref: review.account_id > account.id [delete: Cascade]
+
+Ref: review.business_id > business.id [delete: Cascade]
+
+Ref: review.event_id > event.id [delete: Cascade]
