@@ -79,7 +79,7 @@ describe('Auth (e2e)', () => {
 				})
 				.expect(201);
 
-			expect(res.body).toHaveProperty('accessToken');
+			expect(res.body).toHaveProperty('access_token');
 		});
 	});
 

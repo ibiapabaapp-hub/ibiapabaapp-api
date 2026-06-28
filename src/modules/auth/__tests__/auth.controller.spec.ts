@@ -1,16 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
-import { Account } from 'src/modules/accounts/entities/account.entity';
 
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
+import { GoogleOAuthService } from '../oauth/google-oauth.service';
 import {
 	CheckUniqueDto,
 	CheckUniqueResponse,
 } from '../dtos/check-unique-field.dto';
-import { LoginDto } from '../dtos/login.dto';
-import { RegisterDto } from '../dtos/register.dto';
-import { AuthResponseDto } from '../dtos/auth-response.dto';
+import { AuthResponseDto } from '../dtos/manual-auth/auth-response.dto';
+import { LoginDto } from '../dtos/manual-auth/login.dto';
+import { RegisterDto } from '../dtos/manual-auth/register.dto';
 
 describe('AuthController', () => {
 	let controller: AuthController;
@@ -23,6 +23,10 @@ describe('AuthController', () => {
 				{
 					provide: AuthService,
 					useValue: mockDeep<AuthService>(),
+				},
+				{
+					provide: GoogleOAuthService,
+					useValue: mockDeep<GoogleOAuthService>(),
 				},
 			],
 		}).compile();
@@ -41,8 +45,8 @@ describe('AuthController', () => {
 		const dto = { email: 'test@test.com', password: '123' };
 		const response = {
 			account: { id: '1' },
-			accessToken: 'access',
-			refreshToken: 'refresh',
+			access_token: 'access',
+			refresh_token: 'refresh',
 		};
 
 		service.login.mockResolvedValue(response as AuthResponseDto);
@@ -63,8 +67,8 @@ describe('AuthController', () => {
 
 		const response = {
 			account: { id: '1' },
-			accessToken: 'access',
-			refreshToken: 'refresh',
+			access_token: 'access',
+			refresh_token: 'refresh',
 		};
 
 		service.register.mockResolvedValue(response as AuthResponseDto);
@@ -79,13 +83,11 @@ describe('AuthController', () => {
 		const token = 'refresh';
 		const response = {
 			account: { id: '1' },
-			accessToken: 'new-access',
-			refreshToken: 'new-refresh',
+			access_token: 'new-access',
+			refresh_token: 'new-refresh',
 		};
 
-		service.refreshTokens.mockResolvedValue(
-			response as AuthResponseDto,
-		);
+		service.refreshTokens.mockResolvedValue(response as AuthResponseDto);
 
 		const result = await controller.refresh(token);
 
