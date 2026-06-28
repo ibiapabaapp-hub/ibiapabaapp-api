@@ -11,15 +11,21 @@ import { Public } from 'src/modules/common/decorators/public.decorator';
 
 import { SecureAccountDTO } from '../accounts/dtos/secure-account-dto';
 import { AuthService } from './auth.service';
-import { AuthResponseDto } from './dtos/auth-response.dto';
 import { CheckUniqueDto } from './dtos/check-unique-field.dto';
-import { LoginDto } from './dtos/login.dto';
-import { RegisterDto } from './dtos/register.dto';
+import { GoogleAuthCompleteDto } from './dtos/google-auth/google-auth-complete.dto';
+import { GoogleAuthDto } from './dtos/google-auth/google-auth.dto';
+import { AuthResponseDto } from './dtos/manual-auth/auth-response.dto';
+import { LoginDto } from './dtos/manual-auth/login.dto';
+import { RegisterDto } from './dtos/manual-auth/register.dto';
 import { SuccessResponseDTO } from './dtos/success-response.dto';
+import { GoogleOAuthService } from './oauth/google-oauth.service';
 
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
-	constructor(private readonly authService: AuthService) {}
+	constructor(
+		private readonly authService: AuthService,
+		private readonly googleOAuthService: GoogleOAuthService,
+	) {}
 
 	@ApiOperation({
 		summary: 'Realizar login',
@@ -40,7 +46,7 @@ export class AuthController {
 		const authData = await this.authService.login(loginDto);
 
 		// for web
-		// response.cookie('refreshToken', authData.refreshToken, {
+		// response.cookie('refresh_token', authData.refresh_token, {
 		//   httpOnly: true,
 		//   sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
 		//   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
@@ -49,9 +55,25 @@ export class AuthController {
 
 		return {
 			account: authData.account,
-			accessToken: authData.accessToken,
-			refreshToken: authData.refreshToken,
+			access_token: authData.access_token,
+			refresh_token: authData.refresh_token,
 		};
+	}
+
+	@ApiOperation({ summary: 'Login ou cadastro com Google' })
+	@Post('google')
+	@Public()
+	@Throttle({ default: { limit: 10, ttl: 900000 } })
+	async googleAuth(@Body() dto: GoogleAuthDto) {
+		return this.googleOAuthService.loginWithGoogle(dto);
+	}
+
+	@ApiOperation({ summary: 'Completar cadastro Google (onboarding)' })
+	@Post('google/complete')
+	@Public()
+	@Throttle({ default: { limit: 5, ttl: 900000 } })
+	async googleComplete(@Body() dto: GoogleAuthCompleteDto) {
+		return this.googleOAuthService.completeGoogleRegistration(dto);
 	}
 
 	@ApiOperation({ summary: 'Registrar nova conta' })
@@ -66,7 +88,7 @@ export class AuthController {
 	async register(@Body() registerDto: RegisterDto) {
 		const authData = await this.authService.register(registerDto);
 
-		// response.cookie('refreshToken', authData?.refreshToken, {
+		// response.cookie('refresh_token', authData?.refresh_token, {
 		//   httpOnly: true,
 		//   sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
 		//   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dias
@@ -75,8 +97,8 @@ export class AuthController {
 
 		return {
 			account: authData?.account,
-			accessToken: authData?.accessToken,
-			refreshToken: authData?.refreshToken,
+			access_token: authData?.access_token,
+			refresh_token: authData?.refresh_token,
 		};
 	}
 
@@ -106,16 +128,16 @@ export class AuthController {
 	@Public()
 	@Throttle({ default: { limit: 5, ttl: 900000 } })
 	async refresh(@Headers('x-refresh-token') token: string) {
-		const { account, accessToken, refreshToken } =
+		const { account, access_token, refresh_token } =
 			await this.authService.refreshTokens(token);
 
-		// response.cookie('refreshToken', refreshToken, {
+		// response.cookie('refresh_token', refresh_token, {
 		//   httpOnly: true,
 		//   sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
 		//   secure: process.env.NODE_ENV === 'production' ? true : false,
 		// });
 
-		return { account, accessToken, refreshToken };
+		return { account, access_token, refresh_token };
 	}
 
 	@ApiOperation({ summary: 'Encerrar sessão' })
@@ -123,7 +145,7 @@ export class AuthController {
 	@Post('logout')
 	@Throttle({ default: { limit: 5, ttl: 900000 } })
 	logout() {
-		// response.cookie('refreshToken', '', {
+		// response.cookie('refresh_token', '', {
 		//   httpOnly: true,
 		//   expires: new Date(0),
 		//   sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',

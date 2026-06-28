@@ -4,28 +4,29 @@ import {
 	InternalServerErrorException,
 	UnauthorizedException,
 } from '@nestjs/common';
+import { account } from '@prisma/client';
+
 import { AccountsService } from 'src/modules/accounts/accounts.service';
-import { Account } from 'src/modules/accounts/entities/account.entity';
 import { JwtService } from 'src/modules/common/jwt/jwt.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 import { extractBearerTokenFromString } from 'src/utils/extract-bearer-token';
 
-import { PasswordService } from '../common/password/password.service';
+import { verifyPassword } from '../common/password/password.util';
 import { TokenService } from '../common/token/token.service';
 import { EmailService } from '../email/email.service';
+
 import {
 	AuthResponseDto,
 	CheckUniqueResponseDto,
-} from './dtos/auth-response.dto';
-import { LoginDto } from './dtos/login.dto';
-import { RegisterDto } from './dtos/register.dto';
+} from './dtos/manual-auth/auth-response.dto';
+import { LoginDto } from './dtos/manual-auth/login.dto';
+import { RegisterDto } from './dtos/manual-auth/register.dto';
 import { UniqueAccountFields } from './dtos/unique-account-fields';
 
 @Injectable()
 export class AuthService {
 	constructor(
 		private readonly prismaService: PrismaService,
-		private readonly passwordService: PasswordService,
 		private readonly jwtService: JwtService,
 		private readonly accountService: AccountsService,
 		private readonly tokenService: TokenService,
@@ -36,8 +37,8 @@ export class AuthService {
 		const { email, password } = loginDto;
 
 		const account = await this.accountService.findOneByEmail(email, true);
-		const isPasswordValid = await this.passwordService.verifyPassword(
-			account.password,
+		const isPasswordValid = await verifyPassword(
+			account.password!,
 			password,
 		);
 		if (!isPasswordValid) {
@@ -47,16 +48,16 @@ export class AuthService {
 			});
 		}
 
-		const accessToken = this.jwtService.sign(
+		const access_token = this.jwtService.sign(
 			{ id: account.id },
 			{ expiresIn: '40m' },
 		);
-		const refreshToken = this.jwtService.sign(
+		const refresh_token = this.jwtService.sign(
 			{ id: account.id },
 			{ expiresIn: '7d' },
 		);
 
-		return new AuthResponseDto({ account, accessToken, refreshToken });
+		return new AuthResponseDto({ account, access_token, refresh_token });
 	}
 
 	async register(
@@ -72,18 +73,18 @@ export class AuthService {
 		}
 
 		const account = await this.accountService.create(registerDto);
-		const accessToken = this.jwtService.sign(
+		const access_token = this.jwtService.sign(
 			{ id: account.id },
 			{ expiresIn: '40m' },
 		);
-		const refreshToken = this.jwtService.sign(
+		const refresh_token = this.jwtService.sign(
 			{ id: account.id },
 			{ expiresIn: '7d' },
 		);
 
 		const token = await this.tokenService.create(account.id, 'verify_email');
 		await this.emailService.sendVerificationEmail(account.email, token);
-		return new AuthResponseDto({ account, accessToken, refreshToken });
+		return new AuthResponseDto({ account, access_token, refresh_token });
 	}
 
 	// TODO: escrever teste unitário de verifyEmail -> auth.service
@@ -104,11 +105,11 @@ export class AuthService {
 		return { success: verifyResult.is_verified };
 	}
 
-	async refreshTokens(pastRefreshToken: string): Promise<AuthResponseDto> {
+	async refreshTokens(refreshToken: string): Promise<AuthResponseDto> {
 		const decodedTokenData = this.jwtService.verify<{
 			id: string;
 			role: number;
-		}>(pastRefreshToken);
+		}>(refreshToken);
 
 		const account = await this.accountService.findOneById(decodedTokenData.id);
 		if (!account) {
@@ -118,21 +119,21 @@ export class AuthService {
 			});
 		}
 
-		const accessToken = this.jwtService.sign(
+		const access_token = this.jwtService.sign(
 			{ id: account.id },
 			{ expiresIn: '40m' },
 		);
-		const refreshToken = this.jwtService.sign(
+		const refresh_token = this.jwtService.sign(
 			{ id: account.id },
 			{ expiresIn: '7d' },
 		);
 
-		return new AuthResponseDto({ account, accessToken, refreshToken });
+		return new AuthResponseDto({ account, access_token, refresh_token });
 	}
 
 	async isUniqueAvailable<K extends UniqueAccountFields>(
 		field: K,
-		value: Account[K],
+		value: account[K],
 	): Promise<CheckUniqueResponseDto> {
 		try {
 			const count = await this.prismaService.account.count({
@@ -143,7 +144,7 @@ export class AuthService {
 
 			return {
 				field,
-				value,
+				value: value as string,
 				available: count === 0,
 			};
 		} catch (e) {
