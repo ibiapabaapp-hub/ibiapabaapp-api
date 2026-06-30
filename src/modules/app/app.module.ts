@@ -8,7 +8,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from 'src/modules/auth/auth.module';
 
-import { CategoriesModule } from '../../modules/categories/categories.module';
+import { TagsModule } from '../../modules/tags/tags.module';
 import { CitiesModule } from '../../modules/cities/cities.module';
 import { GlobalExceptionsFilter } from '../../modules/common/filters/global-exceptions.filter';
 import { AuthGuard } from '../../modules/common/guards/auth.guard';
@@ -69,7 +69,7 @@ import { AppService } from './app.service';
 		EventsModule,
 		FavoritesModule,
 		ReviewsModule,
-		CategoriesModule,
+		TagsModule,
 	],
 	controllers: [AppController],
 	providers: [
