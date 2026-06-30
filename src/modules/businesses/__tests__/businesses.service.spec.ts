@@ -22,7 +22,7 @@ describe('BusinessesService', () => {
 	});
 
 	describe('findAll', () => {
-		it('should return a list of companies with mapped category names', async () => {
+		it('should return a list of companies with mapped tag names', async () => {
 			const mockPrismaResponse = [
 				{
 					id: '1',
@@ -37,9 +37,9 @@ describe('BusinessesService', () => {
 						avatar_url: 'http://example.com/avatar.jpg',
 						type: 'business',
 					},
-					categories: [
-						{ category: { name: 'Alimentação' } },
-						{ category: { name: 'Turismo' } },
+					tags: [
+						{ tag: { name: 'Alimentação' } },
+						{ tag: { name: 'Turismo' } },
 					],
 				},
 			];
@@ -49,7 +49,7 @@ describe('BusinessesService', () => {
 
 			const result = await service.findAll();
 
-			expect(result[0].categories).toEqual(['Alimentação', 'Turismo']);
+			expect(result[0].tags).toEqual(['Alimentação', 'Turismo']);
 			expect(result[0].name).toBe('Test Business');
 			expect(result[0].account_id).toBe('account-1');
 			expect(prisma.business.findMany).toHaveBeenCalledWith(
@@ -67,7 +67,7 @@ describe('BusinessesService', () => {
 			await expect(service.findOne('uuid')).rejects.toThrow(NotFoundException);
 		});
 
-		it('should return a single business with flattened categories', async () => {
+		it('should return a single business with flattened tags', async () => {
 			const mockBusiness = {
 				id: '1',
 				created_at: new Date(),
@@ -81,7 +81,7 @@ describe('BusinessesService', () => {
 					avatar_url: 'http://example.com/avatar.jpg',
 					type: 'business',
 				},
-				categories: [{ category: { name: 'Tecnologia' } }],
+				tags: [{ tag: { name: 'Tecnologia' } }],
 			};
 
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -91,7 +91,7 @@ describe('BusinessesService', () => {
 
 			expect(result.id).toBe('1');
 			expect(result.name).toBe('Test Business');
-			expect(result.categories).toEqual(['Tecnologia']);
+			expect(result.tags).toEqual(['Tecnologia']);
 			expect(prisma.business.findUnique).toHaveBeenCalled();
 		});
 	});
@@ -112,7 +112,7 @@ describe('BusinessesService', () => {
 					avatar_url: 'http://example.com/avatar.jpg',
 					type: 'business',
 				},
-				categories: [],
+				tags: [],
 			};
 
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument

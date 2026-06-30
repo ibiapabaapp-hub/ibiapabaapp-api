@@ -23,7 +23,7 @@ export class BusinessesService {
 				type: true,
 			},
 		},
-		categories: { select: { category: { select: { name: true } } } },
+		tags: { select: { tag: { select: { name: true } } } },
 	};
 
 	private mapBusiness(business: any) {
@@ -37,7 +37,7 @@ export class BusinessesService {
 			type: business.account.type,
 			max_reach_level: business.max_reach_level,
 			cnpj: business.cnpj,
-			categories: business.categories.map((c) => c.category.name),
+			tags: business.tags.map((t) => t.tag.name),
 			created_at: business.created_at,
 		};
 	}

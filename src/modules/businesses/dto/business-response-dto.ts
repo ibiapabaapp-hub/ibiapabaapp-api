@@ -29,8 +29,8 @@ export class BusinessResponseDTO {
 	max_reach_level: string;
 
 	@Expose()
-	@Transform(({ obj }) => obj.categories?.map((c) => c.category.name) || [])
-	categories: string[];
+	@Transform(({ obj }) => obj.tags?.map((t) => t.tag.name) || [])
+	tags: string[];
 
 	constructor(partial: any) {
 		Object.assign(this, partial);

@@ -28,8 +28,8 @@ export class EventsService {
 	async findAll() {
 		const events = await this.prismaService.event.findMany({
 			include: {
-				categories: {
-					select: { category: { select: { name: true } } },
+				tags: {
+					select: { tag: { select: { name: true } } },
 				},
 				owner: {
 					select: {
@@ -46,7 +46,7 @@ export class EventsService {
 
 		return events.map((e) => ({
 			...e,
-			categories: e.categories.map((cat) => cat.category.name),
+			tags: e.tags.map((t) => t.tag.name),
 		}));
 	}
 
@@ -54,8 +54,8 @@ export class EventsService {
 		const event = await this.prismaService.event.findUnique({
 			where: { id },
 			include: {
-				categories: {
-					select: { category: { select: { name: true } } },
+				tags: {
+					select: { tag: { select: { name: true } } },
 				},
 				owner: {
 					select: {
@@ -75,7 +75,7 @@ export class EventsService {
 
 		return {
 			...event,
-			categories: event.categories.map((cat) => cat.category.name),
+			tags: event.tags.map((t) => t.tag.name),
 		};
 	}
 

@@ -3,7 +3,7 @@ import { IsArray, IsUUID, IsOptional } from 'class-validator';
 
 export class UpdateInterestsDTO {
 	@ApiProperty({
-		description: 'IDs das categorias de interesse de negócios',
+		description: 'IDs das tags de interesse de negócios',
 		type: [String],
 		example: ['uuid1', 'uuid2'],
 	})
@@ -13,7 +13,7 @@ export class UpdateInterestsDTO {
 	businesses?: string[];
 
 	@ApiProperty({
-		description: 'IDs das categorias de interesse de eventos',
+		description: 'IDs das tags de interesse de eventos',
 		type: [String],
 		example: ['uuid1', 'uuid2'],
 	})

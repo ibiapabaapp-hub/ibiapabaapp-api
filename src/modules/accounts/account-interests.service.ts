@@ -5,12 +5,6 @@ import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
 import { UpdateInterestsDTO } from './dtos/update-interests.dto';
 
-interface InterestCategory {
-	id: string;
-	name: string;
-	entities: string[];
-}
-
 export interface AccountInterestsResult {
 	businesses: { id: string; name: string }[];
 	events: { id: string; name: string }[];
@@ -24,12 +18,8 @@ export class AccountInterestsService {
 		const interests = await this.prismaService.account_interest.findMany({
 			where: { account_id: accountId },
 			include: {
-				category: {
-					select: {
-						id: true,
-						name: true,
-						entities: true,
-					},
+				tag: {
+					include: { group: true },
 				},
 			},
 		});
@@ -38,12 +28,14 @@ export class AccountInterestsService {
 		const events: { id: string; name: string }[] = [];
 
 		for (const interest of interests) {
-			const categories = interest.category as unknown as InterestCategory;
-			if (categories.entities.includes('business')) {
-				businesses.push({ id: categories.id, name: categories.name });
+			const tag = interest.tag;
+			const group = tag.group.name.toLowerCase();
+
+			if (group === 'business') {
+				businesses.push({ id: tag.id, name: tag.name });
 			}
-			if (categories.entities.includes('event')) {
-				events.push({ id: categories.id, name: categories.name });
+			if (group === 'event') {
+				events.push({ id: tag.id, name: tag.name });
 			}
 		}
 
@@ -51,7 +43,6 @@ export class AccountInterestsService {
 	}
 
 	async upsert(accountId: string, dto: UpdateInterestsDTO) {
-		// Verify account exists
 		const account = await this.prismaService.account.findUnique({
 			where: { id: accountId },
 		});
@@ -63,13 +54,13 @@ export class AccountInterestsService {
 		const businessesData = (dto.businesses || []).map((bInterest) => ({
 			id: randomUUID(),
 			account_id: accountId,
-			category_id: bInterest,
+			tag_id: bInterest,
 		}));
 
 		const eventsData = (dto.events || []).map((eInterest) => ({
 			id: randomUUID(),
 			account_id: accountId,
-			category_id: eInterest,
+			tag_id: eInterest,
 		}));
 
 		await this.prismaService.$transaction([
@@ -97,7 +88,7 @@ export class AccountInterestsService {
 		const updatedInterests = await this.prismaService.account_interest.findMany(
 			{
 				where: { account_id: accountId },
-				select: { category_id: true },
+				select: { tag_id: true },
 			},
 		);
 

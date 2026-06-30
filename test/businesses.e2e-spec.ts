@@ -40,11 +40,10 @@ describe('Companies (e2e)', () => {
 	});
 
 	afterEach(async () => {
-		// A ordem aqui é importante se não usar CASCADE,
-		// mas o TRUNCATE com CASCADE limpa as tabelas N-N automaticamente.
-		await prisma.$executeRaw`TRUNCATE TABLE "business_category" RESTART IDENTITY CASCADE`;
+		await prisma.$executeRaw`TRUNCATE TABLE "business_tag" RESTART IDENTITY CASCADE`;
 		await prisma.$executeRaw`TRUNCATE TABLE "business" RESTART IDENTITY CASCADE`;
-		await prisma.$executeRaw`TRUNCATE TABLE "category" RESTART IDENTITY CASCADE`;
+		await prisma.$executeRaw`TRUNCATE TABLE "tag" RESTART IDENTITY CASCADE`;
+		await prisma.$executeRaw`TRUNCATE TABLE "tag_group" RESTART IDENTITY CASCADE`;
 		await prisma.$executeRaw`TRUNCATE TABLE "account" RESTART IDENTITY CASCADE`;
 	});
 
@@ -53,7 +52,6 @@ describe('Companies (e2e)', () => {
 		await app.close();
 	});
 
-	// Helper function to create a business account
 	const createBusinessAccount = async (slug: string, name: string) => {
 		return await prisma.account.create({
 			data: {
@@ -73,7 +71,6 @@ describe('Companies (e2e)', () => {
 		});
 	};
 
-	// Helper function to create a business
 	const createBusiness = async (accountId: string) => {
 		return await prisma.business.create({
 			data: {
@@ -83,26 +80,26 @@ describe('Companies (e2e)', () => {
 		});
 	};
 
-	it('GET /companies -> deve listar empresas com seus nomes de categorias mapeados', async () => {
-		// 1. Criar Categoria
-		const category = await prisma.category.create({
-			data: { name: 'Alimentação' },
+	it('GET /businesses -> deve listar empresas com seus nomes de tags mapeados', async () => {
+		const group = await prisma.tag_group.create({
+			data: { name: 'Categorias' },
 		});
 
-		// 2. Criar Account do tipo Business
+		const tag = await prisma.tag.create({
+			data: { name: 'Alimentação', slug: 'alimentacao', group_id: group.id },
+		});
+
 		const businessAccount = await createBusinessAccount(
 			'pousada',
 			'Restaurante Serra',
 		);
 
-		// 3. Criar Empresa
 		const business = await createBusiness(businessAccount.id);
 
-		// 4. Criar relacionamento Business-Category
-		await prisma.business_category.create({
+		await prisma.business_tag.create({
 			data: {
 				business_id: business.id,
-				category_id: category.id,
+				tag_id: tag.id,
 			},
 		});
 
@@ -111,18 +108,19 @@ describe('Companies (e2e)', () => {
 
 		expect(Array.isArray(res.body)).toBe(true);
 		expect(res.body[0].name).toBe('Restaurante Serra');
-
-		// Valida o map() que você fez no Service: [cat.category.name]
-		expect(res.body[0].categories).toContain('Alimentação');
-		expect(typeof res.body[0].categories[0]).toBe('string');
+		expect(res.body[0].tags).toContain('Alimentação');
+		expect(typeof res.body[0].tags[0]).toBe('string');
 	});
 
-	it('GET /companies/:id -> deve retornar os detalhes da empresa e categorias', async () => {
-		const category = await prisma.category.create({
-			data: { name: 'Hotelaria' },
+	it('GET /businesses/:id -> deve retornar os detalhes da empresa e tags', async () => {
+		const group = await prisma.tag_group.create({
+			data: { name: 'Categorias' },
 		});
 
-		// Criar Account do tipo Business
+		const tag = await prisma.tag.create({
+			data: { name: 'Hotelaria', slug: 'hotelaria', group_id: group.id },
+		});
+
 		const businessAccount = await createBusinessAccount(
 			'pousada-hotel',
 			'Hotel Serra',
@@ -130,11 +128,10 @@ describe('Companies (e2e)', () => {
 
 		const business = await createBusiness(businessAccount.id);
 
-		// Criar relacionamento Business-Category
-		await prisma.business_category.create({
+		await prisma.business_tag.create({
 			data: {
 				business_id: business.id,
-				category_id: category.id,
+				tag_id: tag.id,
 			},
 		});
 
@@ -144,6 +141,6 @@ describe('Companies (e2e)', () => {
 			.expect(200);
 
 		expect(res.body.id).toBe(business.id);
-		expect(res.body.categories).toEqual(['Hotelaria']);
+		expect(res.body.tags).toEqual(['Hotelaria']);
 	});
 });

@@ -9,19 +9,19 @@ export class CitiesService {
 
 	async findAll(): Promise<City[]> {
 		return this.prismaService.$queryRaw`
-      SELECT 
-        c.id, 
-        c.name, 
-        c.slug, 
+      SELECT
+        c.id,
+        c.name,
+        c.slug,
         c.description,
         c."cover_img_url",
         ST_AsGeoJSON(c.location)::json as location,
         (
-          SELECT json_agg(cat.name)
-          FROM city_category cc
-          JOIN category cat ON cat.id = cc."category_id"
-          WHERE cc."city_id" = c.id
-        ) as categories
+          SELECT json_agg(t.name)
+          FROM city_tag ct
+          JOIN tag t ON t.id = ct."tag_id"
+          WHERE ct."city_id" = c.id
+        ) as tags
       FROM city c
       ORDER BY c.name ASC
     `;
@@ -29,10 +29,10 @@ export class CitiesService {
 
 	async findOne(id: string): Promise<City> {
 		const cities: City[] = await this.prismaService.$queryRaw`
-      SELECT 
-        id, 
-        name, 
-        slug, 
+      SELECT
+        id,
+        name,
+        slug,
         description,
         "cover_img_url",
         ST_AsGeoJSON(location)::json as location

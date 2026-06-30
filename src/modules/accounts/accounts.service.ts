@@ -70,7 +70,7 @@ export class AccountsService {
 			include: {
 				interests: {
 					select: {
-						category: {
+						tag: {
 							select: {
 								id: true,
 								name: true,
