@@ -69,7 +69,7 @@ Table business {
   updated_at DateTime [not null]
   favorites account_favorite [not null]
   account account [not null]
-  categories business_category [not null]
+  tags business_tag [not null]
   cities business_city [not null]
   reviews review [not null]
 }
@@ -84,7 +84,7 @@ Table city {
   updated_at DateTime [not null]
   favorites account_favorite [not null]
   businesses business_city [not null]
-  categories city_category [not null]
+  tags city_tag [not null]
   events event_city [not null]
   medias media [not null]
 }
@@ -105,7 +105,7 @@ Table event {
   updated_at DateTime [not null]
   favorites account_favorite [not null]
   owner account [not null]
-  categories event_category [not null]
+  tags event_tag [not null]
   cities event_city [not null]
   medias media [not null]
   reviews review [not null]
@@ -148,49 +148,66 @@ Table account_favorite {
 Table account_interest {
   id String [pk]
   account_id String [not null]
-  category_id String [not null]
+  tag_id String [not null]
   account account [not null]
-  category category [not null]
+  tag tag [not null]
 
   indexes {
-    (account_id, category_id) [unique]
+    (account_id, tag_id) [unique]
   }
 }
 
-Table category {
+Table tag_group {
   id String [pk]
-  parent_id String
   name String [unique, not null]
-  entities entity_category[] [not null]
-  interests account_interest [not null]
-  business_cats business_category [not null]
-  parent category
-  children category [not null]
-  city_cats city_category [not null]
-  event_cats event_category [not null]
+  description String
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+  tags tag [not null]
 }
 
-Table city_category {
+Table tag {
+  id String [pk]
+  name String [not null]
+  slug String [unique, not null]
+  description String
+  color String
+  group_id String [not null]
+  position Int [not null, default: 0]
+  created_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+  group tag_group [not null]
+  businesses business_tag [not null]
+  events event_tag [not null]
+  cities city_tag [not null]
+  interests account_interest [not null]
+
+  indexes {
+    (group_id, name) [unique]
+  }
+}
+
+Table city_tag {
   id String [pk]
   city_id String [not null]
-  category_id String [not null]
-  category category [not null]
+  tag_id String [not null]
+  tag tag [not null]
   city city [not null]
 
   indexes {
-    (city_id, category_id) [unique]
+    (city_id, tag_id) [unique]
   }
 }
 
-Table business_category {
+Table business_tag {
   id String [pk]
   business_id String [not null]
-  category_id String [not null]
+  tag_id String [not null]
   business business [not null]
-  category category [not null]
+  tag tag [not null]
 
   indexes {
-    (business_id, category_id) [unique]
+    (business_id, tag_id) [unique]
   }
 }
 
@@ -204,15 +221,15 @@ Table business_city {
   city city [not null]
 }
 
-Table event_category {
+Table event_tag {
   id String [pk]
   event_id String [not null]
-  category_id String [not null]
-  category category [not null]
+  tag_id String [not null]
   event event [not null]
+  tag tag [not null]
 
   indexes {
-    (event_id, category_id) [unique]
+    (event_id, tag_id) [unique]
   }
 }
 
@@ -292,12 +309,6 @@ Enum media_type {
   video
 }
 
-Enum entity_category {
-  city
-  business
-  event
-}
-
 Enum token_type {
   verify_email
   reset_password
@@ -327,25 +338,25 @@ Ref: account_favorite.event_id > event.id [delete: Cascade]
 
 Ref: account_interest.account_id > account.id [delete: Cascade]
 
-Ref: account_interest.category_id > category.id [delete: Cascade]
+Ref: account_interest.tag_id > tag.id [delete: Cascade]
 
-Ref: category.parent_id - category.id
+Ref: tag.group_id > tag_group.id [delete: Cascade]
 
-Ref: city_category.category_id > category.id [delete: Cascade]
+Ref: city_tag.tag_id > tag.id [delete: Cascade]
 
-Ref: city_category.city_id > city.id [delete: Cascade]
+Ref: city_tag.city_id > city.id [delete: Cascade]
 
-Ref: business_category.business_id > business.id [delete: Cascade]
+Ref: business_tag.business_id > business.id [delete: Cascade]
 
-Ref: business_category.category_id > category.id [delete: Cascade]
+Ref: business_tag.tag_id > tag.id [delete: Cascade]
 
 Ref: business_city.business_id > business.id [delete: Cascade]
 
 Ref: business_city.city_id > city.id [delete: Cascade]
 
-Ref: event_category.category_id > category.id [delete: Cascade]
+Ref: event_tag.event_id > event.id [delete: Cascade]
 
-Ref: event_category.event_id > event.id [delete: Cascade]
+Ref: event_tag.tag_id > tag.id [delete: Cascade]
 
 Ref: event_city.city_id > city.id [delete: Cascade]
 
