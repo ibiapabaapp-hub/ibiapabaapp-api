@@ -79,7 +79,7 @@ model business {
   updated_at       DateTime            @updatedAt @db.Timestamp(6)
   favorites        account_favorite[]
   account          account             @relation(fields: [owner_account_id], references: [id], onDelete: Cascade)
-  categories       business_category[]
+  tags             business_tag[]
   cities           business_city[]
   reviews          review[]            @relation("BusinessReviews")
 
@@ -97,7 +97,7 @@ model city {
   updated_at    DateTime                @updatedAt
   favorites     account_favorite[]
   businesses    business_city[]
-  categories    city_category[]
+  tags         city_tag[]
   events        event_city[]
   medias        media[]                 @relation("CityMedias")
 
@@ -120,7 +120,7 @@ model event {
   updated_at       DateTime           @updatedAt @db.Timestamp(6)
   favorites        account_favorite[]
   owner            account            @relation("AccountEvents", fields: [owner_account_id], references: [id], onDelete: Cascade)
-  categories       event_category[]
+  tags          event_tag[]
   cities           event_city[]
   medias           media[]            @relation("EventMedias")
   reviews          review[]           @relation("EventReviews")
@@ -162,46 +162,63 @@ model account_favorite {
 }
 
 model account_interest {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  account_id  String   @db.Uuid
-  category_id String   @db.Uuid
-  account     account  @relation(fields: [account_id], references: [id], onDelete: Cascade)
-  category    category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  account_id String  @db.Uuid
+  tag_id     String  @db.Uuid
+  account    account @relation(fields: [account_id], references: [id], onDelete: Cascade)
+  tag        tag     @relation(fields: [tag_id], references: [id], onDelete: Cascade)
 
-  @@unique([account_id, category_id])
+  @@unique([account_id, tag_id])
 }
 
-model category {
-  id            String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  parent_id     String?             @db.Uuid
-  name          String              @unique
-  entities      entity_category[]
-  interests     account_interest[]
-  business_cats business_category[]
-  parent        category?           @relation("category_tree", fields: [parent_id], references: [id])
-  children      category[]          @relation("category_tree")
-  city_cats     city_category[]
-  event_cats    event_category[]
+model tag_group {
+  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String @unique
+  description String?
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @updatedAt @db.Timestamp(6)
+  tags        tag[]
 }
 
-model city_category {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  city_id     String   @db.Uuid
-  category_id String   @db.Uuid
-  category    category @relation(fields: [category_id], references: [id], onDelete: Cascade)
-  city        city     @relation(fields: [city_id], references: [id], onDelete: Cascade)
+model tag {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  slug        String       @unique
+  description String?
+  color       String?      @db.VarChar(7)
+  group_id    String       @db.Uuid
+  position    Int          @default(0)
+  created_at  DateTime     @default(now()) @db.Timestamp(6)
+  updated_at  DateTime     @updatedAt @db.Timestamp(6)
+  group       tag_group    @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  businesses  business_tag[]
+  events      event_tag[]
+  cities      city_tag[]
+  interests   account_interest[]
 
-  @@unique([city_id, category_id])
+  @@unique([group_id, name])
+  @@index([group_id])
+  @@index([slug])
 }
 
-model business_category {
+model city_tag {
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  city_id String @db.Uuid
+  tag_id  String @db.Uuid
+  tag     tag    @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+  city    city   @relation(fields: [city_id], references: [id], onDelete: Cascade)
+
+  @@unique([city_id, tag_id])
+}
+
+model business_tag {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   business_id String   @db.Uuid
-  category_id String   @db.Uuid
+  tag_id      String   @db.Uuid
   business    business @relation(fields: [business_id], references: [id], onDelete: Cascade)
-  category    category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  tag         tag      @relation(fields: [tag_id], references: [id], onDelete: Cascade)
 
-  @@unique([business_id, category_id])
+  @@unique([business_id, tag_id])
 }
 
 model business_city {
@@ -214,14 +231,14 @@ model business_city {
   city             city     @relation(fields: [city_id], references: [id], onDelete: Cascade)
 }
 
-model event_category {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  event_id    String   @db.Uuid
-  category_id String   @db.Uuid
-  category    category @relation(fields: [category_id], references: [id], onDelete: Cascade)
-  event       event    @relation(fields: [event_id], references: [id], onDelete: Cascade)
+model event_tag {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_id String @db.Uuid
+  tag_id   String @db.Uuid
+  event    event  @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  tag      tag    @relation(fields: [tag_id], references: [id], onDelete: Cascade)
 
-  @@unique([event_id, category_id])
+  @@unique([event_id, tag_id])
 }
 
 model event_city {
@@ -304,11 +321,6 @@ enum media_type {
   video
 }
 
-enum entity_category {
-  city
-  business
-  event
-}
 
 enum token_type {
   verify_email
