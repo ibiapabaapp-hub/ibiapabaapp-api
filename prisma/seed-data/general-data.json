@@ -7,7 +7,7 @@
 			"lat": -3.8321,
 			"lng": -40.9224,
 			"cover_img_url": "https://cdn.ibiapabaapp.com.br/cities/ubajara.png",
-			"categories": [
+			"tags": [
 				"Turismo e Hospitalidade",
 				"Ecoturismo",
 				"Parques e atrações turísticas"
@@ -20,7 +20,7 @@
 			"lat": -3.7314,
 			"lng": -40.9917,
 			"cover_img_url": "https://cdn.ibiapabaapp.com.br/cities/tiangua.png",
-			"categories": ["Comércio", "Turismo e Hospitalidade"]
+			"tags": ["Comércio", "Turismo e Hospitalidade"]
 		},
 		{
 			"name": "Viçosa do Ceará",
@@ -29,7 +29,7 @@
 			"lat": -3.5622,
 			"lng": -41.0911,
 			"cover_img_url": "https://cdn.ibiapabaapp.com.br/cities/vicosa-do-ceara.png",
-			"categories": [
+			"tags": [
 				"Cultura, Lazer e Entretenimento",
 				"Espaços culturais",
 				"Turismo e Hospitalidade"
@@ -89,7 +89,7 @@
 			"max_reach_level": "local",
 			"active": true,
 			"cover_img_url": "https://cdn.ibiapabaapp.com.br/businesses/manaca.png",
-			"categories": ["Restaurantes"],
+			"tags": ["Restaurantes"],
 			"cities": [
 				{
 					"slug": "ubajara",
@@ -120,7 +120,7 @@
 			"max_reach_level": "regional",
 			"active": true,
 			"cover_img_url": "https://cdn.ibiapabaapp.com.br/businesses/serraviva.png",
-			"categories": ["Bares e pubs", "Casas de eventos"],
+			"tags": ["Bares e pubs", "Casas de eventos"],
 			"cities": [
 				{
 					"slug": "ubajara",
@@ -162,7 +162,7 @@
 			"active": true,
 			"business_slug": null,
 			"user_email": "admin@teste.com",
-			"categories": ["Eventos culturais", "Shows e apresentações", "Festivais"],
+			"tags": ["Eventos culturais", "Shows e apresentações", "Festivais"],
 			"cities": [
 				{
 					"slug": "ubajara",
@@ -190,7 +190,7 @@
 			"active": true,
 			"business_slug": "serra-viva-music-bar",
 			"user_email": null,
-			"categories": ["Shows e apresentações", "Eventos culturais"],
+			"tags": ["Shows e apresentações", "Eventos culturais"],
 			"cities": [
 				{
 					"slug": "tiangua",

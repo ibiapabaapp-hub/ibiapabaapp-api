@@ -1,0 +1,164 @@
+{
+	"groups": [
+		{
+			"name": "Comércio",
+			"tags": [
+				"Supermercados e mercantis",
+				"Lojas de roupas e calçados",
+				"Farmácias e drogarias",
+				"Lojas de eletrônicos",
+				"Materiais de construção",
+				"Papelarias e livrarias",
+				"Lojas de móveis",
+				"Floriculturas",
+				"Lojas agropecuárias"
+			]
+		},
+		{
+			"name": "Alimentação e Bebidas",
+			"tags": [
+				"Restaurantes",
+				"Lanchonetes",
+				"Bares e pubs",
+				"Pizzarias",
+				"Cafeterias",
+				"Sorveterias",
+				"Docerias e confeitarias",
+				"Food trucks",
+				"Produtores artesanais"
+			]
+		},
+		{
+			"name": "Turismo e Hospitalidade",
+			"tags": [
+				"Hotéis",
+				"Pousadas",
+				"Hostels",
+				"Chalés",
+				"Guias turísticos",
+				"Agências de turismo",
+				"Turismo rural",
+				"Ecoturismo",
+				"Experiências locais"
+			]
+		},
+		{
+			"name": "Cultura, Lazer e Entretenimento",
+			"tags": [
+				"Casas de eventos",
+				"Produtoras culturais",
+				"Espaços culturais",
+				"Teatros",
+				"Estúdios artísticos",
+				"Artesãos",
+				"Parques e atrações turísticas",
+				"Espaços de lazer"
+			]
+		},
+		{
+			"name": "Saúde e Bem-estar",
+			"tags": [
+				"Clínicas médicas",
+				"Consultórios odontológicos",
+				"Laboratórios",
+				"Farmácias",
+				"Clínicas veterinárias",
+				"Academias",
+				"Estúdios de pilates/yoga",
+				"Spas e estética",
+				"Terapias alternativas"
+			]
+		},
+		{
+			"name": "Serviços Gerais",
+			"tags": [
+				"Oficinas mecânicas",
+				"Serviços elétricos",
+				"Serviços hidráulicos",
+				"Manutenção predial",
+				"Limpeza e conservação",
+				"Segurança privada",
+				"Transportadoras",
+				"Serviços funerários"
+			]
+		},
+		{
+			"name": "Educação e Capacitação",
+			"tags": [
+				"Escolas",
+				"Faculdades",
+				"Cursos técnicos",
+				"Cursos profissionalizantes",
+				"Idiomas",
+				"Reforço escolar",
+				"Treinamentos corporativos",
+				"Autoescolas"
+			]
+		},
+		{
+			"name": "Serviços Profissionais",
+			"tags": [
+				"Contabilidade",
+				"Advocacia",
+				"Consultoria empresarial",
+				"Recursos humanos",
+				"Marketing e publicidade",
+				"Design gráfico",
+				"Tecnologia da informação",
+				"Desenvolvimento de software",
+				"Fotografia e audiovisual"
+			]
+		},
+		{
+			"name": "Indústria e Produção",
+			"tags": [
+				"Indústrias alimentícias",
+				"Fábricas",
+				"Agroindústrias",
+				"Confecções",
+				"Marcenarias",
+				"Metalúrgicas",
+				"Produção artesanal",
+				"Cooperativas"
+			]
+		},
+		{
+			"name": "Agronegócio e Economia Rural",
+			"tags": [
+				"Produtores rurais",
+				"Cooperativas agrícolas",
+				"Floricultura",
+				"Cafeicultura",
+				"Hortifruti",
+				"Avicultura",
+				"Apicultura",
+				"Viveiros",
+				"Associações rurais"
+			]
+		},
+		{
+			"name": "Financeiro e Imobiliário",
+			"tags": [
+				"Bancos",
+				"Cooperativas de crédito",
+				"Correspondentes bancários",
+				"Imobiliárias",
+				"Corretores de imóveis",
+				"Seguradoras",
+				"Consórcios"
+			]
+		},
+		{
+			"name": "Institucional e Terceiro Setor",
+			"tags": [
+				"Associações",
+				"ONGs",
+				"Cooperativas",
+				"Sindicatos",
+				"Instituições religiosas",
+				"Fundações",
+				"Entidades culturais"
+			]
+		}
+	]
+}

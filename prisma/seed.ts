@@ -16,10 +16,9 @@ const prisma = new PrismaClient({ adapter });
 
 // ——— TIPOS ———————————————————————————————————————————————————————————————————
 
-interface CategoryEntry {
+interface TagGroupEntry {
 	name: string;
-	parent: string | null;
-	entities: string[];
+	tags: string[];
 }
 
 interface CityEntry {
@@ -29,7 +28,7 @@ interface CityEntry {
 	lat: number;
 	lng: number;
 	cover_img_url: string;
-	categories: string[];
+	tags: string[];
 }
 
 interface UserEntry {
@@ -72,7 +71,7 @@ interface BusinessEntry {
 	max_reach_level: 'local' | 'regional';
 	active: boolean;
 	cover_img_url: string;
-	categories: string[];
+	tags: string[];
 	cities: BusinessCityRef[];
 	users: BusinessUserRef[];
 	medias: MediaEntry[];
@@ -95,7 +94,7 @@ interface EventEntry {
 	active: boolean;
 	business_slug: string | null;
 	user_email: string | null;
-	categories: string[];
+	tags: string[];
 	cities: EventCityRef[];
 	medias: MediaEntry[];
 }
@@ -124,8 +123,8 @@ interface GeneralData {
 	favorites: FavoriteEntry[];
 }
 
-interface CategoriesData {
-	categories: CategoryEntry[];
+interface TagsData {
+	groups: TagGroupEntry[];
 }
 
 // ——— HELPERS —————————————————————————————————————————————————————————————————
@@ -135,6 +134,15 @@ function loadJsonFile<T>(filePath: string): T {
 	return JSON.parse(data) as T;
 }
 
+function generateSlug(name: string): string {
+	return name
+		.toLowerCase()
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/(^-|-$)/g, '');
+}
+
 function loadSeedData() {
 	const seedDataDir = path.join(__dirname, 'seed-data');
 
@@ -142,19 +150,16 @@ function loadSeedData() {
 		path.join(seedDataDir, 'general-data.json'),
 	);
 
-	const companiesCategories = loadJsonFile<CategoriesData>(
-		path.join(seedDataDir, 'companies-categories.json'),
+	const companiesTags = loadJsonFile<TagsData>(
+		path.join(seedDataDir, 'tags-companies.json'),
 	);
 
-	const eventsCategories = loadJsonFile<CategoriesData>(
-		path.join(seedDataDir, 'events-categories.json'),
+	const eventsTags = loadJsonFile<TagsData>(
+		path.join(seedDataDir, 'tags-events.json'),
 	);
 
 	return {
-		categories: [
-			...companiesCategories.categories,
-			...eventsCategories.categories,
-		],
+		groups: [...companiesTags.groups, ...eventsTags.groups],
 		...generalData,
 	};
 }
@@ -172,52 +177,48 @@ async function main() {
 
 	await prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
-			// ─── 1. CATEGORIAS ──────────────────────────────────────────────
+			// ─── 1. TAGS (tag_group + tag) ─────────────────────────────────────
 
-			console.log('\n🏷️  Seeding categorias...');
+			console.log('\n🏷️  Seeding tag_groups e tags...');
 
-			// Mapa name -> id para resolver parent_id e lookups posteriores
-			const categoryMap = new Map<string, string>();
+			// Mapa tag name -> id para resolver lookups posteriores
+			const tagMap = new Map<string, string>();
 
-			// Primeira passagem: categorias raiz (sem parent)
-			for (const cat of data.categories.filter((c) => c.parent === null)) {
-				const created = await tx.category.upsert({
-					where: { name: cat.name },
-					update: { entities: cat.entities as any[] },
-					create: {
-						name: cat.name,
-						entities: cat.entities as any[],
-					},
+			// Criar tag_groups e suas tags
+			for (const group of data.groups) {
+				const createdGroup = await tx.tag_group.upsert({
+					where: { name: group.name },
+					update: {},
+					create: { name: group.name },
 				});
-				categoryMap.set(created.name, created.id);
-			}
 
-			// Segunda passagem: categorias filhas
-			for (const cat of data.categories.filter((c) => c.parent !== null)) {
-				const parentId = categoryMap.get(cat.parent!);
-				if (!parentId) {
-					console.warn(
-						`  ⚠️  Parent "${cat.parent}" não encontrado para "${cat.name}". Pulando.`,
-					);
-					continue;
+				let position = 0;
+				for (const tagName of group.tags) {
+					const slug = generateSlug(tagName);
+					const createdTag = await tx.tag.upsert({
+						where: { slug },
+						update: {
+							name: tagName,
+							group_id: createdGroup.id,
+							position,
+						},
+						create: {
+							name: tagName,
+							slug,
+							group_id: createdGroup.id,
+							position,
+						},
+					});
+					tagMap.set(createdTag.name, createdTag.id);
+					position++;
 				}
 
-				const created = await tx.category.upsert({
-					where: { name: cat.name },
-					update: {
-						entities: cat.entities as any[],
-						parent_id: parentId,
-					},
-					create: {
-						name: cat.name,
-						entities: cat.entities as any[],
-						parent_id: parentId,
-					},
-				});
-				categoryMap.set(created.name, created.id);
+				console.log(
+					`  ✅ Group "${group.name}" com ${group.tags.length} tags`,
+				);
 			}
 
-			console.log(`  ✅ ${categoryMap.size} categorias processadas.`);
+			console.log(`  ✅ Total: ${tagMap.size} tags processadas.`);
 
 			// ─── 2. CIDADES ─────────────────────────────────────────────────
 
@@ -255,32 +256,32 @@ async function main() {
 				const cityId = rows[0]?.id;
 				if (!cityId) {
 					console.warn(
-						`  ⚠️  Falha ao recuperar id da cidade "${cityData.slug}". Pulando categorias.`,
+						`  ⚠️  Falha ao recuperar id da cidade "${cityData.slug}". Pulando tags.`,
 					);
 					continue;
 				}
 
 				cityMap.set(cityData.slug, cityId);
 
-				// Categorias da cidade
-				for (const catName of cityData.categories) {
-					const catId = categoryMap.get(catName);
-					if (!catId) {
+				// Tags da cidade
+				for (const tagName of cityData.tags) {
+					const tagId = tagMap.get(tagName);
+					if (!tagId) {
 						console.warn(
-							`  ⚠️  Categoria "${catName}" não encontrada para cidade "${cityData.name}".`,
+							`  ⚠️  Tag "${tagName}" não encontrada para cidade "${cityData.name}".`,
 						);
 						continue;
 					}
 
-					await tx.city_category.upsert({
+					await tx.city_tag.upsert({
 						where: {
-							city_id_category_id: {
+							city_id_tag_id: {
 								city_id: cityId,
-								category_id: catId,
+								tag_id: tagId,
 							},
 						},
 						update: {},
-						create: { city_id: cityId, category_id: catId },
+						create: { city_id: cityId, tag_id: tagId },
 					});
 				}
 			}
@@ -328,25 +329,25 @@ async function main() {
 
 				accountMap.set(userData.email, account.id);
 
-				// Interesses do usuário (agora account_interest)
+				// Interesses do usuário (agora account_interest com tag_id)
 				for (const interestName of userData.interests) {
-					const catId = categoryMap.get(interestName);
-					if (!catId) {
+					const tagId = tagMap.get(interestName);
+					if (!tagId) {
 						console.warn(
-							`  ⚠️  Categoria de interesse "${interestName}" não encontrada para usuário "${userData.email}".`,
+							`  ⚠️  Tag de interesse "${interestName}" não encontrada para usuário "${userData.email}".`,
 						);
 						continue;
 					}
 
 					await tx.account_interest.upsert({
 						where: {
-							account_id_category_id: {
+							account_id_tag_id: {
 								account_id: account.id,
-								category_id: catId,
+								tag_id: tagId,
 							},
 						},
 						update: {},
-						create: { account_id: account.id, category_id: catId },
+						create: { account_id: account.id, tag_id: tagId },
 					});
 				}
 			}
@@ -419,27 +420,27 @@ async function main() {
 					);
 				}
 
-				// Categorias do business
-				for (const catName of bizData.categories) {
-					const catId = categoryMap.get(catName);
-					if (!catId) {
+				// Tags do business
+				for (const tagName of bizData.tags) {
+					const tagId = tagMap.get(tagName);
+					if (!tagId) {
 						console.warn(
-							`  ⚠️  Categoria "${catName}" não encontrada para business "${bizData.slug}".`,
+							`  ⚠️  Tag "${tagName}" não encontrada para business "${bizData.slug}".`,
 						);
 						continue;
 					}
 
-					await tx.business_category.upsert({
+					await tx.business_tag.upsert({
 						where: {
-							business_id_category_id: {
+							business_id_tag_id: {
 								business_id: business.id,
-								category_id: catId,
+								tag_id: tagId,
 							},
 						},
 						update: {},
 						create: {
 							business_id: business.id,
-							category_id: catId,
+							tag_id: tagId,
 						},
 					});
 				}
@@ -551,25 +552,25 @@ async function main() {
 					},
 				});
 
-				// Categorias do evento
-				for (const catName of evData.categories) {
-					const catId = categoryMap.get(catName);
-					if (!catId) {
+				// Tags do evento
+				for (const tagName of evData.tags) {
+					const tagId = tagMap.get(tagName);
+					if (!tagId) {
 						console.warn(
-							`  ⚠️  Categoria "${catName}" não encontrada para evento "${evData.slug}".`,
+							`  ⚠️  Tag "${tagName}" não encontrada para evento "${evData.slug}".`,
 						);
 						continue;
 					}
 
-					await tx.event_category.upsert({
+					await tx.event_tag.upsert({
 						where: {
-							event_id_category_id: {
+							event_id_tag_id: {
 								event_id: event.id,
-								category_id: catId,
+								tag_id: tagId,
 							},
 						},
 						update: {},
-						create: { event_id: event.id, category_id: catId },
+						create: { event_id: event.id, tag_id: tagId },
 					});
 				}
 
