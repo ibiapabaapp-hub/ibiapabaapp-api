@@ -218,9 +218,9 @@ Todas as requisições são validadas usando `class-validator` e `class-transfor
 A API permite requisições das seguintes origens:
 
 - `http://localhost:3001`
-- `https://ibiapabaapp.com.br`
-- `https://www.ibiapabaapp.com.br`
-- `https://ibiapabaapp-landingpage.vercel.app`
+- `https://ibivibe.com.br`
+- `https://www.ibivibe.com.br`
+- `https://ibivibe-landingpage.vercel.app`
 
 ## Arquitetura
 
