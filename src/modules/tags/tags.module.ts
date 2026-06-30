@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from 'src/modules/common/prisma/prisma.module';
+
+import { TagGroupsService } from './tag-groups.service';
 import { TagsController } from './tags.controller';
 import { TagsService } from './tags.service';
-import { TagGroupsService } from './tag-groups.service';
 
 @Module({
 	imports: [PrismaModule],

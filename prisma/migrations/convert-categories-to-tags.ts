@@ -14,7 +14,9 @@ function generateSlug(name: string): string {
 		.replace(/(^-|-$)/g, '');
 }
 
-type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+type TransactionClient = Parameters<
+	Parameters<typeof prisma.$transaction>[0]
+>[0];
 
 async function main() {
 	console.log('🚀 Starting migration: categories → tag_group + tag\n');
@@ -30,12 +32,19 @@ async function main() {
 	`;
 
 	if (!tableExists[0]?.exists) {
-		console.log('   ✅ No category table found. Creating tag_groups and tags from seed data...\n');
+		console.log(
+			'   ✅ No category table found. Creating tag_groups and tags from seed data...\n',
+		);
 
 		// Create tag_groups and tags from seed data files
 		const companiesData = JSON.parse(
 			require('fs').readFileSync(
-				require('path').join(__dirname, '..', 'seed-data', 'tags-companies.json'),
+				require('path').join(
+					__dirname,
+					'..',
+					'seed-data',
+					'tags-companies.json',
+				),
 				'utf-8',
 			),
 		);
@@ -61,7 +70,9 @@ async function main() {
 			const groupId = groupRows[0]?.id;
 
 			if (!groupId) {
-				console.warn(`   ⚠️  Failed to get group_id for "${group.name}". Skipping.`);
+				console.warn(
+					`   ⚠️  Failed to get group_id for "${group.name}". Skipping.`,
+				);
 				continue;
 			}
 
@@ -80,7 +91,9 @@ async function main() {
 				position++;
 			}
 
-			console.log(`   ✅ Group "${group.name}" created with ${group.tags.length} tags`);
+			console.log(
+				`   ✅ Group "${group.name}" created with ${group.tags.length} tags`,
+			);
 		}
 
 		console.log('\n✅ Migration completed successfully!');
@@ -138,10 +151,14 @@ async function main() {
 			childCategoriesByGroup.set(child.parent_id!, list);
 		}
 
-		for (const [parentId, children] of Array.from(childCategoriesByGroup.entries())) {
+		for (const [parentId, children] of Array.from(
+			childCategoriesByGroup.entries(),
+		)) {
 			const groupId = tagGroupMap.get(parentId);
 			if (!groupId) {
-				console.warn(`   ⚠️  Group not found for parent ${parentId}. Skipping ${children.length} tags.`);
+				console.warn(
+					`   ⚠️  Group not found for parent ${parentId}. Skipping ${children.length} tags.`,
+				);
 				continue;
 			}
 
@@ -189,7 +206,9 @@ async function main() {
 				`;
 			}
 		}
-		console.log(`   ✅ ${businessCategoryRows.length} business_category rows migrated`);
+		console.log(
+			`   ✅ ${businessCategoryRows.length} business_category rows migrated`,
+		);
 
 		// 5b: event_category → event_tag
 		console.log('   🎉 Migrating event_category → event_tag...');
@@ -207,7 +226,9 @@ async function main() {
 				`;
 			}
 		}
-		console.log(`   ✅ ${eventCategoryRows.length} event_category rows migrated`);
+		console.log(
+			`   ✅ ${eventCategoryRows.length} event_category rows migrated`,
+		);
 
 		// 5c: city_category → city_tag
 		console.log('   🏙️  Migrating city_category → city_tag...');
@@ -251,7 +272,9 @@ async function main() {
 			SELECT COUNT(*) as count FROM account_interest WHERE tag_id IS NULL
 		`;
 		if (unmappedCount[0]?.count && unmappedCount[0].count > BigInt(0)) {
-			console.warn(`   ⚠️  ${unmappedCount[0].count} account_interest rows have no matching tag. Deleting them.`);
+			console.warn(
+				`   ⚠️  ${unmappedCount[0].count} account_interest rows have no matching tag. Deleting them.`,
+			);
 			await tx.$executeRaw`DELETE FROM account_interest WHERE tag_id IS NULL`;
 		}
 
@@ -285,7 +308,9 @@ async function main() {
 			END
 			$$
 		`;
-		console.log(`   ✅ ${accountInterestRows.length} account_interest rows migrated`);
+		console.log(
+			`   ✅ ${accountInterestRows.length} account_interest rows migrated`,
+		);
 
 		// Step 6: Drop old junction tables
 		console.log('\n6️⃣  Dropping old junction tables...');

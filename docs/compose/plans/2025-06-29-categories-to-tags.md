@@ -25,6 +25,7 @@
 ## File Structure
 
 ### New Files
+
 - `src/modules/tags/entities/tag.entity.ts` — Tag entity class
 - `src/modules/tags/entities/tag-group.entity.ts` — TagGroup entity class
 - `src/modules/tags/dto/create-tag.dto.ts` — Create tag DTO
@@ -41,6 +42,7 @@
 - `prisma/seed-data/tags-events.json` — Event tags seed
 
 ### Modified Files
+
 - `prisma/schema.prisma` — Replace category models with tag models
 - `prisma/seed.ts` — Update to use new tag models
 - `src/modules/businesses/businesses.service.ts` — Update category refs to tags
@@ -49,6 +51,7 @@
 - `src/modules/accounts/account-interests.service.ts` — Update category refs to tags
 
 ### Deleted Files
+
 - `src/modules/categories/` (entire directory)
 
 ---
@@ -58,6 +61,7 @@
 **Covers:** Schema design
 
 **Files:**
+
 - Modify: `prisma/schema.prisma`
 
 - [ ] **Step 1: Add tag_group and tag models, rename junction tables**
@@ -188,6 +192,7 @@ git commit -m "feat(schema): replace category model with tag_group + tag models"
 **Covers:** Data migration
 
 **Files:**
+
 - Create: `prisma/migrations/convert-categories-to-tags.ts` (one-time migration script)
 
 - [ ] **Step 1: Write migration script**
@@ -207,163 +212,173 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
+	return name
+		.toLowerCase()
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/(^-|-$)/g, '');
 }
 
 async function main() {
-  console.log('🔄 Starting category → tag migration...');
+	console.log('🔄 Starting category → tag migration...');
 
-  // 1. Fetch all existing categories
-  const categories = await prisma.$queryRaw<
-    { id: string; name: string; parent_id: string | null; entities: string[] }[]
-  >`SELECT id, name, parent_id, entities::text[] FROM category`;
+	// 1. Fetch all existing categories
+	const categories = await prisma.$queryRaw<
+		{ id: string; name: string; parent_id: string | null; entities: string[] }[]
+	>`SELECT id, name, parent_id, entities::text[] FROM category`;
 
-  console.log(`  Found ${categories.length} categories`);
+	console.log(`  Found ${categories.length} categories`);
 
-  // 2. Create tag_groups from parent categories (parent_id IS NULL)
-  const parentCategories = categories.filter((c) => c.parent_id === null);
-  const childCategories = categories.filter((c) => c.parent_id !== null);
+	// 2. Create tag_groups from parent categories (parent_id IS NULL)
+	const parentCategories = categories.filter((c) => c.parent_id === null);
+	const childCategories = categories.filter((c) => c.parent_id !== null);
 
-  const tagGroupMap = new Map<string, string>(); // old category id → new tag_group id
+	const tagGroupMap = new Map<string, string>(); // old category id → new tag_group id
 
-  for (const parent of parentCategories) {
-    const result = await prisma.$executeRaw`
+	for (const parent of parentCategories) {
+		const result = await prisma.$executeRaw`
       INSERT INTO tag_group (id, name, created_at, updated_at)
       VALUES (gen_random_uuid(), ${parent.name}, now(), now())
       ON CONFLICT (name) DO UPDATE SET updated_at = now()
       RETURNING id
     `;
 
-    const rows = await prisma.$queryRaw<{ id: string }[]>`
+		const rows = await prisma.$queryRaw<{ id: string }[]>`
       SELECT id FROM tag_group WHERE name = ${parent.name}
     `;
-    tagGroupMap.set(parent.id, rows[0].id);
-  }
+		tagGroupMap.set(parent.id, rows[0].id);
+	}
 
-  console.log(`  Created ${tagGroupMap.size} tag groups`);
+	console.log(`  Created ${tagGroupMap.size} tag groups`);
 
-  // 3. Create tags from child categories
-  const tagMap = new Map<string, string>(); // old category id → new tag id
-  let tagCount = 0;
+	// 3. Create tags from child categories
+	const tagMap = new Map<string, string>(); // old category id → new tag id
+	let tagCount = 0;
 
-  for (const child of childCategories) {
-    const groupId = tagGroupMap.get(child.parent_id!);
-    if (!groupId) {
-      console.warn(`  ⚠️  No tag_group for parent "${child.parent_id}" (tag "${child.name}")`);
-      continue;
-    }
+	for (const child of childCategories) {
+		const groupId = tagGroupMap.get(child.parent_id!);
+		if (!groupId) {
+			console.warn(
+				`  ⚠️  No tag_group for parent "${child.parent_id}" (tag "${child.name}")`,
+			);
+			continue;
+		}
 
-    const slug = slugify(child.name);
+		const slug = slugify(child.name);
 
-    await prisma.$executeRaw`
+		await prisma.$executeRaw`
       INSERT INTO tag (id, name, slug, group_id, position, created_at, updated_at)
       VALUES (gen_random_uuid(), ${child.name}, ${slug}, ${groupId}, ${tagCount}, now(), now())
       ON CONFLICT (slug) DO UPDATE SET updated_at = now()
     `;
 
-    const rows = await prisma.$queryRaw<{ id: string }[]>`
+		const rows = await prisma.$queryRaw<{ id: string }[]>`
       SELECT id FROM tag WHERE slug = ${slug}
     `;
-    tagMap.set(child.id, rows[0].id);
-    tagCount++;
-  }
+		tagMap.set(child.id, rows[0].id);
+		tagCount++;
+	}
 
-  console.log(`  Created ${tagCount} tags`);
+	console.log(`  Created ${tagCount} tags`);
 
-  // 4. Migrate junction tables
-  // business_tag
-  const bizCats = await prisma.$queryRaw<{ business_id: string; category_id: string }[]>`
+	// 4. Migrate junction tables
+	// business_tag
+	const bizCats = await prisma.$queryRaw<
+		{ business_id: string; category_id: string }[]
+	>`
     SELECT business_id, category_id FROM business_category
   `;
-  for (const bc of bizCats) {
-    const tagId = tagMap.get(bc.category_id);
-    if (tagId) {
-      await prisma.$executeRaw`
+	for (const bc of bizCats) {
+		const tagId = tagMap.get(bc.category_id);
+		if (tagId) {
+			await prisma.$executeRaw`
         INSERT INTO business_tag (id, business_id, tag_id)
         VALUES (gen_random_uuid(), ${bc.business_id}, ${tagId})
         ON CONFLICT (business_id, tag_id) DO NOTHING
       `;
-    }
-  }
-  console.log(`  Migrated ${bizCats.length} business_tag entries`);
+		}
+	}
+	console.log(`  Migrated ${bizCats.length} business_tag entries`);
 
-  // event_tag
-  const evCats = await prisma.$queryRaw<{ event_id: string; category_id: string }[]>`
+	// event_tag
+	const evCats = await prisma.$queryRaw<
+		{ event_id: string; category_id: string }[]
+	>`
     SELECT event_id, category_id FROM event_category
   `;
-  for (const ec of evCats) {
-    const tagId = tagMap.get(ec.category_id);
-    if (tagId) {
-      await prisma.$executeRaw`
+	for (const ec of evCats) {
+		const tagId = tagMap.get(ec.category_id);
+		if (tagId) {
+			await prisma.$executeRaw`
         INSERT INTO event_tag (id, event_id, tag_id)
         VALUES (gen_random_uuid(), ${ec.event_id}, ${tagId})
         ON CONFLICT (event_id, tag_id) DO NOTHING
       `;
-    }
-  }
-  console.log(`  Migrated ${evCats.length} event_tag entries`);
+		}
+	}
+	console.log(`  Migrated ${evCats.length} event_tag entries`);
 
-  // city_tag
-  const cityCats = await prisma.$queryRaw<{ city_id: string; category_id: string }[]>`
+	// city_tag
+	const cityCats = await prisma.$queryRaw<
+		{ city_id: string; category_id: string }[]
+	>`
     SELECT city_id, category_id FROM city_category
   `;
-  for (const cc of cityCats) {
-    const tagId = tagMap.get(cc.category_id);
-    if (tagId) {
-      await prisma.$executeRaw`
+	for (const cc of cityCats) {
+		const tagId = tagMap.get(cc.category_id);
+		if (tagId) {
+			await prisma.$executeRaw`
         INSERT INTO city_tag (id, city_id, tag_id)
         VALUES (gen_random_uuid(), ${cc.city_id}, ${tagId})
         ON CONFLICT (city_id, tag_id) DO NOTHING
       `;
-    }
-  }
-  console.log(`  Migrated ${cityCats.length} city_tag entries`);
+		}
+	}
+	console.log(`  Migrated ${cityCats.length} city_tag entries`);
 
-  // account_interest
-  const interests = await prisma.$queryRaw<{ account_id: string; category_id: string }[]>`
+	// account_interest
+	const interests = await prisma.$queryRaw<
+		{ account_id: string; category_id: string }[]
+	>`
     SELECT account_id, category_id FROM account_interest
   `;
-  for (const ai of interests) {
-    const tagId = tagMap.get(ai.category_id);
-    if (tagId) {
-      await prisma.$executeRaw`
+	for (const ai of interests) {
+		const tagId = tagMap.get(ai.category_id);
+		if (tagId) {
+			await prisma.$executeRaw`
         INSERT INTO account_interest (id, account_id, tag_id)
         VALUES (gen_random_uuid(), ${ai.account_id}, ${tagId})
         ON CONFLICT (account_id, tag_id) DO NOTHING
       `;
-    }
-  }
-  console.log(`  Migrated ${interests.length} account_interest entries`);
+		}
+	}
+	console.log(`  Migrated ${interests.length} account_interest entries`);
 
-  // 5. Drop old tables
-  await prisma.$executeRaw`DROP TABLE IF EXISTS account_interest CASCADE`;
-  await prisma.$executeRaw`DROP TABLE IF EXISTS city_category CASCADE`;
-  await prisma.$executeRaw`DROP TABLE IF EXISTS event_category CASCADE`;
-  await prisma.$executeRaw`DROP TABLE IF EXISTS business_category CASCADE`;
-  await prisma.$executeRaw`DROP TABLE IF EXISTS category CASCADE`;
-  await prisma.$executeRaw`DROP TYPE IF EXISTS entity_category CASCADE`;
+	// 5. Drop old tables
+	await prisma.$executeRaw`DROP TABLE IF EXISTS account_interest CASCADE`;
+	await prisma.$executeRaw`DROP TABLE IF EXISTS city_category CASCADE`;
+	await prisma.$executeRaw`DROP TABLE IF EXISTS event_category CASCADE`;
+	await prisma.$executeRaw`DROP TABLE IF EXISTS business_category CASCADE`;
+	await prisma.$executeRaw`DROP TABLE IF EXISTS category CASCADE`;
+	await prisma.$executeRaw`DROP TYPE IF EXISTS entity_category CASCADE`;
 
-  console.log('  Dropped old category tables and enum');
+	console.log('  Dropped old category tables and enum');
 
-  console.log('✅ Migration complete!');
+	console.log('✅ Migration complete!');
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-    await pool.end();
-  })
-  .catch(async (e) => {
-    console.error('❌ Migration failed:', e);
-    await prisma.$disconnect();
-    await pool.end();
-    process.exit(1);
-  });
+	.then(async () => {
+		await prisma.$disconnect();
+		await pool.end();
+	})
+	.catch(async (e) => {
+		console.error('❌ Migration failed:', e);
+		await prisma.$disconnect();
+		await pool.end();
+		process.exit(1);
+	});
 ```
 
 - [ ] **Step 2: Run migration**
@@ -396,6 +411,7 @@ git commit -m "feat(migration): convert categories to tag_group + tag"
 **Covers:** Seeding
 
 **Files:**
+
 - Create: `prisma/seed-data/tags-companies.json`
 - Create: `prisma/seed-data/tags-events.json`
 - Modify: `prisma/seed.ts`
@@ -403,10 +419,17 @@ git commit -m "feat(migration): convert categories to tag_group + tag"
 - [ ] **Step 1: Create company tags seed data**
 
 Convert `companies-categories.json` to new format. The JSON structure changes from:
+
 ```json
-{ "name": "Restaurantes", "parent": "Alimentação e Bebidas", "entities": ["business"] }
+{
+	"name": "Restaurantes",
+	"parent": "Alimentação e Bebidas",
+	"entities": ["business"]
+}
 ```
+
 To:
+
 ```json
 { "group": "Alimentação e Bebidas", "tags": ["Restaurantes", "Lanchonetes", ...] }
 ```
@@ -415,168 +438,168 @@ Write `prisma/seed-data/tags-companies.json`:
 
 ```json
 {
-  "groups": [
-    {
-      "name": "Comércio",
-      "tags": [
-        "Supermercados e mercantis",
-        "Lojas de roupas e calçados",
-        "Farmácias e drogarias",
-        "Lojas de eletrônicos",
-        "Materiais de construção",
-        "Papelarias e livrarias",
-        "Lojas de móveis",
-        "Floriculturas",
-        "Lojas agropecuárias"
-      ]
-    },
-    {
-      "name": "Alimentação e Bebidas",
-      "tags": [
-        "Restaurantes",
-        "Lanchonetes",
-        "Bares e pubs",
-        "Pizzarias",
-        "Cafeterias",
-        "Sorveterias",
-        "Docerias e confeitarias",
-        "Food trucks",
-        "Produtores artesanais"
-      ]
-    },
-    {
-      "name": "Turismo e Hospitalidade",
-      "tags": [
-        "Hotéis",
-        "Pousadas",
-        "Hostels",
-        "Chalés",
-        "Guias turísticos",
-        "Agências de turismo",
-        "Turismo rural",
-        "Ecoturismo",
-        "Experiências locais"
-      ]
-    },
-    {
-      "name": "Cultura, Lazer e Entretenimento",
-      "tags": [
-        "Casas de eventos",
-        "Produtoras culturais",
-        "Espaços culturais",
-        "Teatros",
-        "Estúdios artísticos",
-        "Artesãos",
-        "Parques e atrações turísticas",
-        "Espaços de lazer"
-      ]
-    },
-    {
-      "name": "Saúde e Bem-estar",
-      "tags": [
-        "Clínicas médicas",
-        "Consultórios odontológicos",
-        "Laboratórios",
-        "Farmácias",
-        "Clínicas veterinárias",
-        "Academias",
-        "Estúdios de pilates/yoga",
-        "Spas e estética",
-        "Terapias alternativas"
-      ]
-    },
-    {
-      "name": "Serviços Gerais",
-      "tags": [
-        "Oficinas mecânicas",
-        "Serviços elétricos",
-        "Serviços hidráulicos",
-        "Manutenção predial",
-        "Limpeza e conservação",
-        "Segurança privada",
-        "Transportadoras",
-        "Serviços funerários"
-      ]
-    },
-    {
-      "name": "Educação e Capacitação",
-      "tags": [
-        "Escolas",
-        "Faculdades",
-        "Cursos técnicos",
-        "Cursos profissionalizantes",
-        "Idiomas",
-        "Reforço escolar",
-        "Treinamentos corporativos",
-        "Autoescolas"
-      ]
-    },
-    {
-      "name": "Serviços Profissionais",
-      "tags": [
-        "Contabilidade",
-        "Advocacia",
-        "Consultoria empresarial",
-        "Recursos humanos",
-        "Marketing e publicidade",
-        "Design gráfico",
-        "Tecnologia da informação",
-        "Desenvolvimento de software",
-        "Fotografia e audiovisual"
-      ]
-    },
-    {
-      "name": "Indústria e Produção",
-      "tags": [
-        "Indústrias alimentícias",
-        "Fábricas",
-        "Agroindústrias",
-        "Confecções",
-        "Marcenarias",
-        "Metalúrgicas",
-        "Produção artesanal",
-        "Cooperativas"
-      ]
-    },
-    {
-      "name": "Agronegócio e Economia Rural",
-      "tags": [
-        "Produtores rurais",
-        "Cooperativas agrícolas",
-        "Floricultura",
-        "Cafeicultura",
-        "Hortifruti",
-        "Avicultura",
-        "Apicultura",
-        "Viveiros",
-        "Associações rurais"
-      ]
-    },
-    {
-      "name": "Financeiro e Imobiliário",
-      "tags": [
-        "Bancos",
-        "Cooperativas de crédito",
-        "Correspondentes bancários",
-        "Imobiliárias",
-        "Corretores de imóveis",
-        "Seguradoras",
-        "Consórcios"
-      ]
-    },
-    {
-      "name": "Institucional e Terceiro Setor",
-      "tags": [
-        "Associações",
-        "ONGs",
-        "Cooperativas",
-        "Sindicatos",
-        "Instituições religiosas",
-        "Fundações",
-        "Entidades culturais"
-      ]
-    }
-  ]
+	"groups": [
+		{
+			"name": "Comércio",
+			"tags": [
+				"Supermercados e mercantis",
+				"Lojas de roupas e calçados",
+				"Farmácias e drogarias",
+				"Lojas de eletrônicos",
+				"Materiais de construção",
+				"Papelarias e livrarias",
+				"Lojas de móveis",
+				"Floriculturas",
+				"Lojas agropecuárias"
+			]
+		},
+		{
+			"name": "Alimentação e Bebidas",
+			"tags": [
+				"Restaurantes",
+				"Lanchonetes",
+				"Bares e pubs",
+				"Pizzarias",
+				"Cafeterias",
+				"Sorveterias",
+				"Docerias e confeitarias",
+				"Food trucks",
+				"Produtores artesanais"
+			]
+		},
+		{
+			"name": "Turismo e Hospitalidade",
+			"tags": [
+				"Hotéis",
+				"Pousadas",
+				"Hostels",
+				"Chalés",
+				"Guias turísticos",
+				"Agências de turismo",
+				"Turismo rural",
+				"Ecoturismo",
+				"Experiências locais"
+			]
+		},
+		{
+			"name": "Cultura, Lazer e Entretenimento",
+			"tags": [
+				"Casas de eventos",
+				"Produtoras culturais",
+				"Espaços culturais",
+				"Teatros",
+				"Estúdios artísticos",
+				"Artesãos",
+				"Parques e atrações turísticas",
+				"Espaços de lazer"
+			]
+		},
+		{
+			"name": "Saúde e Bem-estar",
+			"tags": [
+				"Clínicas médicas",
+				"Consultórios odontológicos",
+				"Laboratórios",
+				"Farmácias",
+				"Clínicas veterinárias",
+				"Academias",
+				"Estúdios de pilates/yoga",
+				"Spas e estética",
+				"Terapias alternativas"
+			]
+		},
+		{
+			"name": "Serviços Gerais",
+			"tags": [
+				"Oficinas mecânicas",
+				"Serviços elétricos",
+				"Serviços hidráulicos",
+				"Manutenção predial",
+				"Limpeza e conservação",
+				"Segurança privada",
+				"Transportadoras",
+				"Serviços funerários"
+			]
+		},
+		{
+			"name": "Educação e Capacitação",
+			"tags": [
+				"Escolas",
+				"Faculdades",
+				"Cursos técnicos",
+				"Cursos profissionalizantes",
+				"Idiomas",
+				"Reforço escolar",
+				"Treinamentos corporativos",
+				"Autoescolas"
+			]
+		},
+		{
+			"name": "Serviços Profissionais",
+			"tags": [
+				"Contabilidade",
+				"Advocacia",
+				"Consultoria empresarial",
+				"Recursos humanos",
+				"Marketing e publicidade",
+				"Design gráfico",
+				"Tecnologia da informação",
+				"Desenvolvimento de software",
+				"Fotografia e audiovisual"
+			]
+		},
+		{
+			"name": "Indústria e Produção",
+			"tags": [
+				"Indústrias alimentícias",
+				"Fábricas",
+				"Agroindústrias",
+				"Confecções",
+				"Marcenarias",
+				"Metalúrgicas",
+				"Produção artesanal",
+				"Cooperativas"
+			]
+		},
+		{
+			"name": "Agronegócio e Economia Rural",
+			"tags": [
+				"Produtores rurais",
+				"Cooperativas agrícolas",
+				"Floricultura",
+				"Cafeicultura",
+				"Hortifruti",
+				"Avicultura",
+				"Apicultura",
+				"Viveiros",
+				"Associações rurais"
+			]
+		},
+		{
+			"name": "Financeiro e Imobiliário",
+			"tags": [
+				"Bancos",
+				"Cooperativas de crédito",
+				"Correspondentes bancários",
+				"Imobiliárias",
+				"Corretores de imóveis",
+				"Seguradoras",
+				"Consórcios"
+			]
+		},
+		{
+			"name": "Institucional e Terceiro Setor",
+			"tags": [
+				"Associações",
+				"ONGs",
+				"Cooperativas",
+				"Sindicatos",
+				"Instituições religiosas",
+				"Fundações",
+				"Entidades culturais"
+			]
+		}
+	]
 }
 ```
 
@@ -586,39 +609,39 @@ Write `prisma/seed-data/tags-events.json`:
 
 ```json
 {
-  "groups": [
-    {
-      "name": "Eventos Abertos ao Público",
-      "tags": [
-        "Shows e apresentações",
-        "Festivais",
-        "Feiras e exposições",
-        "Eventos gastronômicos",
-        "Eventos culturais",
-        "Eventos esportivos"
-      ]
-    },
-    {
-      "name": "Eventos Corporativos",
-      "tags": [
-        "Palestras",
-        "Workshops",
-        "Treinamentos",
-        "Congressos",
-        "Encontros empresariais"
-      ]
-    },
-    {
-      "name": "Eventos Comerciais",
-      "tags": [
-        "Ações Promocionais",
-        "Inaugurações",
-        "Lançamentos de produtos",
-        "Liquidações especiais",
-        "Datas comemorativas"
-      ]
-    }
-  ]
+	"groups": [
+		{
+			"name": "Eventos Abertos ao Público",
+			"tags": [
+				"Shows e apresentações",
+				"Festivais",
+				"Feiras e exposições",
+				"Eventos gastronômicos",
+				"Eventos culturais",
+				"Eventos esportivos"
+			]
+		},
+		{
+			"name": "Eventos Corporativos",
+			"tags": [
+				"Palestras",
+				"Workshops",
+				"Treinamentos",
+				"Congressos",
+				"Encontros empresariais"
+			]
+		},
+		{
+			"name": "Eventos Comerciais",
+			"tags": [
+				"Ações Promocionais",
+				"Inaugurações",
+				"Lançamentos de produtos",
+				"Liquidações especiais",
+				"Datas comemorativas"
+			]
+		}
+	]
 }
 ```
 
@@ -627,17 +650,19 @@ Write `prisma/seed-data/tags-events.json`:
 Replace the entire `main()` function and related types/helpers in `prisma/seed.ts`. Key changes:
 
 1. Replace `CategoryEntry` interface with:
+
 ```typescript
 interface TagGroupEntry {
-  name: string;
-  tags: string[];
+	name: string;
+	tags: string[];
 }
 ```
 
 2. Replace `CategoriesData` with:
+
 ```typescript
 interface TagsData {
-  groups: TagGroupEntry[];
+	groups: TagGroupEntry[];
 }
 ```
 
@@ -653,37 +678,39 @@ const tagGroupMap = new Map<string, string>();
 const tagMap = new Map<string, string>();
 
 for (const group of data.tagGroups) {
-  const created = await tx.tag_group.upsert({
-    where: { name: group.name },
-    update: {},
-    create: { name: group.name },
-  });
-  tagGroupMap.set(created.name, created.id);
+	const created = await tx.tag_group.upsert({
+		where: { name: group.name },
+		update: {},
+		create: { name: group.name },
+	});
+	tagGroupMap.set(created.name, created.id);
 
-  for (let i = 0; i < group.tags.length; i++) {
-    const tagName = group.tags[i];
-    const slug = tagName
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
+	for (let i = 0; i < group.tags.length; i++) {
+		const tagName = group.tags[i];
+		const slug = tagName
+			.toLowerCase()
+			.normalize('NFD')
+			.replace(/[\u0300-\u036f]/g, '')
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/(^-|-$)/g, '');
 
-    const tag = await tx.tag.upsert({
-      where: { slug },
-      update: { group_id: created.id, position: i },
-      create: {
-        name: tagName,
-        slug,
-        group_id: created.id,
-        position: i,
-      },
-    });
-    tagMap.set(tagName, tag.id);
-  }
+		const tag = await tx.tag.upsert({
+			where: { slug },
+			update: { group_id: created.id, position: i },
+			create: {
+				name: tagName,
+				slug,
+				group_id: created.id,
+				position: i,
+			},
+		});
+		tagMap.set(tagName, tag.id);
+	}
 }
 
-console.log(`  ✅ ${tagGroupMap.size} tag groups, ${tagMap.size} tags processed.`);
+console.log(
+	`  ✅ ${tagGroupMap.size} tag groups, ${tagMap.size} tags processed.`,
+);
 ```
 
 5. Replace all `categoryMap` references with `tagMap` and update junction table upserts:
@@ -718,6 +745,7 @@ git commit -m "feat(seed): restructure seed data for tag_group + tag model"
 **Covers:** API models, DTOs
 
 **Files:**
+
 - Create: `src/modules/tags/entities/tag.entity.ts`
 - Create: `src/modules/tags/entities/tag-group.entity.ts`
 - Create: `src/modules/tags/dto/create-tag.dto.ts`
@@ -732,11 +760,11 @@ git commit -m "feat(seed): restructure seed data for tag_group + tag model"
 import { tag_group } from '@prisma/client';
 
 export class TagGroup implements tag_group {
-  id: string;
-  name: string;
-  description: string | null;
-  created_at: Date;
-  updated_at: Date;
+	id: string;
+	name: string;
+	description: string | null;
+	created_at: Date;
+	updated_at: Date;
 }
 ```
 
@@ -747,15 +775,15 @@ export class TagGroup implements tag_group {
 import { tag } from '@prisma/client';
 
 export class Tag implements tag {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  color: string | null;
-  group_id: string;
-  position: number;
-  created_at: Date;
-  updated_at: Date;
+	id: string;
+	name: string;
+	slug: string;
+	description: string | null;
+	color: string | null;
+	group_id: string;
+	position: number;
+	created_at: Date;
+	updated_at: Date;
 }
 ```
 
@@ -766,13 +794,13 @@ export class Tag implements tag {
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateTagGroupDto {
-  @IsNotEmpty()
-  @IsString()
-  name: string;
+	@IsNotEmpty()
+	@IsString()
+	name: string;
 
-  @IsOptional()
-  @IsString()
-  description?: string;
+	@IsOptional()
+	@IsString()
+	description?: string;
 }
 ```
 
@@ -789,25 +817,25 @@ export class UpdateTagGroupDto extends PartialType(CreateTagGroupDto) {}
 import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateTagDto {
-  @IsNotEmpty()
-  @IsString()
-  name: string;
+	@IsNotEmpty()
+	@IsString()
+	name: string;
 
-  @IsNotEmpty()
-  @IsString()
-  group_id: string;
+	@IsNotEmpty()
+	@IsString()
+	group_id: string;
 
-  @IsOptional()
-  @IsString()
-  description?: string;
+	@IsOptional()
+	@IsString()
+	description?: string;
 
-  @IsOptional()
-  @IsString()
-  color?: string;
+	@IsOptional()
+	@IsString()
+	color?: string;
 
-  @IsOptional()
-  @IsInt()
-  position?: number;
+	@IsOptional()
+	@IsInt()
+	position?: number;
 }
 ```
 
@@ -833,6 +861,7 @@ git commit -m "feat(tags): add tag and tag-group entities and DTOs"
 **Covers:** API services, search functionality
 
 **Files:**
+
 - Create: `src/modules/tags/tag-groups.service.ts`
 - Create: `src/modules/tags/tags.service.ts`
 
@@ -848,85 +877,88 @@ import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 import { TagGroupsService } from '../tag-groups.service';
 
 describe('TagGroupsService', () => {
-  let service: TagGroupsService;
-  let prisma: DeepMockProxy<PrismaService>;
+	let service: TagGroupsService;
+	let prisma: DeepMockProxy<PrismaService>;
 
-  const mockTagGroup = {
-    id: 'group-1',
-    name: 'Comércio',
-    description: null,
-    created_at: new Date(),
-    updated_at: new Date(),
-  };
+	const mockTagGroup = {
+		id: 'group-1',
+		name: 'Comércio',
+		description: null,
+		created_at: new Date(),
+		updated_at: new Date(),
+	};
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        TagGroupsService,
-        { provide: PrismaService, useValue: mockDeep<PrismaService>() },
-      ],
-    }).compile();
+	beforeEach(async () => {
+		const module: TestingModule = await Test.createTestingModule({
+			providers: [
+				TagGroupsService,
+				{ provide: PrismaService, useValue: mockDeep<PrismaService>() },
+			],
+		}).compile();
 
-    service = module.get<TagGroupsService>(TagGroupsService);
-    prisma = module.get(PrismaService);
-    jest.clearAllMocks();
-  });
+		service = module.get<TagGroupsService>(TagGroupsService);
+		prisma = module.get(PrismaService);
+		jest.clearAllMocks();
+	});
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
+	it('should be defined', () => {
+		expect(service).toBeDefined();
+	});
 
-  describe('create', () => {
-    it('should create a tag group', async () => {
-      prisma.tag_group.create.mockResolvedValue(mockTagGroup);
-      const result = await service.create({ name: 'Comércio' });
-      expect(result).toEqual(mockTagGroup);
-      expect(prisma.tag_group.create).toHaveBeenCalledWith({
-        data: { name: 'Comércio' },
-      });
-    });
-  });
+	describe('create', () => {
+		it('should create a tag group', async () => {
+			prisma.tag_group.create.mockResolvedValue(mockTagGroup);
+			const result = await service.create({ name: 'Comércio' });
+			expect(result).toEqual(mockTagGroup);
+			expect(prisma.tag_group.create).toHaveBeenCalledWith({
+				data: { name: 'Comércio' },
+			});
+		});
+	});
 
-  describe('findAll', () => {
-    it('should return all tag groups', async () => {
-      prisma.tag_group.findMany.mockResolvedValue([mockTagGroup]);
-      const result = await service.findAll();
-      expect(result).toEqual([mockTagGroup]);
-    });
-  });
+	describe('findAll', () => {
+		it('should return all tag groups', async () => {
+			prisma.tag_group.findMany.mockResolvedValue([mockTagGroup]);
+			const result = await service.findAll();
+			expect(result).toEqual([mockTagGroup]);
+		});
+	});
 
-  describe('findOne', () => {
-    it('should return a tag group by id', async () => {
-      prisma.tag_group.findUnique.mockResolvedValue(mockTagGroup);
-      const result = await service.findOne('group-1');
-      expect(result).toEqual(mockTagGroup);
-    });
+	describe('findOne', () => {
+		it('should return a tag group by id', async () => {
+			prisma.tag_group.findUnique.mockResolvedValue(mockTagGroup);
+			const result = await service.findOne('group-1');
+			expect(result).toEqual(mockTagGroup);
+		});
 
-    it('should throw NotFoundException when not found', async () => {
-      prisma.tag_group.findUnique.mockResolvedValue(null);
-      await expect(service.findOne('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-  });
+		it('should throw NotFoundException when not found', async () => {
+			prisma.tag_group.findUnique.mockResolvedValue(null);
+			await expect(service.findOne('non-existent')).rejects.toThrow(
+				NotFoundException,
+			);
+		});
+	});
 
-  describe('update', () => {
-    it('should update a tag group', async () => {
-      prisma.tag_group.findUnique.mockResolvedValue(mockTagGroup);
-      prisma.tag_group.update.mockResolvedValue({ ...mockTagGroup, name: 'Updated' });
-      const result = await service.update('group-1', { name: 'Updated' });
-      expect(result.name).toBe('Updated');
-    });
-  });
+	describe('update', () => {
+		it('should update a tag group', async () => {
+			prisma.tag_group.findUnique.mockResolvedValue(mockTagGroup);
+			prisma.tag_group.update.mockResolvedValue({
+				...mockTagGroup,
+				name: 'Updated',
+			});
+			const result = await service.update('group-1', { name: 'Updated' });
+			expect(result.name).toBe('Updated');
+		});
+	});
 
-  describe('remove', () => {
-    it('should delete a tag group', async () => {
-      prisma.tag_group.findUnique.mockResolvedValue(mockTagGroup);
-      prisma.tag_group.delete.mockResolvedValue(mockTagGroup);
-      const result = await service.remove('group-1');
-      expect(result).toEqual(mockTagGroup);
-    });
-  });
+	describe('remove', () => {
+		it('should delete a tag group', async () => {
+			prisma.tag_group.findUnique.mockResolvedValue(mockTagGroup);
+			prisma.tag_group.delete.mockResolvedValue(mockTagGroup);
+			const result = await service.remove('group-1');
+			expect(result).toEqual(mockTagGroup);
+		});
+	});
 });
 ```
 
@@ -950,37 +982,37 @@ import { UpdateTagGroupDto } from './dto/update-tag-group.dto';
 
 @Injectable()
 export class TagGroupsService {
-  constructor(private readonly prismaService: PrismaService) {}
+	constructor(private readonly prismaService: PrismaService) {}
 
-  create(dto: CreateTagGroupDto) {
-    return this.prismaService.tag_group.create({ data: dto });
-  }
+	create(dto: CreateTagGroupDto) {
+		return this.prismaService.tag_group.create({ data: dto });
+	}
 
-  findAll() {
-    return this.prismaService.tag_group.findMany({
-      include: { tags: { orderBy: { position: 'asc' } } },
-      orderBy: { name: 'asc' },
-    });
-  }
+	findAll() {
+		return this.prismaService.tag_group.findMany({
+			include: { tags: { orderBy: { position: 'asc' } } },
+			orderBy: { name: 'asc' },
+		});
+	}
 
-  async findOne(id: string) {
-    const group = await this.prismaService.tag_group.findUnique({
-      where: { id },
-      include: { tags: { orderBy: { position: 'asc' } } },
-    });
-    if (!group) throw new NotFoundException();
-    return group;
-  }
+	async findOne(id: string) {
+		const group = await this.prismaService.tag_group.findUnique({
+			where: { id },
+			include: { tags: { orderBy: { position: 'asc' } } },
+		});
+		if (!group) throw new NotFoundException();
+		return group;
+	}
 
-  async update(id: string, dto: UpdateTagGroupDto) {
-    await this.findOne(id);
-    return this.prismaService.tag_group.update({ where: { id }, data: dto });
-  }
+	async update(id: string, dto: UpdateTagGroupDto) {
+		await this.findOne(id);
+		return this.prismaService.tag_group.update({ where: { id }, data: dto });
+	}
 
-  async remove(id: string) {
-    await this.findOne(id);
-    return this.prismaService.tag_group.delete({ where: { id } });
-  }
+	async remove(id: string) {
+		await this.findOne(id);
+		return this.prismaService.tag_group.delete({ where: { id } });
+	}
 }
 ```
 
@@ -1004,112 +1036,117 @@ import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 import { TagsService } from '../tags.service';
 
 describe('TagsService', () => {
-  let service: TagsService;
-  let prisma: DeepMockProxy<PrismaService>;
+	let service: TagsService;
+	let prisma: DeepMockProxy<PrismaService>;
 
-  const mockTag = {
-    id: 'tag-1',
-    name: 'Restaurantes',
-    slug: 'restaurantes',
-    description: null,
-    color: null,
-    group_id: 'group-1',
-    position: 0,
-    created_at: new Date(),
-    updated_at: new Date(),
-  };
+	const mockTag = {
+		id: 'tag-1',
+		name: 'Restaurantes',
+		slug: 'restaurantes',
+		description: null,
+		color: null,
+		group_id: 'group-1',
+		position: 0,
+		created_at: new Date(),
+		updated_at: new Date(),
+	};
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        TagsService,
-        { provide: PrismaService, useValue: mockDeep<PrismaService>() },
-      ],
-    }).compile();
+	beforeEach(async () => {
+		const module: TestingModule = await Test.createTestingModule({
+			providers: [
+				TagsService,
+				{ provide: PrismaService, useValue: mockDeep<PrismaService>() },
+			],
+		}).compile();
 
-    service = module.get<TagsService>(TagsService);
-    prisma = module.get(PrismaService);
-    jest.clearAllMocks();
-  });
+		service = module.get<TagsService>(TagsService);
+		prisma = module.get(PrismaService);
+		jest.clearAllMocks();
+	});
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
+	it('should be defined', () => {
+		expect(service).toBeDefined();
+	});
 
-  describe('create', () => {
-    it('should create a tag', async () => {
-      prisma.tag.create.mockResolvedValue(mockTag);
-      const result = await service.create({
-        name: 'Restaurantes',
-        group_id: 'group-1',
-      });
-      expect(result).toEqual(mockTag);
-    });
-  });
+	describe('create', () => {
+		it('should create a tag', async () => {
+			prisma.tag.create.mockResolvedValue(mockTag);
+			const result = await service.create({
+				name: 'Restaurantes',
+				group_id: 'group-1',
+			});
+			expect(result).toEqual(mockTag);
+		});
+	});
 
-  describe('findAll', () => {
-    it('should return all tags', async () => {
-      prisma.tag.findMany.mockResolvedValue([mockTag]);
-      const result = await service.findAll();
-      expect(result).toEqual([mockTag]);
-    });
+	describe('findAll', () => {
+		it('should return all tags', async () => {
+			prisma.tag.findMany.mockResolvedValue([mockTag]);
+			const result = await service.findAll();
+			expect(result).toEqual([mockTag]);
+		});
 
-    it('should filter by group_id', async () => {
-      prisma.tag.findMany.mockResolvedValue([mockTag]);
-      await service.findAll({ group_id: 'group-1' });
-      expect(prisma.tag.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({ group_id: 'group-1' }),
-        }),
-      );
-    });
-  });
+		it('should filter by group_id', async () => {
+			prisma.tag.findMany.mockResolvedValue([mockTag]);
+			await service.findAll({ group_id: 'group-1' });
+			expect(prisma.tag.findMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: expect.objectContaining({ group_id: 'group-1' }),
+				}),
+			);
+		});
+	});
 
-  describe('search', () => {
-    it('should search tags by name', async () => {
-      prisma.tag.findMany.mockResolvedValue([mockTag]);
-      const result = await service.search('Restaur');
-      expect(result).toEqual([mockTag]);
-      expect(prisma.tag.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            name: expect.objectContaining({ contains: 'Restaur', mode: 'insensitive' }),
-          }),
-        }),
-      );
-    });
-  });
+	describe('search', () => {
+		it('should search tags by name', async () => {
+			prisma.tag.findMany.mockResolvedValue([mockTag]);
+			const result = await service.search('Restaur');
+			expect(result).toEqual([mockTag]);
+			expect(prisma.tag.findMany).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: expect.objectContaining({
+						name: expect.objectContaining({
+							contains: 'Restaur',
+							mode: 'insensitive',
+						}),
+					}),
+				}),
+			);
+		});
+	});
 
-  describe('findOne', () => {
-    it('should return a tag by id', async () => {
-      prisma.tag.findUnique.mockResolvedValue(mockTag);
-      const result = await service.findOne('tag-1');
-      expect(result).toEqual(mockTag);
-    });
+	describe('findOne', () => {
+		it('should return a tag by id', async () => {
+			prisma.tag.findUnique.mockResolvedValue(mockTag);
+			const result = await service.findOne('tag-1');
+			expect(result).toEqual(mockTag);
+		});
 
-    it('should throw NotFoundException', async () => {
-      prisma.tag.findUnique.mockResolvedValue(null);
-      await expect(service.findOne('non-existent')).rejects.toThrow(NotFoundException);
-    });
-  });
+		it('should throw NotFoundException', async () => {
+			prisma.tag.findUnique.mockResolvedValue(null);
+			await expect(service.findOne('non-existent')).rejects.toThrow(
+				NotFoundException,
+			);
+		});
+	});
 
-  describe('update', () => {
-    it('should update a tag', async () => {
-      prisma.tag.findUnique.mockResolvedValue(mockTag);
-      prisma.tag.update.mockResolvedValue({ ...mockTag, name: 'Updated' });
-      const result = await service.update('tag-1', { name: 'Updated' });
-      expect(result.name).toBe('Updated');
-    });
-  });
+	describe('update', () => {
+		it('should update a tag', async () => {
+			prisma.tag.findUnique.mockResolvedValue(mockTag);
+			prisma.tag.update.mockResolvedValue({ ...mockTag, name: 'Updated' });
+			const result = await service.update('tag-1', { name: 'Updated' });
+			expect(result.name).toBe('Updated');
+		});
+	});
 
-  describe('remove', () => {
-    it('should delete a tag', async () => {
-      prisma.tag.findUnique.mockResolvedValue(mockTag);
-      prisma.tag.delete.mockResolvedValue(mockTag);
-      const result = await service.remove('tag-1');
-      expect(result).toEqual(mockTag);
-    });
-  });
+	describe('remove', () => {
+		it('should delete a tag', async () => {
+			prisma.tag.findUnique.mockResolvedValue(mockTag);
+			prisma.tag.delete.mockResolvedValue(mockTag);
+			const result = await service.remove('tag-1');
+			expect(result).toEqual(mockTag);
+		});
+	});
 });
 ```
 
@@ -1133,86 +1170,86 @@ import { UpdateTagDto } from './dto/update-tag.dto';
 
 @Injectable()
 export class TagsService {
-  constructor(private readonly prismaService: PrismaService) {}
+	constructor(private readonly prismaService: PrismaService) {}
 
-  private slugify(name: string): string {
-    return name
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-  }
+	private slugify(name: string): string {
+		return name
+			.toLowerCase()
+			.normalize('NFD')
+			.replace(/[\u0300-\u036f]/g, '')
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/(^-|-$)/g, '');
+	}
 
-  create(dto: CreateTagDto) {
-    return this.prismaService.tag.create({
-      data: {
-        name: dto.name,
-        slug: this.slugify(dto.name),
-        group_id: dto.group_id,
-        description: dto.description,
-        color: dto.color,
-        position: dto.position ?? 0,
-      },
-    });
-  }
+	create(dto: CreateTagDto) {
+		return this.prismaService.tag.create({
+			data: {
+				name: dto.name,
+				slug: this.slugify(dto.name),
+				group_id: dto.group_id,
+				description: dto.description,
+				color: dto.color,
+				position: dto.position ?? 0,
+			},
+		});
+	}
 
-  findAll(filters?: { group_id?: string; name?: string }) {
-    return this.prismaService.tag.findMany({
-      where: {
-        ...(filters?.group_id && { group_id: filters.group_id }),
-        ...(filters?.name && {
-          name: { contains: filters.name, mode: 'insensitive' },
-        }),
-      },
-      include: { group: true },
-      orderBy: [{ group: { name: 'asc' } }, { position: 'asc' }],
-    });
-  }
+	findAll(filters?: { group_id?: string; name?: string }) {
+		return this.prismaService.tag.findMany({
+			where: {
+				...(filters?.group_id && { group_id: filters.group_id }),
+				...(filters?.name && {
+					name: { contains: filters.name, mode: 'insensitive' },
+				}),
+			},
+			include: { group: true },
+			orderBy: [{ group: { name: 'asc' } }, { position: 'asc' }],
+		});
+	}
 
-  search(query: string) {
-    return this.prismaService.tag.findMany({
-      where: {
-        name: { contains: query, mode: 'insensitive' },
-      },
-      include: { group: true },
-      orderBy: { name: 'asc' },
-    });
-  }
+	search(query: string) {
+		return this.prismaService.tag.findMany({
+			where: {
+				name: { contains: query, mode: 'insensitive' },
+			},
+			include: { group: true },
+			orderBy: { name: 'asc' },
+		});
+	}
 
-  async findOne(id: string) {
-    const tag = await this.prismaService.tag.findUnique({
-      where: { id },
-      include: { group: true },
-    });
-    if (!tag) throw new NotFoundException();
-    return tag;
-  }
+	async findOne(id: string) {
+		const tag = await this.prismaService.tag.findUnique({
+			where: { id },
+			include: { group: true },
+		});
+		if (!tag) throw new NotFoundException();
+		return tag;
+	}
 
-  async findBySlug(slug: string) {
-    const tag = await this.prismaService.tag.findUnique({
-      where: { slug },
-      include: { group: true },
-    });
-    if (!tag) throw new NotFoundException();
-    return tag;
-  }
+	async findBySlug(slug: string) {
+		const tag = await this.prismaService.tag.findUnique({
+			where: { slug },
+			include: { group: true },
+		});
+		if (!tag) throw new NotFoundException();
+		return tag;
+	}
 
-  async update(id: string, dto: UpdateTagDto) {
-    await this.findOne(id);
-    return this.prismaService.tag.update({
-      where: { id },
-      data: {
-        ...dto,
-        ...(dto.name && { slug: this.slugify(dto.name) }),
-      },
-    });
-  }
+	async update(id: string, dto: UpdateTagDto) {
+		await this.findOne(id);
+		return this.prismaService.tag.update({
+			where: { id },
+			data: {
+				...dto,
+				...(dto.name && { slug: this.slugify(dto.name) }),
+			},
+		});
+	}
 
-  async remove(id: string) {
-    await this.findOne(id);
-    return this.prismaService.tag.delete({ where: { id } });
-  }
+	async remove(id: string) {
+		await this.findOne(id);
+		return this.prismaService.tag.delete({ where: { id } });
+	}
 }
 ```
 
@@ -1238,6 +1275,7 @@ git commit -m "feat(tags): implement TagGroupsService and TagsService with tests
 **Covers:** API routes
 
 **Files:**
+
 - Create: `src/modules/tags/tags.controller.ts`
 - Create: `src/modules/tags/tags.module.ts`
 
@@ -1251,23 +1289,42 @@ import { TagsService } from '../tags.service';
 import { TagGroupsService } from '../tag-groups.service';
 
 describe('TagsController', () => {
-  let controller: TagsController;
+	let controller: TagsController;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [TagsController],
-      providers: [
-        { provide: TagsService, useValue: { create: jest.fn(), findAll: jest.fn(), search: jest.fn(), findOne: jest.fn(), update: jest.fn(), remove: jest.fn() } },
-        { provide: TagGroupsService, useValue: { create: jest.fn(), findAll: jest.fn(), findOne: jest.fn(), update: jest.fn(), remove: jest.fn() } },
-      ],
-    }).compile();
+	beforeEach(async () => {
+		const module: TestingModule = await Test.createTestingModule({
+			controllers: [TagsController],
+			providers: [
+				{
+					provide: TagsService,
+					useValue: {
+						create: jest.fn(),
+						findAll: jest.fn(),
+						search: jest.fn(),
+						findOne: jest.fn(),
+						update: jest.fn(),
+						remove: jest.fn(),
+					},
+				},
+				{
+					provide: TagGroupsService,
+					useValue: {
+						create: jest.fn(),
+						findAll: jest.fn(),
+						findOne: jest.fn(),
+						update: jest.fn(),
+						remove: jest.fn(),
+					},
+				},
+			],
+		}).compile();
 
-    controller = module.get<TagsController>(TagsController);
-  });
+		controller = module.get<TagsController>(TagsController);
+	});
 
-  it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
+	it('should be defined', () => {
+		expect(controller).toBeDefined();
+	});
 });
 ```
 
@@ -1284,22 +1341,22 @@ Expected: FAIL (module not found).
 ```typescript
 // src/modules/tags/tags.controller.ts
 import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
+	Body,
+	Controller,
+	Delete,
+	Get,
+	Param,
+	Patch,
+	Post,
+	Query,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
-  ApiBody,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-  ApiResponse,
+	ApiBearerAuth,
+	ApiBody,
+	ApiOperation,
+	ApiParam,
+	ApiQuery,
+	ApiResponse,
 } from '@nestjs/swagger';
 import { Public } from 'src/modules/common/decorators/public.decorator';
 
@@ -1314,119 +1371,120 @@ import { TagsService } from './tags.service';
 
 @Controller({ path: 'tags', version: '1' })
 export class TagsController {
-  constructor(
-    private readonly tagsService: TagsService,
-    private readonly tagGroupsService: TagGroupsService,
-  ) {}
+	constructor(
+		private readonly tagsService: TagsService,
+		private readonly tagGroupsService: TagGroupsService,
+	) {}
 
-  // ─── TAG GROUPS ─────────────────────────────────────────
+	// ─── TAG GROUPS ─────────────────────────────────────────
 
-  @ApiOperation({ summary: 'Lista todos os grupos de tags' })
-  @ApiResponse({ status: 200, type: TagGroup, isArray: true })
-  @Public()
-  @Get('/groups')
-  findAllGroups() {
-    return this.tagGroupsService.findAll();
-  }
+	@ApiOperation({ summary: 'Lista todos os grupos de tags' })
+	@ApiResponse({ status: 200, type: TagGroup, isArray: true })
+	@Public()
+	@Get('/groups')
+	findAllGroups() {
+		return this.tagGroupsService.findAll();
+	}
 
-  @ApiOperation({ summary: 'Obtém um grupo de tags por ID' })
-  @ApiParam({ name: 'id', description: 'UUID do grupo', required: true })
-  @ApiResponse({ status: 200, type: TagGroup })
-  @ApiResponse({ status: 404, description: 'Grupo não encontrado' })
-  @Public()
-  @Get('/groups/:id')
-  findOneGroup(@Param('id') id: string) {
-    return this.tagGroupsService.findOne(id);
-  }
+	@ApiOperation({ summary: 'Obtém um grupo de tags por ID' })
+	@ApiParam({ name: 'id', description: 'UUID do grupo', required: true })
+	@ApiResponse({ status: 200, type: TagGroup })
+	@ApiResponse({ status: 404, description: 'Grupo não encontrado' })
+	@Public()
+	@Get('/groups/:id')
+	findOneGroup(@Param('id') id: string) {
+		return this.tagGroupsService.findOne(id);
+	}
 
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Cria um grupo de tags' })
-  @ApiBody({ type: CreateTagGroupDto, required: true })
-  @ApiResponse({ status: 201, type: TagGroup })
-  @Post('/groups')
-  createGroup(@Body() dto: CreateTagGroupDto) {
-    return this.tagGroupsService.create(dto);
-  }
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Cria um grupo de tags' })
+	@ApiBody({ type: CreateTagGroupDto, required: true })
+	@ApiResponse({ status: 201, type: TagGroup })
+	@Post('/groups')
+	createGroup(@Body() dto: CreateTagGroupDto) {
+		return this.tagGroupsService.create(dto);
+	}
 
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Atualiza um grupo de tags' })
-  @ApiParam({ name: 'id', description: 'UUID do grupo', required: true })
-  @ApiBody({ type: UpdateTagGroupDto })
-  @ApiResponse({ status: 200, type: TagGroup })
-  @Patch('/groups/:id')
-  updateGroup(@Param('id') id: string, @Body() dto: UpdateTagGroupDto) {
-    return this.tagGroupsService.update(id, dto);
-  }
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Atualiza um grupo de tags' })
+	@ApiParam({ name: 'id', description: 'UUID do grupo', required: true })
+	@ApiBody({ type: UpdateTagGroupDto })
+	@ApiResponse({ status: 200, type: TagGroup })
+	@Patch('/groups/:id')
+	updateGroup(@Param('id') id: string, @Body() dto: UpdateTagGroupDto) {
+		return this.tagGroupsService.update(id, dto);
+	}
 
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Deleta um grupo de tags' })
-  @ApiParam({ name: 'id', description: 'UUID do grupo', required: true })
-  @ApiResponse({ status: 200 })
-  @Delete('/groups/:id')
-  removeGroup(@Param('id') id: string) {
-    return this.tagGroupsService.remove(id);
-  }
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Deleta um grupo de tags' })
+	@ApiParam({ name: 'id', description: 'UUID do grupo', required: true })
+	@ApiResponse({ status: 200 })
+	@Delete('/groups/:id')
+	removeGroup(@Param('id') id: string) {
+		return this.tagGroupsService.remove(id);
+	}
 
-  // ─── TAGS ───────────────────────────────────────────────
+	// ─── TAGS ───────────────────────────────────────────────
 
-  @ApiOperation({ summary: 'Busca tags por nome' })
-  @ApiQuery({ name: 'q', description: 'Termo de busca', required: true })
-  @ApiResponse({ status: 200, type: Tag, isArray: true })
-  @Public()
-  @Get('/search')
-  search(@Query('q') query: string) {
-    return this.tagsService.search(query);
-  }
+	@ApiOperation({ summary: 'Busca tags por nome' })
+	@ApiQuery({ name: 'q', description: 'Termo de busca', required: true })
+	@ApiResponse({ status: 200, type: Tag, isArray: true })
+	@Public()
+	@Get('/search')
+	search(@Query('q') query: string) {
+		return this.tagsService.search(query);
+	}
 
-  @ApiOperation({ summary: 'Lista todas as tags' })
-  @ApiResponse({ status: 200, type: Tag, isArray: true })
-  @ApiQuery({ name: 'group_id', required: false, description: 'Filtrar por grupo' })
-  @ApiQuery({ name: 'name', required: false, description: 'Filtrar por nome' })
-  @Public()
-  @Get()
-  findAll(
-    @Query('group_id') groupId?: string,
-    @Query('name') name?: string,
-  ) {
-    return this.tagsService.findAll({ group_id: groupId, name });
-  }
+	@ApiOperation({ summary: 'Lista todas as tags' })
+	@ApiResponse({ status: 200, type: Tag, isArray: true })
+	@ApiQuery({
+		name: 'group_id',
+		required: false,
+		description: 'Filtrar por grupo',
+	})
+	@ApiQuery({ name: 'name', required: false, description: 'Filtrar por nome' })
+	@Public()
+	@Get()
+	findAll(@Query('group_id') groupId?: string, @Query('name') name?: string) {
+		return this.tagsService.findAll({ group_id: groupId, name });
+	}
 
-  @ApiOperation({ summary: 'Obtém uma tag por ID' })
-  @ApiParam({ name: 'id', description: 'UUID da tag', required: true })
-  @ApiResponse({ status: 200, type: Tag })
-  @Public()
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.tagsService.findOne(id);
-  }
+	@ApiOperation({ summary: 'Obtém uma tag por ID' })
+	@ApiParam({ name: 'id', description: 'UUID da tag', required: true })
+	@ApiResponse({ status: 200, type: Tag })
+	@Public()
+	@Get(':id')
+	findOne(@Param('id') id: string) {
+		return this.tagsService.findOne(id);
+	}
 
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Cria uma tag' })
-  @ApiBody({ type: CreateTagDto, required: true })
-  @ApiResponse({ status: 201, type: Tag })
-  @Post()
-  create(@Body() dto: CreateTagDto) {
-    return this.tagsService.create(dto);
-  }
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Cria uma tag' })
+	@ApiBody({ type: CreateTagDto, required: true })
+	@ApiResponse({ status: 201, type: Tag })
+	@Post()
+	create(@Body() dto: CreateTagDto) {
+		return this.tagsService.create(dto);
+	}
 
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Atualiza uma tag' })
-  @ApiParam({ name: 'id', description: 'UUID da tag', required: true })
-  @ApiBody({ type: UpdateTagDto })
-  @ApiResponse({ status: 200, type: Tag })
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateTagDto) {
-    return this.tagsService.update(id, dto);
-  }
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Atualiza uma tag' })
+	@ApiParam({ name: 'id', description: 'UUID da tag', required: true })
+	@ApiBody({ type: UpdateTagDto })
+	@ApiResponse({ status: 200, type: Tag })
+	@Patch(':id')
+	update(@Param('id') id: string, @Body() dto: UpdateTagDto) {
+		return this.tagsService.update(id, dto);
+	}
 
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Deleta uma tag' })
-  @ApiParam({ name: 'id', description: 'UUID da tag', required: true })
-  @ApiResponse({ status: 200 })
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.tagsService.remove(id);
-  }
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Deleta uma tag' })
+	@ApiParam({ name: 'id', description: 'UUID da tag', required: true })
+	@ApiResponse({ status: 200 })
+	@Delete(':id')
+	remove(@Param('id') id: string) {
+		return this.tagsService.remove(id);
+	}
 }
 ```
 
@@ -1442,10 +1500,10 @@ import { TagsService } from './tags.service';
 import { TagGroupsService } from './tag-groups.service';
 
 @Module({
-  imports: [PrismaModule],
-  controllers: [TagsController],
-  providers: [TagsService, TagGroupsService],
-  exports: [TagsService, TagGroupsService],
+	imports: [PrismaModule],
+	controllers: [TagsController],
+	providers: [TagsService, TagGroupsService],
+	exports: [TagsService, TagGroupsService],
 })
 export class TagsModule {}
 ```
@@ -1472,6 +1530,7 @@ git commit -m "feat(tags): add TagsController and TagsModule with routes"
 **Covers:** All consumer modules
 
 **Files:**
+
 - Modify: `src/modules/businesses/businesses.service.ts`
 - Modify: `src/modules/businesses/entities/business.entity.ts`
 - Modify: `src/modules/events/events.service.ts`
@@ -1617,6 +1676,7 @@ git commit -m "feat: update all consumers to use tags instead of categories"
 **Covers:** Verification, cleanup
 
 **Files:**
+
 - Modify: various (cleanup)
 
 - [ ] **Step 1: Run full test suite**

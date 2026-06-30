@@ -9,9 +9,9 @@ import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaModule } from 'src/modules/common/prisma/prisma.module';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
-import { TagsModule } from 'src/modules/tags/tags.module';
-import { Tag } from 'src/modules/tags/entities/tag.entity';
 import { TagGroup } from 'src/modules/tags/entities/tag-group.entity';
+import { Tag } from 'src/modules/tags/entities/tag.entity';
+import { TagsModule } from 'src/modules/tags/tags.module';
 import request from 'supertest';
 import { App } from 'supertest/types';
 
@@ -155,9 +155,7 @@ describe('Tags (e2e)', () => {
 				data: { name: 'Tag One', slug: 'tag-one', group_id: groupId },
 			});
 
-			const res = await request(app.getHttpServer())
-				.get(BASE_PATH)
-				.expect(200);
+			const res = await request(app.getHttpServer()).get(BASE_PATH).expect(200);
 
 			expect(Array.isArray(res.body)).toBe(true);
 			expect(res.body.length).toBe(1);
@@ -165,9 +163,7 @@ describe('Tags (e2e)', () => {
 		});
 
 		it('GET /tags -> returns empty array when no tags exist', async () => {
-			const res = await request(app.getHttpServer())
-				.get(BASE_PATH)
-				.expect(200);
+			const res = await request(app.getHttpServer()).get(BASE_PATH).expect(200);
 
 			expect(Array.isArray(res.body)).toBe(true);
 			expect(res.body.length).toBe(0);

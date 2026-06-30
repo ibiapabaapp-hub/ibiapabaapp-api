@@ -8,7 +8,6 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from 'src/modules/auth/auth.module';
 
-import { TagsModule } from '../../modules/tags/tags.module';
 import { CitiesModule } from '../../modules/cities/cities.module';
 import { GlobalExceptionsFilter } from '../../modules/common/filters/global-exceptions.filter';
 import { AuthGuard } from '../../modules/common/guards/auth.guard';
@@ -18,6 +17,7 @@ import { EventsModule } from '../../modules/events/events.module';
 import { LeadsModule } from '../../modules/leads/leads.module';
 import { MediasModule } from '../../modules/medias/medias.module';
 import { SearchModule } from '../../modules/search/search.module';
+import { TagsModule } from '../../modules/tags/tags.module';
 import { AccountsModule } from '../accounts/accounts.module';
 import { BusinessesModule } from '../businesses/businesses.module';
 import { ThrottlerBehindProxyGuard } from '../common/guards/throttler-behind-proxy-guard';

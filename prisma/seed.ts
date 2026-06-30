@@ -213,9 +213,7 @@ async function main() {
 					position++;
 				}
 
-				console.log(
-					`  ✅ Group "${group.name}" com ${group.tags.length} tags`,
-				);
+				console.log(`  ✅ Group "${group.name}" com ${group.tags.length} tags`);
 			}
 
 			console.log(`  ✅ Total: ${tagMap.size} tags processadas.`);

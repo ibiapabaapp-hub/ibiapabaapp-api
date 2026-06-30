@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { TagGroupsService } from '../tag-groups.service';
 import { TagsController } from '../tags.controller';
 import { TagsService } from '../tags.service';
-import { TagGroupsService } from '../tag-groups.service';
 
 describe('TagsController', () => {
 	let controller: TagsController;
@@ -118,9 +118,7 @@ describe('TagsController', () => {
 		describe('updateGroup', () => {
 			it('should update a tag group', async () => {
 				const updatedGroup = { ...mockGroup, name: 'Updated Group' };
-				jest
-					.spyOn(tagGroupsService, 'update')
-					.mockResolvedValue(updatedGroup);
+				jest.spyOn(tagGroupsService, 'update').mockResolvedValue(updatedGroup);
 
 				const result = await controller.updateGroup('group-1', {
 					name: 'Updated Group',
@@ -149,9 +147,7 @@ describe('TagsController', () => {
 		describe('searchTags', () => {
 			it('should search tags by name', async () => {
 				const tagWithGroup = { ...mockTag, group: mockGroup };
-				jest
-					.spyOn(tagsService, 'search')
-					.mockResolvedValue([tagWithGroup]);
+				jest.spyOn(tagsService, 'search').mockResolvedValue([tagWithGroup]);
 
 				const result = await controller.searchTags('Test');
 
@@ -163,9 +159,7 @@ describe('TagsController', () => {
 		describe('findAllTags', () => {
 			it('should return all tags', async () => {
 				const tagWithGroup = { ...mockTag, group: mockGroup };
-				jest
-					.spyOn(tagsService, 'findAll')
-					.mockResolvedValue([tagWithGroup]);
+				jest.spyOn(tagsService, 'findAll').mockResolvedValue([tagWithGroup]);
 
 				const result = await controller.findAllTags();
 
@@ -191,9 +185,7 @@ describe('TagsController', () => {
 		describe('findOneTag', () => {
 			it('should return a tag by id', async () => {
 				const tagWithGroup = { ...mockTag, group: mockGroup };
-				jest
-					.spyOn(tagsService, 'findOne')
-					.mockResolvedValue(tagWithGroup);
+				jest.spyOn(tagsService, 'findOne').mockResolvedValue(tagWithGroup);
 
 				const result = await controller.findOneTag('tag-1');
 

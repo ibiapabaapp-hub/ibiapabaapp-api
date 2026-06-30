@@ -43,7 +43,11 @@ export class TagsController {
 	}
 
 	@ApiOperation({ summary: 'Get tag group by ID' })
-	@ApiParam({ name: 'id', description: 'UUID of the tag group', required: true })
+	@ApiParam({
+		name: 'id',
+		description: 'UUID of the tag group',
+		required: true,
+	})
 	@ApiResponse({ status: 200, type: TagGroup })
 	@ApiResponse({ status: 404, description: 'Tag group not found' })
 	@Public()
@@ -63,7 +67,11 @@ export class TagsController {
 
 	@ApiBearerAuth()
 	@ApiOperation({ summary: 'Update tag group' })
-	@ApiParam({ name: 'id', description: 'UUID of the tag group', required: true })
+	@ApiParam({
+		name: 'id',
+		description: 'UUID of the tag group',
+		required: true,
+	})
 	@ApiBody({ type: UpdateTagGroupDto })
 	@ApiResponse({ status: 200, type: TagGroup })
 	@ApiResponse({ status: 404, description: 'Tag group not found' })
@@ -77,7 +85,11 @@ export class TagsController {
 
 	@ApiBearerAuth()
 	@ApiOperation({ summary: 'Delete tag group' })
-	@ApiParam({ name: 'id', description: 'UUID of the tag group', required: true })
+	@ApiParam({
+		name: 'id',
+		description: 'UUID of the tag group',
+		required: true,
+	})
 	@ApiResponse({ status: 200, type: TagGroup })
 	@ApiResponse({ status: 404, description: 'Tag group not found' })
 	@Delete('groups/:id')
@@ -96,7 +108,11 @@ export class TagsController {
 
 	@ApiOperation({ summary: 'List all tags' })
 	@ApiResponse({ status: 200, type: Tag, isArray: true })
-	@ApiQuery({ name: 'group_id', description: 'Filter by group ID', required: false })
+	@ApiQuery({
+		name: 'group_id',
+		description: 'Filter by group ID',
+		required: false,
+	})
 	@ApiQuery({ name: 'name', description: 'Filter by name', required: false })
 	@Public()
 	@Get()
