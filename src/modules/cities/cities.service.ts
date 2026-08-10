@@ -16,12 +16,15 @@ export class CitiesService {
         c.description,
         c."cover_img_url",
         ST_AsGeoJSON(c.location)::json as location,
-        (
-          SELECT json_agg(t.name)
-          FROM city_tag ct
-          JOIN tag t ON t.id = ct."tag_id"
-          WHERE ct."city_id" = c.id
-        ) as tags
+		COALESCE(
+		  (
+		    SELECT json_agg(t.name)
+		    FROM city_tag ct
+		    JOIN tag t ON t.id = ct."tag_id"
+		    WHERE ct."city_id" = c.id
+		  ),
+		  '[]'::json
+		) as tags
       FROM city c
       ORDER BY c.name ASC
     `;
@@ -35,8 +38,17 @@ export class CitiesService {
         slug,
         description,
         "cover_img_url",
-        ST_AsGeoJSON(location)::json as location
-      FROM city
+	        ST_AsGeoJSON(location)::json as location,
+	        COALESCE(
+	          (
+	            SELECT json_agg(t.name)
+	            FROM city_tag ct
+	            JOIN tag t ON t.id = ct."tag_id"
+	            WHERE ct."city_id" = city.id
+	          ),
+	          '[]'::json
+	        ) as tags
+	      FROM city
       WHERE id = ${id}::uuid
       LIMIT 1
     `;
