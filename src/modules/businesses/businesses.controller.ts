@@ -59,7 +59,6 @@ export class BusinessesController {
 	}
 
 	@ApiBearerAuth()
-	@Public()
 	@ApiParam({ name: 'id', description: 'UUID da empresa' })
 	@ApiBody({ type: UpdateBusinessDTO })
 	@ApiOperation({ summary: 'Atualizar dados de uma empresa' })

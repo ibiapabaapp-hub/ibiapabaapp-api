@@ -54,7 +54,6 @@ export class EventsController {
 	}
 
 	@ApiBearerAuth()
-	@Public()
 	@ApiParam({ name: 'id', description: 'UUID do evento' })
 	@ApiBody({ type: UpdateEventDTO })
 	@ApiOperation({ summary: 'Atualizar dados de um evento' })
