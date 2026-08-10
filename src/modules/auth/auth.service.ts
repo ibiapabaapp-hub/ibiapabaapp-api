@@ -31,6 +31,14 @@ export class AuthService {
 		private readonly emailService: EmailService,
 	) {}
 
+	private async getAccountRole(accountId: string): Promise<string> {
+		const rows =
+			(await this.prismaService.$queryRaw<Array<{ role: string }>>`
+			SELECT role::text AS role FROM account WHERE id = ${accountId}::uuid LIMIT 1
+		`) ?? [];
+		return rows[0]?.role ?? 'user';
+	}
+
 	async login(loginDto: LoginDto): Promise<AuthResponseDto> {
 		const { email, password } = loginDto;
 
@@ -43,7 +51,7 @@ export class AuthService {
 			});
 		}
 
-		const accountRole = (account as account & { role?: string }).role ?? 'user';
+		const accountRole = await this.getAccountRole(account.id);
 		const access_token = this.jwtService.sign(
 			{ id: account.id, role: accountRole },
 			{ expiresIn: '40m' },
@@ -69,7 +77,7 @@ export class AuthService {
 		}
 
 		const account = await this.accountService.create(registerDto);
-		const accountRole = (account as account & { role?: string }).role ?? 'user';
+		const accountRole = await this.getAccountRole(account.id);
 		const access_token = this.jwtService.sign(
 			{ id: account.id, role: accountRole },
 			{ expiresIn: '40m' },
@@ -103,10 +111,9 @@ export class AuthService {
 	}
 
 	async refreshTokens(refreshToken: string): Promise<AuthResponseDto> {
-		const decodedTokenData = this.jwtService.verify<{
-			id: string;
-			role: number;
-		}>(refreshToken);
+		const decodedTokenData = this.jwtService.verify<{ id: string }>(
+			refreshToken,
+		);
 
 		const account = await this.accountService.findOneById(decodedTokenData.id);
 		if (!account) {
@@ -116,12 +123,13 @@ export class AuthService {
 			});
 		}
 
+		const accountRole = await this.getAccountRole(account.id);
 		const access_token = this.jwtService.sign(
-			{ id: account.id, role: account.role },
+			{ id: account.id, role: accountRole },
 			{ expiresIn: '40m' },
 		);
 		const refresh_token = this.jwtService.sign(
-			{ id: account.id },
+			{ id: account.id, role: accountRole },
 			{ expiresIn: '7d' },
 		);
 
@@ -154,7 +162,9 @@ export class AuthService {
 
 	async getMe(authorization: string) {
 		const token = extractBearerTokenFromString(authorization);
-		const { id } = this.jwtService.verify<{ id: string; role: string }>(token);
-		return this.accountService.findOneInDetailById(id);
+		const { id } = this.jwtService.verify<{ id: string; role?: string }>(token);
+		const account = await this.accountService.findOneInDetailById(id);
+		account.role = await this.getAccountRole(id);
+		return account;
 	}
 }
