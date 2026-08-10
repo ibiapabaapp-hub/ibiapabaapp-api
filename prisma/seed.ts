@@ -295,6 +295,12 @@ async function main() {
 
 			for (const userData of data.users) {
 				const hashedPassword = await hashPassword(userData.password);
+				const role =
+					userData.role === 'superuser'
+						? 'super_admin'
+						: userData.role === 'admin'
+							? 'admin'
+							: 'user';
 
 				// Cria account unificado com campos do perfil
 				const account = await tx.account.upsert({
@@ -324,6 +330,8 @@ async function main() {
 						type: userData.type || 'personal',
 					},
 				});
+
+				await tx.$executeRaw`UPDATE account SET role = ${role}::account_role WHERE id = ${account.id}::uuid`;
 
 				accountMap.set(userData.email, account.id);
 
