@@ -48,19 +48,40 @@ export class AdminService {
 				orderBy: { created_at: 'desc' },
 			});
 		if (resource === 'cities')
-			return this.prisma.city.findMany({
-				orderBy: { name: 'asc' },
-				include: { tags: { include: { tag: true } } },
-			});
+			return this.prisma
+				.$queryRaw`SELECT c.id, c.name, c.slug, c.description, c."cover_img_url", ST_AsGeoJSON(c.location)::json AS location, COALESCE((SELECT json_agg(t.name) FROM city_tag ct JOIN tag t ON t.id = ct."tag_id" WHERE ct."city_id" = c.id), '[]'::json) AS tags FROM city c ORDER BY c.name ASC`;
 		if (resource === 'businesses')
 			return this.prisma.business.findMany({
 				orderBy: { created_at: 'desc' },
-				include: { account: true, tags: { include: { tag: true } } },
+				select: {
+					id: true,
+					owner_account_id: true,
+					cnpj: true,
+					max_reach_level: true,
+					created_at: true,
+					account: { select: { display_name: true, email: true, type: true } },
+					tags: { include: { tag: true } },
+				},
 			});
 		if (resource === 'events')
 			return this.prisma.event.findMany({
 				orderBy: { created_at: 'desc' },
-				include: { owner: true, tags: { include: { tag: true } } },
+				select: {
+					id: true,
+					owner_account_id: true,
+					name: true,
+					slug: true,
+					description: true,
+					cover_img_url: true,
+					type: true,
+					reach_level: true,
+					start_date: true,
+					end_date: true,
+					active: true,
+					created_at: true,
+					owner: { select: { display_name: true, email: true } },
+					tags: { include: { tag: true } },
+				},
 			});
 		return this.prisma.tag.findMany({
 			orderBy: [{ group: { name: 'asc' } }, { position: 'asc' }],
