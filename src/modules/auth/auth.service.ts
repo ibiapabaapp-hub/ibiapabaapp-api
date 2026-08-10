@@ -43,12 +43,13 @@ export class AuthService {
 			});
 		}
 
+		const accountRole = (account as account & { role?: string }).role ?? 'user';
 		const access_token = this.jwtService.sign(
-			{ id: account.id },
+			{ id: account.id, role: accountRole },
 			{ expiresIn: '40m' },
 		);
 		const refresh_token = this.jwtService.sign(
-			{ id: account.id },
+			{ id: account.id, role: accountRole },
 			{ expiresIn: '7d' },
 		);
 
@@ -68,12 +69,13 @@ export class AuthService {
 		}
 
 		const account = await this.accountService.create(registerDto);
+		const accountRole = (account as account & { role?: string }).role ?? 'user';
 		const access_token = this.jwtService.sign(
-			{ id: account.id },
+			{ id: account.id, role: accountRole },
 			{ expiresIn: '40m' },
 		);
 		const refresh_token = this.jwtService.sign(
-			{ id: account.id },
+			{ id: account.id, role: accountRole },
 			{ expiresIn: '7d' },
 		);
 
@@ -115,7 +117,7 @@ export class AuthService {
 		}
 
 		const access_token = this.jwtService.sign(
-			{ id: account.id },
+			{ id: account.id, role: account.role },
 			{ expiresIn: '40m' },
 		);
 		const refresh_token = this.jwtService.sign(

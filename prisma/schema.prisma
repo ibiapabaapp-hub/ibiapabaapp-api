@@ -41,6 +41,7 @@ model account {
   avatar_url          String?
   gender              gender?
   type                account_type         @default(personal)
+  role                account_role         @default(user)
   name                String               @db.VarChar(50)
   active              Boolean              @default(true)
   is_verified         Boolean              @default(false)
@@ -297,6 +298,12 @@ enum oauth_provider {
 enum account_type {
   personal
   business
+}
+
+enum account_role {
+  user
+  admin
+  super_admin
 }
 
 enum gender {

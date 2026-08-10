@@ -90,6 +90,10 @@ export class SecureAccountDTO {
 	@Expose()
 	type: account_type;
 
+	@ApiProperty({ enum: ['user', 'admin', 'super_admin'], example: 'user' })
+	@Expose()
+	role: string;
+
 	constructor(partial: any) {
 		const { password: _, ...rest } = partial;
 		Object.assign(this, rest);
