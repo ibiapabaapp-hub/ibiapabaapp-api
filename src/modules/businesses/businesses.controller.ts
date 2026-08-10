@@ -14,6 +14,7 @@ import {
 	ApiParam,
 	ApiResponse,
 } from '@nestjs/swagger';
+import { Public } from 'src/modules/common/decorators/public.decorator';
 import { Media } from 'src/modules/medias/entities/media.entity';
 import { MediasService } from 'src/modules/medias/medias.service';
 
@@ -39,6 +40,7 @@ export class BusinessesController {
 	}
 
 	@ApiBearerAuth()
+	@Public()
 	@ApiOperation({ summary: 'Obtém todas as empresas' })
 	@ApiResponse({ status: 200, type: Business, isArray: true })
 	@Get()
@@ -57,6 +59,7 @@ export class BusinessesController {
 	}
 
 	@ApiBearerAuth()
+	@Public()
 	@ApiParam({ name: 'id', description: 'UUID da empresa' })
 	@ApiBody({ type: UpdateBusinessDTO })
 	@ApiOperation({ summary: 'Atualizar dados de uma empresa' })
