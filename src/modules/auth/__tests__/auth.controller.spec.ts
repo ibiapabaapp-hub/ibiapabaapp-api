@@ -8,8 +8,10 @@ import {
 	CheckUniqueResponse,
 } from '../dtos/check-unique-field.dto';
 import { AuthResponseDto } from '../dtos/manual-auth/auth-response.dto';
+import { ForgotPasswordDto } from '../dtos/manual-auth/forgot-password.dto';
 import { LoginDto } from '../dtos/manual-auth/login.dto';
 import { RegisterDto } from '../dtos/manual-auth/register.dto';
+import { ResetPasswordDto } from '../dtos/manual-auth/reset-password.dto';
 import { GoogleOAuthService } from '../oauth/google-oauth.service';
 
 describe('AuthController', () => {
@@ -77,6 +79,30 @@ describe('AuthController', () => {
 
 		expect(service.register).toHaveBeenCalledWith(dto);
 		expect(result).toEqual(response);
+	});
+
+	it('should call authService.requestPasswordReset on forgotPassword()', async () => {
+		const dto = { email: 'test@test.com' } as ForgotPasswordDto;
+		service.requestPasswordReset.mockResolvedValue({ success: true });
+
+		const result = await controller.forgotPassword(dto);
+
+		expect(service.requestPasswordReset).toHaveBeenCalledWith(dto);
+		expect(result).toEqual({ success: true });
+	});
+
+	it('should call authService.resetPassword on resetPassword()', async () => {
+		const dto = {
+			token: 'reset-token',
+			password: 'Password1!',
+			password_confirm: 'Password1!',
+		} as ResetPasswordDto;
+		service.resetPassword.mockResolvedValue({ success: true });
+
+		const result = await controller.resetPassword(dto);
+
+		expect(service.resetPassword).toHaveBeenCalledWith(dto);
+		expect(result).toEqual({ success: true });
 	});
 
 	it('should call authService.refreshTokens on refresh()', async () => {
