@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { account_type } from '@prisma/client';
 import {
 	IsEmail,
@@ -22,13 +22,14 @@ export class CreateAccountDTO {
 	@IsEmail()
 	email: string;
 
-	@ApiProperty({
+	@ApiPropertyOptional({
 		example: '+5511999998888',
 		description: 'Telefone no formato E.164',
 	})
+	@IsOptional()
 	@IsString()
 	@Matches(/^\+[1-9]\d{1,14}$/)
-	phone_number: string;
+	phone_number?: string;
 
 	// @ApiProperty({ example: '2000-01-01T00:00:00.000Z' })
 	// @IsDate()
