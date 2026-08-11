@@ -6,7 +6,7 @@
 			"description": "Conheça Ubajara",
 			"lat": -3.8321,
 			"lng": -40.9224,
-			"cover_img_url": "https://cdn.ibivibe.com.br/cities/ubajara.png",
+			"cover_img_url": "https://cdn.ibivibe.com.br/media/cities/ubajara.png",
 			"tags": [
 				"Turismo rural",
 				"Ecoturismo",
@@ -19,7 +19,7 @@
 			"description": "Conheça Tianguá",
 			"lat": -3.7314,
 			"lng": -40.9917,
-			"cover_img_url": "https://cdn.ibivibe.com.br/cities/tiangua.png",
+			"cover_img_url": "https://cdn.ibivibe.com.br/media/cities/tiangua.png",
 			"tags": [
 				"Lojas de roupas e calçados",
 				"Pousadas"
@@ -31,7 +31,7 @@
 			"description": "Conheça Viçosa do Ceará",
 			"lat": -3.5622,
 			"lng": -41.0911,
-			"cover_img_url": "https://cdn.ibivibe.com.br/cities/vicosa-do-ceara.png",
+			"cover_img_url": "https://cdn.ibivibe.com.br/media/cities/vicosa-do-ceara.png",
 			"tags": [
 				"Espaços culturais",
 				"Espaços de lazer",
@@ -54,7 +54,7 @@
 				"Espaços culturais"
 			],
 			"bio": "Administrador do sistema",
-			"avatar_url": "https://cdn.ibivibe.com.br/avatars/admin.png"
+			"avatar_url": "https://cdn.ibivibe.com.br/media/users/admin.png"
 		},
 		{
 			"name": "Usuário Teste",
@@ -70,7 +70,7 @@
 				"Shows e apresentações"
 			],
 			"bio": "Usuário para testes",
-			"avatar_url": "https://cdn.ibivibe.com.br/avatars/user.png"
+			"avatar_url": "https://cdn.ibivibe.com.br/media/users/user.png"
 		},
 		{
 			"name": "Maria Dona de Negócio",
@@ -86,7 +86,7 @@
 				"Restaurantes"
 			],
 			"bio": "Empreendedora local",
-			"avatar_url": "https://cdn.ibivibe.com.br/avatars/maria.png"
+			"avatar_url": "https://cdn.ibivibe.com.br/media/users/user.png"
 		}
 	],
 	"businesses": [
