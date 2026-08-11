@@ -5,6 +5,7 @@ import { MediasService } from 'src/modules/medias/medias.service';
 
 import { BusinessesController } from '../businesses.controller';
 import { BusinessesService } from '../businesses.service';
+import { BusinessOnboardingDto } from '../dto/business-onboarding.dto';
 import { CreateBusinessDTO } from '../dto/create-business.dto';
 
 describe('BusinessesController', () => {
@@ -49,6 +50,19 @@ describe('BusinessesController', () => {
 	it('should call service.findAll', async () => {
 		await controller.findAll();
 		expect(service.findAll).toHaveBeenCalled();
+	});
+
+	it('should call service.onboard with the authenticated account id', async () => {
+		const dto: BusinessOnboardingDto = {
+			name: 'Empresa Teste',
+			cnpj: '12345678000195',
+			headquarters_city_id: 'city-1',
+			branch_city_ids: ['city-2'],
+		};
+
+		await controller.onboarding('account-1', dto);
+
+		expect(service.onboard).toHaveBeenCalledWith('account-1', dto);
 	});
 
 	it('should call mediasService.getMediaByAccount', async () => {

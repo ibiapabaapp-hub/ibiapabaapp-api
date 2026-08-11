@@ -14,11 +14,13 @@ import {
 	ApiParam,
 	ApiResponse,
 } from '@nestjs/swagger';
+import { CurrentAccount } from 'src/modules/common/decorators/current-account.decorator';
 import { Public } from 'src/modules/common/decorators/public.decorator';
 import { Media } from 'src/modules/medias/entities/media.entity';
 import { MediasService } from 'src/modules/medias/medias.service';
 
 import { BusinessesService } from './businesses.service';
+import { BusinessOnboardingDto } from './dto/business-onboarding.dto';
 import { CreateBusinessDTO } from './dto/create-business.dto';
 import { UpdateBusinessDTO } from './dto/update-business.dto';
 import { Business } from './entities/business.entity';
@@ -37,6 +39,19 @@ export class BusinessesController {
 	@Post()
 	create(@Body() createBusinessDto: CreateBusinessDTO) {
 		return this.businessesService.create(createBusinessDto);
+	}
+
+	@ApiBearerAuth()
+	@ApiBody({ type: BusinessOnboardingDto })
+	@ApiOperation({ summary: 'Concluir o onboarding de uma empresa' })
+	@ApiResponse({ status: 201, description: 'Empresa criada com sucesso' })
+	@ApiResponse({ status: 409, description: 'A conta já possui uma empresa' })
+	@Post('onboarding')
+	onboarding(
+		@CurrentAccount('id') accountId: string,
+		@Body() dto: BusinessOnboardingDto,
+	) {
+		return this.businessesService.onboard(accountId, dto);
 	}
 
 	@ApiBearerAuth()
