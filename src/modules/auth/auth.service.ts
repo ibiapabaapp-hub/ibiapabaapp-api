@@ -2,6 +2,7 @@ import {
 	BadRequestException,
 	Injectable,
 	InternalServerErrorException,
+	NotFoundException,
 	UnauthorizedException,
 } from '@nestjs/common';
 import { account } from '@prisma/client';
@@ -10,15 +11,17 @@ import { JwtService } from 'src/modules/common/jwt/jwt.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 import { extractBearerTokenFromString } from 'src/utils/extract-bearer-token';
 
-import { verifyPassword } from '../common/password/password.util';
+import { hashPassword, verifyPassword } from '../common/password/password.util';
 import { TokenService } from '../common/token/token.service';
 import { EmailService } from '../email/email.service';
 import {
 	AuthResponseDto,
 	CheckUniqueResponseDto,
 } from './dtos/manual-auth/auth-response.dto';
+import { ForgotPasswordDto } from './dtos/manual-auth/forgot-password.dto';
 import { LoginDto } from './dtos/manual-auth/login.dto';
 import { RegisterDto } from './dtos/manual-auth/register.dto';
+import { ResetPasswordDto } from './dtos/manual-auth/reset-password.dto';
 import { UniqueAccountFields } from './dtos/unique-account-fields';
 
 @Injectable()
@@ -108,6 +111,64 @@ export class AuthService {
 
 		const verifyResult = await this.accountService.verifyAccount(rawAccountId);
 		return { success: verifyResult.is_verified };
+	}
+
+	async requestPasswordReset(
+		forgotPasswordDto: ForgotPasswordDto,
+	): Promise<{ success: boolean }> {
+		try {
+			const account = await this.accountService.findOneByEmail(
+				forgotPasswordDto.email.trim(),
+			);
+			const token = await this.tokenService.create(
+				account.id,
+				'reset_password',
+			);
+			await this.emailService.sendPasswordResetEmail(account.email, token);
+		} catch (error) {
+			if (error instanceof NotFoundException) {
+				// Não revela se o e-mail está cadastrado.
+				return { success: true };
+			}
+			throw error;
+		}
+
+		return { success: true };
+	}
+
+	async resetPassword(
+		resetPasswordDto: ResetPasswordDto,
+	): Promise<{ success: boolean }> {
+		const { token, password, password_confirm } = resetPasswordDto;
+
+		if (password !== password_confirm) {
+			throw new BadRequestException({
+				message: 'Password and password confirmation must be equal',
+				code: 'password_mismatch',
+			});
+		}
+
+		let accountId: string;
+		try {
+			accountId = await this.tokenService.validateAndConsume(
+				token.trim(),
+				'reset_password',
+			);
+		} catch {
+			throw new BadRequestException({
+				message: 'Invalid or expired token',
+				code: 'invalid_token',
+			});
+		}
+		await this.prismaService.account.update({
+			where: { id: accountId },
+			data: {
+				password: await hashPassword(password),
+				updated_at: new Date(),
+			},
+		});
+
+		return { success: true };
 	}
 
 	async refreshTokens(refreshToken: string): Promise<AuthResponseDto> {
