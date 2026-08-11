@@ -91,7 +91,7 @@
 			"password": "12345678",
 			"birth_date": "1990-01-01",
 			"role": "superuser",
-			"type": "personal",
+			"type": "business",
 			"interests": ["Turismo rural", "Espaços culturais"],
 			"bio": "Administrador do sistema",
 			"avatar_url": "https://cdn.ibivibe.com.br/media/users/admin.png"
