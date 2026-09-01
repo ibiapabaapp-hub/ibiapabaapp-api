@@ -180,6 +180,134 @@ describe('AuthService', () => {
 		});
 	});
 
+	describe('verifyEmail', () => {
+		it('consumes a valid verification token and returns success', async () => {
+			_tokenService.validateAndConsume.mockResolvedValue('account-id');
+			usersService.verifyAccount.mockResolvedValue({
+				is_verified: true,
+			} as account);
+
+			await expect(service.verifyEmail('verification-token')).resolves.toEqual({
+				success: true,
+			});
+			expect(_tokenService.validateAndConsume).toHaveBeenCalledWith(
+				'verification-token',
+				'verify_email',
+			);
+			expect(usersService.verifyAccount).toHaveBeenCalledWith('account-id');
+		});
+
+		it('returns invalid_token when the token is used or expired', async () => {
+			_tokenService.validateAndConsume.mockRejectedValue(
+				new Error('Expired Token'),
+			);
+
+			await expect(
+				service.verifyEmail('verification-token'),
+			).rejects.toMatchObject({
+				response: { code: 'invalid_token' },
+			});
+			expect(usersService.verifyAccount).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('resendVerificationEmail', () => {
+		it('invalidates previous tokens and sends a new verification email', async () => {
+			jwtService.verify.mockReturnValue({ id: 'account-id' });
+			usersService.findOneById.mockResolvedValue({
+				id: 'account-id',
+				email: 'user@example.com',
+				is_verified: false,
+			} as SecureAccountDTO);
+			_tokenService.create.mockResolvedValue('new-token');
+
+			await expect(
+				service.resendVerificationEmail('Bearer access-token'),
+			).resolves.toEqual({ success: true });
+
+			expect(_tokenService.invalidate).toHaveBeenCalledWith(
+				'account-id',
+				'verify_email',
+			);
+			expect(_tokenService.create).toHaveBeenCalledWith(
+				'account-id',
+				'verify_email',
+			);
+			expect(_emailService.sendVerificationEmail).toHaveBeenCalledWith(
+				'user@example.com',
+				'new-token',
+			);
+		});
+
+		it('does not send confirmation to a verified account', async () => {
+			jwtService.verify.mockReturnValue({ id: 'account-id' });
+			usersService.findOneById.mockResolvedValue({
+				id: 'account-id',
+				is_verified: true,
+			} as SecureAccountDTO);
+
+			await expect(
+				service.resendVerificationEmail('Bearer access-token'),
+			).rejects.toMatchObject({
+				response: { code: 'account_already_verified' },
+			});
+			expect(_tokenService.invalidate).not.toHaveBeenCalled();
+			expect(_emailService.sendVerificationEmail).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('changeUnverifiedEmail', () => {
+		it('updates the email, replaces the token and sends confirmation', async () => {
+			jwtService.verify.mockReturnValue({ id: 'account-id' });
+			usersService.findOneById.mockResolvedValue({
+				id: 'account-id',
+				email: 'old@example.com',
+				is_verified: false,
+			} as SecureAccountDTO);
+			prisma.account.findFirst.mockResolvedValue(null);
+			_tokenService.create.mockResolvedValue('new-token');
+
+			await expect(
+				service.changeUnverifiedEmail('Bearer access-token', {
+					email: ' New@Example.com ',
+				}),
+			).resolves.toEqual({ success: true });
+
+			expect(prisma.account.update).toHaveBeenCalledWith({
+				where: { id: 'account-id' },
+				data: { email: 'new@example.com', updated_at: expect.any(Date) },
+			});
+			expect(_tokenService.invalidate).toHaveBeenCalledWith(
+				'account-id',
+				'verify_email',
+			);
+			expect(_emailService.sendVerificationEmail).toHaveBeenCalledWith(
+				'new@example.com',
+				'new-token',
+			);
+		});
+
+		it('rejects an email already used by another account', async () => {
+			jwtService.verify.mockReturnValue({ id: 'account-id' });
+			usersService.findOneById.mockResolvedValue({
+				id: 'account-id',
+				is_verified: false,
+			} as SecureAccountDTO);
+			prisma.account.findFirst.mockResolvedValue({
+				id: 'other-account',
+			} as account);
+
+			await expect(
+				service.changeUnverifiedEmail('Bearer access-token', {
+					email: 'used@example.com',
+				}),
+			).rejects.toMatchObject({
+				response: { code: 'email_already_registered' },
+			});
+			expect(prisma.account.update).not.toHaveBeenCalled();
+		});
+	});
+
 	describe('isUniqueAvailable', () => {
 		it('should return available true when no account exists', async () => {
 			prisma.account.count.mockResolvedValue(0);

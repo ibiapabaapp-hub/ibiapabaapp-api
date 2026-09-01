@@ -22,6 +22,7 @@ import { ForgotPasswordDto } from './dtos/manual-auth/forgot-password.dto';
 import { LoginDto } from './dtos/manual-auth/login.dto';
 import { RegisterDto } from './dtos/manual-auth/register.dto';
 import { ResetPasswordDto } from './dtos/manual-auth/reset-password.dto';
+import { ChangeEmailDto } from './dtos/manual-auth/change-email.dto';
 import { UniqueAccountFields } from './dtos/unique-account-fields';
 
 @Injectable()
@@ -95,12 +96,78 @@ export class AuthService {
 		return new AuthResponseDto({ account, access_token, refresh_token });
 	}
 
-	// TODO: escrever teste unitário de verifyEmail -> auth.service
+	private getAccountIdFromAuthorization(authorization: string): string {
+		const token = extractBearerTokenFromString(authorization);
+		return this.jwtService.verify<{ id: string }>(token).id;
+	}
+
+	async resendVerificationEmail(
+		authorization: string,
+	): Promise<{ success: boolean }> {
+		const accountId = this.getAccountIdFromAuthorization(authorization);
+		const account = await this.accountService.findOneById(accountId);
+
+		if (account.is_verified) {
+			throw new BadRequestException({
+				message: 'Account already verified',
+				code: 'account_already_verified',
+			});
+		}
+
+		await this.tokenService.invalidate(account.id, 'verify_email');
+		const token = await this.tokenService.create(account.id, 'verify_email');
+		await this.emailService.sendVerificationEmail(account.email, token);
+		return { success: true };
+	}
+
+	async changeUnverifiedEmail(
+		authorization: string,
+		dto: ChangeEmailDto,
+	): Promise<{ success: boolean }> {
+		const accountId = this.getAccountIdFromAuthorization(authorization);
+		const email = dto.email.trim().toLowerCase();
+		const account = await this.accountService.findOneById(accountId);
+
+		if (account.is_verified) {
+			throw new BadRequestException({
+				message: 'Verified account email cannot be changed here',
+				code: 'account_already_verified',
+			});
+		}
+
+		const existing = await this.prismaService.account.findFirst({
+			where: { email, id: { not: account.id } },
+		});
+		if (existing) {
+			throw new BadRequestException({
+				message: 'Email already registered',
+				code: 'email_already_registered',
+			});
+		}
+
+		await this.prismaService.account.update({
+			where: { id: account.id },
+			data: { email, updated_at: new Date() },
+		});
+		await this.tokenService.invalidate(account.id, 'verify_email');
+		const token = await this.tokenService.create(account.id, 'verify_email');
+		await this.emailService.sendVerificationEmail(email, token);
+		return { success: true };
+	}
+
 	async verifyEmail(token: string): Promise<{ success: boolean }> {
-		const rawAccountId = await this.tokenService.validateAndConsume(
-			token,
-			'verify_email',
-		);
+		let rawAccountId: string;
+		try {
+			rawAccountId = await this.tokenService.validateAndConsume(
+				token,
+				'verify_email',
+			);
+		} catch {
+			throw new BadRequestException({
+				message: 'Invalid token',
+				code: 'invalid_token',
+			});
+		}
 
 		if (!rawAccountId) {
 			throw new BadRequestException({

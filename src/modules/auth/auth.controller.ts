@@ -15,6 +15,7 @@ import { CheckUniqueDto } from './dtos/check-unique-field.dto';
 import { GoogleAuthCompleteDto } from './dtos/google-auth/google-auth-complete.dto';
 import { GoogleAuthDto } from './dtos/google-auth/google-auth.dto';
 import { AuthResponseDto } from './dtos/manual-auth/auth-response.dto';
+import { ChangeEmailDto } from './dtos/manual-auth/change-email.dto';
 import { ForgotPasswordDto } from './dtos/manual-auth/forgot-password.dto';
 import { LoginDto } from './dtos/manual-auth/login.dto';
 import { RegisterDto } from './dtos/manual-auth/register.dto';
@@ -104,6 +105,25 @@ export class AuthController {
 		};
 	}
 
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Reenviar confirmação de email' })
+	@Post('resend-verification')
+	@Throttle({ default: { limit: 3, ttl: 3600000 } })
+	async resendVerification(@Headers('Authorization') authorization: string) {
+		return this.authService.resendVerificationEmail(authorization);
+	}
+
+	@ApiBearerAuth()
+	@ApiOperation({ summary: 'Corrigir email antes da confirmação' })
+	@Post('change-unverified-email')
+	@Throttle({ default: { limit: 3, ttl: 900000 } })
+	async changeUnverifiedEmail(
+		@Headers('Authorization') authorization: string,
+		@Body() dto: ChangeEmailDto,
+	) {
+		return this.authService.changeUnverifiedEmail(authorization, dto);
+	}
+
 	@ApiOperation({ summary: 'Solicitar recuperação de senha' })
 	@ApiResponse({ status: 200, type: SuccessResponseDTO })
 	@Post('forgot-password')
@@ -126,8 +146,6 @@ export class AuthController {
 		return this.authService.resetPassword(dto);
 	}
 
-	// TODO: escrever teste e2e de verifyEmail -> auth.controller
-	// TODO: escrever teste unitário de verifyEmail -> auth.controller
 	@ApiOperation({ summary: 'Verificar email' })
 	@ApiQuery({ name: 'token', type: String })
 	@ApiResponse({ status: 200, type: SuccessResponseDTO })
