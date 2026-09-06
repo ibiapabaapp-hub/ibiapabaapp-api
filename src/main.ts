@@ -45,6 +45,7 @@ export async function bootstrap() {
 		app.enableCors({
 			origin: [
 				'http://localhost:3001',
+				'http://localhost:8081',
 				'https://ibiapabaapp.com.br',
 				'https://www.ibiapabaapp.com.br',
 				'https://ibiapabaapp-landingpage.vercel.app',
