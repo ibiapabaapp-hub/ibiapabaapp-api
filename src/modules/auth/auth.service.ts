@@ -18,11 +18,11 @@ import {
 	AuthResponseDto,
 	CheckUniqueResponseDto,
 } from './dtos/manual-auth/auth-response.dto';
+import { ChangeEmailDto } from './dtos/manual-auth/change-email.dto';
 import { ForgotPasswordDto } from './dtos/manual-auth/forgot-password.dto';
 import { LoginDto } from './dtos/manual-auth/login.dto';
 import { RegisterDto } from './dtos/manual-auth/register.dto';
 import { ResetPasswordDto } from './dtos/manual-auth/reset-password.dto';
-import { ChangeEmailDto } from './dtos/manual-auth/change-email.dto';
 import { UniqueAccountFields } from './dtos/unique-account-fields';
 
 @Injectable()
