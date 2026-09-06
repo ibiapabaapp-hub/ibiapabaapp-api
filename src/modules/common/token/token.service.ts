@@ -35,6 +35,12 @@ export class TokenService {
 		return rawToken;
 	}
 
+	async invalidate(accountId: string, type: token_type): Promise<void> {
+		await this.prismaService.verification_token.deleteMany({
+			where: { account_id: accountId, type },
+		});
+	}
+
 	async validateAndConsume(
 		rawToken: string,
 		type: token_type,

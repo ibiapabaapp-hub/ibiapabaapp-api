@@ -29,7 +29,7 @@ export class AccountsService {
 				phone_number: data.phone_number,
 				// Profile fields
 				slug: data.slug,
-				display_name: data.display_name,
+				display_name: data.display_name?.trim() || data.name.trim(),
 				bio: data.bio,
 				avatar_url: data.avatar_url,
 				type: data.type || 'personal',

@@ -19,7 +19,9 @@ import { MediasModule } from '../../modules/medias/medias.module';
 import { SearchModule } from '../../modules/search/search.module';
 import { TagsModule } from '../../modules/tags/tags.module';
 import { AccountsModule } from '../accounts/accounts.module';
+import { AdminModule } from '../admin/admin.module';
 import { BusinessesModule } from '../businesses/businesses.module';
+import { RolesGuard } from '../common/guards/roles.guard';
 import { ThrottlerBehindProxyGuard } from '../common/guards/throttler-behind-proxy-guard';
 import { FavoritesModule } from '../favorites/favorites.module';
 import { ReviewsModule } from '../reviews/reviews.module';
@@ -69,6 +71,7 @@ import { AppService } from './app.service';
 		EventsModule,
 		FavoritesModule,
 		ReviewsModule,
+		AdminModule,
 		TagsModule,
 	],
 	controllers: [AppController],
@@ -81,6 +84,10 @@ import { AppService } from './app.service';
 		{
 			provide: APP_GUARD,
 			useClass: ThrottlerBehindProxyGuard,
+		},
+		{
+			provide: APP_GUARD,
+			useClass: RolesGuard,
 		},
 		{
 			provide: APP_FILTER,

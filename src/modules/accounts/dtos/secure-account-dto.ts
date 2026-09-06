@@ -21,12 +21,12 @@ export class SecureAccountDTO {
 	@Expose()
 	name: string;
 
-	@ApiProperty({
+	@ApiPropertyOptional({
 		example: '+5511999998888',
 		description: 'Phone number in E.164 format',
 	})
 	@Expose()
-	phone_number: string;
+	phone_number?: string | null;
 
 	@ApiProperty({ example: true, description: 'Whether the account is active' })
 	@Expose()
@@ -89,6 +89,10 @@ export class SecureAccountDTO {
 	})
 	@Expose()
 	type: account_type;
+
+	@ApiProperty({ enum: ['user', 'admin', 'super_admin'], example: 'user' })
+	@Expose()
+	role: string;
 
 	constructor(partial: any) {
 		const { password: _, ...rest } = partial;

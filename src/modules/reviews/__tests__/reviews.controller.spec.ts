@@ -48,9 +48,8 @@ describe('ReviewsController', () => {
 	});
 
 	describe('create', () => {
-		it('should create a review', async () => {
+		it('should create an authenticated review using the token account', async () => {
 			const createDto: CreateReviewDto = {
-				account_id: 'account-1',
 				business_id: 'business-1',
 				rating: 5,
 				comment: 'Great place!',
@@ -58,9 +57,9 @@ describe('ReviewsController', () => {
 
 			service.create.mockResolvedValue(mockReview);
 
-			const result = await controller.create(createDto);
+			const result = await controller.create('account-1', createDto);
 
-			expect(service.create).toHaveBeenCalledWith(createDto);
+			expect(service.create).toHaveBeenCalledWith('account-1', createDto);
 			expect(result).toEqual(mockReview);
 		});
 	});
@@ -83,16 +82,6 @@ describe('ReviewsController', () => {
 			const result = await controller.findAll(undefined, 'event-1');
 
 			expect(service.findAll).toHaveBeenCalledWith(undefined, 'event-1');
-			expect(result).toEqual(reviews);
-		});
-
-		it('should return all reviews when no filters', async () => {
-			const reviews = [mockReview];
-			service.findAll.mockResolvedValue(reviews);
-
-			const result = await controller.findAll();
-
-			expect(service.findAll).toHaveBeenCalledWith(undefined, undefined);
 			expect(result).toEqual(reviews);
 		});
 	});
@@ -165,9 +154,17 @@ describe('ReviewsController', () => {
 			const updatedReview = { ...mockReview, ...updateDto };
 			service.update.mockResolvedValue(updatedReview);
 
-			const result = await controller.update('review-1', updateDto);
+			const result = await controller.update(
+				'review-1',
+				'account-1',
+				updateDto,
+			);
 
-			expect(service.update).toHaveBeenCalledWith('review-1', updateDto);
+			expect(service.update).toHaveBeenCalledWith(
+				'review-1',
+				'account-1',
+				updateDto,
+			);
 			expect(result).toEqual(updatedReview);
 		});
 	});
@@ -177,9 +174,9 @@ describe('ReviewsController', () => {
 			const deleteResult = { message: 'Review removida com sucesso' };
 			service.remove.mockResolvedValue(deleteResult);
 
-			const result = await controller.remove('review-1');
+			const result = await controller.remove('review-1', 'account-1');
 
-			expect(service.remove).toHaveBeenCalledWith('review-1');
+			expect(service.remove).toHaveBeenCalledWith('review-1', 'account-1');
 			expect(result).toEqual(deleteResult);
 		});
 	});

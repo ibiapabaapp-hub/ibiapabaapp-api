@@ -41,6 +41,7 @@ model account {
   avatar_url          String?
   gender              gender?
   type                account_type         @default(personal)
+  role                account_role         @default(user)
   name                String               @db.VarChar(50)
   active              Boolean              @default(true)
   is_verified         Boolean              @default(false)
@@ -69,19 +70,33 @@ model verification_token {
   @@index([account_id])
 }
 
-// TODO: enriquecer business
 model business {
-  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  owner_account_id String              @unique @db.Uuid
-  cnpj             String?             @db.VarChar(20)
-  max_reach_level  reach_level         @default(local)
-  created_at       DateTime            @default(now()) @db.Timestamp(6)
-  updated_at       DateTime            @updatedAt @db.Timestamp(6)
-  favorites        account_favorite[]
-  account          account             @relation(fields: [owner_account_id], references: [id], onDelete: Cascade)
-  tags             business_tag[]
-  cities           business_city[]
-  reviews          review[]            @relation("BusinessReviews")
+  id                String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  owner_account_id  String                    @unique @db.Uuid
+  commercial_name   String?                   @db.VarChar(150)
+  description       String?
+  cnpj              String?                   @db.VarChar(20)
+  max_reach_level   reach_level               @default(local)
+  is_verified       Boolean                   @default(false)
+  verified_at       DateTime?                 @db.Timestamp(6)
+  accepts_payment   Boolean                   @default(false)
+  offers_delivery   Boolean                   @default(false)
+  in_person_service Boolean                   @default(true)
+  accessibility     Boolean                   @default(false)
+  parking           Boolean                   @default(false)
+  wifi              Boolean                   @default(false)
+  created_at        DateTime                  @default(now()) @db.Timestamp(6)
+  updated_at        DateTime                  @updatedAt @db.Timestamp(6)
+  favorites         account_favorite[]
+  account           account                   @relation(fields: [owner_account_id], references: [id], onDelete: Cascade)
+  tags              business_tag[]
+  cities            business_city[]
+  social_links      business_social_links?
+  hours             business_hours[]
+  hour_exceptions   business_hour_exception[]
+  services          business_service[]
+  medias            media[]                   @relation("BusinessMedias")
+  reviews           review[]                  @relation("BusinessReviews")
 
   @@index([owner_account_id])
 }
@@ -97,7 +112,7 @@ model city {
   updated_at    DateTime                @updatedAt
   favorites     account_favorite[]
   businesses    business_city[]
-  tags         city_tag[]
+  tags          city_tag[]
   events        event_city[]
   medias        media[]                 @relation("CityMedias")
 
@@ -120,7 +135,7 @@ model event {
   updated_at       DateTime           @updatedAt @db.Timestamp(6)
   favorites        account_favorite[]
   owner            account            @relation("AccountEvents", fields: [owner_account_id], references: [id], onDelete: Cascade)
-  tags          event_tag[]
+  tags             event_tag[]
   cities           event_city[]
   medias           media[]            @relation("EventMedias")
   reviews          review[]           @relation("EventReviews")
@@ -133,15 +148,18 @@ model media {
   account_id    String?    @db.Uuid
   city_id       String?    @db.Uuid
   event_id      String?    @db.Uuid
+  business_id   String?    @db.Uuid
   media_type    media_type
   url           String
   thumbnail_url String?
   is_cover      Boolean    @default(false)
   position      Int        @default(0)
+  alt_text      String?
   created_at    DateTime   @default(now())
   account       account?   @relation("AccountMedias", fields: [account_id], references: [id], onDelete: Cascade)
   city          city?      @relation("CityMedias", fields: [city_id], references: [id], onDelete: Cascade)
   event         event?     @relation("EventMedias", fields: [event_id], references: [id], onDelete: Cascade)
+  business      business?  @relation("BusinessMedias", fields: [business_id], references: [id], onDelete: Cascade)
 }
 
 model account_favorite {
@@ -172,8 +190,8 @@ model account_interest {
 }
 
 model tag_group {
-  id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String @unique
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @unique
   description String?
   created_at  DateTime @default(now()) @db.Timestamp(6)
   updated_at  DateTime @updatedAt @db.Timestamp(6)
@@ -181,16 +199,16 @@ model tag_group {
 }
 
 model tag {
-  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id          String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String
-  slug        String       @unique
+  slug        String             @unique
   description String?
-  color       String?      @db.VarChar(7)
-  group_id    String       @db.Uuid
-  position    Int          @default(0)
-  created_at  DateTime     @default(now()) @db.Timestamp(6)
-  updated_at  DateTime     @updatedAt @db.Timestamp(6)
-  group       tag_group    @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  color       String?            @db.VarChar(7)
+  group_id    String             @db.Uuid
+  position    Int                @default(0)
+  created_at  DateTime           @default(now()) @db.Timestamp(6)
+  updated_at  DateTime           @updatedAt @db.Timestamp(6)
+  group       tag_group          @relation(fields: [group_id], references: [id], onDelete: Cascade)
   businesses  business_tag[]
   events      event_tag[]
   cities      city_tag[]
@@ -222,13 +240,86 @@ model business_tag {
 }
 
 model business_city {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  business_id      String   @db.Uuid
-  city_id          String   @db.Uuid
-  is_headquarter   Boolean  @default(false)
+  id               String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  business_id      String                    @db.Uuid
+  city_id          String                    @db.Uuid
+  is_headquarter   Boolean                   @default(false)
   address_specific String?
-  business         business @relation(fields: [business_id], references: [id], onDelete: Cascade)
-  city             city     @relation(fields: [city_id], references: [id], onDelete: Cascade)
+  address          String?
+  neighborhood     String?
+  postal_code      String?                   @db.VarChar(20)
+  latitude         Float?
+  longitude        Float?
+  map_url          String?
+  business         business                  @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  city             city                      @relation(fields: [city_id], references: [id], onDelete: Cascade)
+  hours            business_hours[]
+  hour_exceptions  business_hour_exception[]
+
+  @@unique([business_id, city_id])
+  @@index([business_id, is_headquarter])
+}
+
+model business_social_links {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  business_id  String   @unique @db.Uuid
+  phone        String?  @db.VarChar(30)
+  whatsapp     String?  @db.VarChar(30)
+  public_email String?  @db.VarChar(255)
+  website      String?
+  instagram    String?
+  facebook     String?
+  business     business @relation(fields: [business_id], references: [id], onDelete: Cascade)
+}
+
+model business_hours {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  business_id      String         @db.Uuid
+  business_city_id String?        @db.Uuid
+  weekday          Int            @db.SmallInt
+  is_closed        Boolean        @default(false)
+  opens_at         String?        @db.VarChar(5)
+  closes_at        String?        @db.VarChar(5)
+  break_start      String?        @db.VarChar(5)
+  break_end        String?        @db.VarChar(5)
+  business         business       @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  location         business_city? @relation(fields: [business_city_id], references: [id], onDelete: Cascade)
+
+  @@unique([business_id, business_city_id, weekday])
+  @@index([business_id])
+}
+
+model business_hour_exception {
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  business_id      String         @db.Uuid
+  business_city_id String?        @db.Uuid
+  date             DateTime       @db.Date
+  is_closed        Boolean        @default(true)
+  opens_at         String?        @db.VarChar(5)
+  closes_at        String?        @db.VarChar(5)
+  reason           String?
+  business         business       @relation(fields: [business_id], references: [id], onDelete: Cascade)
+  location         business_city? @relation(fields: [business_city_id], references: [id], onDelete: Cascade)
+
+  @@unique([business_id, business_city_id, date])
+  @@index([business_id, date])
+}
+
+model business_service {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  business_id  String   @db.Uuid
+  name         String   @db.VarChar(150)
+  description  String?
+  price_from   Decimal? @db.Decimal(12, 2)
+  price_to     Decimal? @db.Decimal(12, 2)
+  price_label  String?  @db.VarChar(100)
+  booking_url  String?
+  service_type String?  @db.VarChar(50)
+  position     Int      @default(0)
+  active       Boolean  @default(true)
+  business     business @relation(fields: [business_id], references: [id], onDelete: Cascade)
+
+  @@index([business_id, active, position])
 }
 
 model event_tag {
@@ -299,6 +390,12 @@ enum account_type {
   business
 }
 
+enum account_role {
+  user
+  admin
+  super_admin
+}
+
 enum gender {
   male
   female
@@ -320,7 +417,6 @@ enum media_type {
   image
   video
 }
-
 
 enum token_type {
   verify_email

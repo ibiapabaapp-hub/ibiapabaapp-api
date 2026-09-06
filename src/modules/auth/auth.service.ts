@@ -2,6 +2,7 @@ import {
 	BadRequestException,
 	Injectable,
 	InternalServerErrorException,
+	NotFoundException,
 	UnauthorizedException,
 } from '@nestjs/common';
 import { account } from '@prisma/client';
@@ -10,15 +11,18 @@ import { JwtService } from 'src/modules/common/jwt/jwt.service';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 import { extractBearerTokenFromString } from 'src/utils/extract-bearer-token';
 
-import { verifyPassword } from '../common/password/password.util';
+import { hashPassword, verifyPassword } from '../common/password/password.util';
 import { TokenService } from '../common/token/token.service';
 import { EmailService } from '../email/email.service';
 import {
 	AuthResponseDto,
 	CheckUniqueResponseDto,
 } from './dtos/manual-auth/auth-response.dto';
+import { ChangeEmailDto } from './dtos/manual-auth/change-email.dto';
+import { ForgotPasswordDto } from './dtos/manual-auth/forgot-password.dto';
 import { LoginDto } from './dtos/manual-auth/login.dto';
 import { RegisterDto } from './dtos/manual-auth/register.dto';
+import { ResetPasswordDto } from './dtos/manual-auth/reset-password.dto';
 import { UniqueAccountFields } from './dtos/unique-account-fields';
 
 @Injectable()
@@ -30,6 +34,14 @@ export class AuthService {
 		private readonly tokenService: TokenService,
 		private readonly emailService: EmailService,
 	) {}
+
+	private async getAccountRole(accountId: string): Promise<string> {
+		const rows =
+			(await this.prismaService.$queryRaw<Array<{ role: string }>>`
+			SELECT role::text AS role FROM account WHERE id = ${accountId}::uuid LIMIT 1
+		`) ?? [];
+		return rows[0]?.role ?? 'user';
+	}
 
 	async login(loginDto: LoginDto): Promise<AuthResponseDto> {
 		const { email, password } = loginDto;
@@ -43,12 +55,13 @@ export class AuthService {
 			});
 		}
 
+		const accountRole = await this.getAccountRole(account.id);
 		const access_token = this.jwtService.sign(
-			{ id: account.id },
+			{ id: account.id, role: accountRole },
 			{ expiresIn: '40m' },
 		);
 		const refresh_token = this.jwtService.sign(
-			{ id: account.id },
+			{ id: account.id, role: accountRole },
 			{ expiresIn: '7d' },
 		);
 
@@ -68,12 +81,13 @@ export class AuthService {
 		}
 
 		const account = await this.accountService.create(registerDto);
+		const accountRole = await this.getAccountRole(account.id);
 		const access_token = this.jwtService.sign(
-			{ id: account.id },
+			{ id: account.id, role: accountRole },
 			{ expiresIn: '40m' },
 		);
 		const refresh_token = this.jwtService.sign(
-			{ id: account.id },
+			{ id: account.id, role: accountRole },
 			{ expiresIn: '7d' },
 		);
 
@@ -82,12 +96,78 @@ export class AuthService {
 		return new AuthResponseDto({ account, access_token, refresh_token });
 	}
 
-	// TODO: escrever teste unitário de verifyEmail -> auth.service
+	private getAccountIdFromAuthorization(authorization: string): string {
+		const token = extractBearerTokenFromString(authorization);
+		return this.jwtService.verify<{ id: string }>(token).id;
+	}
+
+	async resendVerificationEmail(
+		authorization: string,
+	): Promise<{ success: boolean }> {
+		const accountId = this.getAccountIdFromAuthorization(authorization);
+		const account = await this.accountService.findOneById(accountId);
+
+		if (account.is_verified) {
+			throw new BadRequestException({
+				message: 'Account already verified',
+				code: 'account_already_verified',
+			});
+		}
+
+		await this.tokenService.invalidate(account.id, 'verify_email');
+		const token = await this.tokenService.create(account.id, 'verify_email');
+		await this.emailService.sendVerificationEmail(account.email, token);
+		return { success: true };
+	}
+
+	async changeUnverifiedEmail(
+		authorization: string,
+		dto: ChangeEmailDto,
+	): Promise<{ success: boolean }> {
+		const accountId = this.getAccountIdFromAuthorization(authorization);
+		const email = dto.email.trim().toLowerCase();
+		const account = await this.accountService.findOneById(accountId);
+
+		if (account.is_verified) {
+			throw new BadRequestException({
+				message: 'Verified account email cannot be changed here',
+				code: 'account_already_verified',
+			});
+		}
+
+		const existing = await this.prismaService.account.findFirst({
+			where: { email, id: { not: account.id } },
+		});
+		if (existing) {
+			throw new BadRequestException({
+				message: 'Email already registered',
+				code: 'email_already_registered',
+			});
+		}
+
+		await this.prismaService.account.update({
+			where: { id: account.id },
+			data: { email, updated_at: new Date() },
+		});
+		await this.tokenService.invalidate(account.id, 'verify_email');
+		const token = await this.tokenService.create(account.id, 'verify_email');
+		await this.emailService.sendVerificationEmail(email, token);
+		return { success: true };
+	}
+
 	async verifyEmail(token: string): Promise<{ success: boolean }> {
-		const rawAccountId = await this.tokenService.validateAndConsume(
-			token,
-			'verify_email',
-		);
+		let rawAccountId: string;
+		try {
+			rawAccountId = await this.tokenService.validateAndConsume(
+				token,
+				'verify_email',
+			);
+		} catch {
+			throw new BadRequestException({
+				message: 'Invalid token',
+				code: 'invalid_token',
+			});
+		}
 
 		if (!rawAccountId) {
 			throw new BadRequestException({
@@ -100,11 +180,68 @@ export class AuthService {
 		return { success: verifyResult.is_verified };
 	}
 
+	async requestPasswordReset(
+		forgotPasswordDto: ForgotPasswordDto,
+	): Promise<{ success: boolean }> {
+		try {
+			const account = await this.accountService.findOneByEmail(
+				forgotPasswordDto.email.trim(),
+			);
+			const token = await this.tokenService.create(
+				account.id,
+				'reset_password',
+			);
+			await this.emailService.sendPasswordResetEmail(account.email, token);
+		} catch (error) {
+			if (error instanceof NotFoundException) {
+				// Não revela se o e-mail está cadastrado.
+				return { success: true };
+			}
+			throw error;
+		}
+
+		return { success: true };
+	}
+
+	async resetPassword(
+		resetPasswordDto: ResetPasswordDto,
+	): Promise<{ success: boolean }> {
+		const { token, password, password_confirm } = resetPasswordDto;
+
+		if (password !== password_confirm) {
+			throw new BadRequestException({
+				message: 'Password and password confirmation must be equal',
+				code: 'password_mismatch',
+			});
+		}
+
+		let accountId: string;
+		try {
+			accountId = await this.tokenService.validateAndConsume(
+				token.trim(),
+				'reset_password',
+			);
+		} catch {
+			throw new BadRequestException({
+				message: 'Invalid or expired token',
+				code: 'invalid_token',
+			});
+		}
+		await this.prismaService.account.update({
+			where: { id: accountId },
+			data: {
+				password: await hashPassword(password),
+				updated_at: new Date(),
+			},
+		});
+
+		return { success: true };
+	}
+
 	async refreshTokens(refreshToken: string): Promise<AuthResponseDto> {
-		const decodedTokenData = this.jwtService.verify<{
-			id: string;
-			role: number;
-		}>(refreshToken);
+		const decodedTokenData = this.jwtService.verify<{ id: string }>(
+			refreshToken,
+		);
 
 		const account = await this.accountService.findOneById(decodedTokenData.id);
 		if (!account) {
@@ -114,12 +251,13 @@ export class AuthService {
 			});
 		}
 
+		const accountRole = await this.getAccountRole(account.id);
 		const access_token = this.jwtService.sign(
-			{ id: account.id },
+			{ id: account.id, role: accountRole },
 			{ expiresIn: '40m' },
 		);
 		const refresh_token = this.jwtService.sign(
-			{ id: account.id },
+			{ id: account.id, role: accountRole },
 			{ expiresIn: '7d' },
 		);
 
@@ -152,7 +290,9 @@ export class AuthService {
 
 	async getMe(authorization: string) {
 		const token = extractBearerTokenFromString(authorization);
-		const { id } = this.jwtService.verify<{ id: string; role: string }>(token);
-		return this.accountService.findOneInDetailById(id);
+		const { id } = this.jwtService.verify<{ id: string; role?: string }>(token);
+		const account = await this.accountService.findOneInDetailById(id);
+		account.role = await this.getAccountRole(id);
+		return account;
 	}
 }

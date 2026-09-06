@@ -14,6 +14,7 @@ import {
 	ApiParam,
 	ApiResponse,
 } from '@nestjs/swagger';
+import { Public } from 'src/modules/common/decorators/public.decorator';
 
 import { CreateEventDTO } from './dto/create-event.dto';
 import { UpdateEventDTO } from './dto/update-event.dto';
@@ -34,6 +35,7 @@ export class EventsController {
 	}
 
 	@ApiBearerAuth()
+	@Public()
 	@ApiOperation({ summary: 'Obtém todos os eventos' })
 	@ApiResponse({ status: 200, type: Event, isArray: true })
 	@Get()
