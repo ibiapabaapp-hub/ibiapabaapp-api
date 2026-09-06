@@ -3,6 +3,7 @@ import {
 	NotFoundException,
 	ConflictException,
 	BadRequestException,
+	ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
@@ -31,7 +32,7 @@ export class ReviewsService {
 		},
 	};
 
-	async create(dto: CreateReviewDto) {
+	async create(accountId: string, dto: CreateReviewDto) {
 		try {
 			const entityCount = [dto.business_id, dto.event_id].filter(
 				Boolean,
@@ -61,7 +62,7 @@ export class ReviewsService {
 			}
 
 			const review = await this.prismaService.review.create({
-				data: dto,
+				data: { ...dto, account_id: accountId },
 				select: this.select,
 			});
 
@@ -78,15 +79,16 @@ export class ReviewsService {
 	}
 
 	async findAll(businessId?: string, eventId?: string) {
-		const where: any = {};
-
-		if (businessId) {
-			where.business_id = businessId;
+		const targetCount = [businessId, eventId].filter(Boolean).length;
+		if (targetCount !== 1) {
+			throw new BadRequestException(
+				'Must provide exactly one businessId or eventId',
+			);
 		}
 
-		if (eventId) {
-			where.event_id = eventId;
-		}
+		const where = businessId
+			? { business_id: businessId }
+			: { event_id: eventId };
 
 		const reviews = await this.prismaService.review.findMany({
 			where,
@@ -110,13 +112,16 @@ export class ReviewsService {
 		return review;
 	}
 
-	async update(id: string, dto: UpdateReviewDto) {
+	async update(id: string, accountId: string, dto: UpdateReviewDto) {
 		const existingReview = await this.prismaService.review.findUnique({
 			where: { id },
 		});
 
 		if (!existingReview) {
 			throw new NotFoundException('Review not found');
+		}
+		if (existingReview.account_id !== accountId) {
+			throw new ForbiddenException('You can only update your own review');
 		}
 
 		const updatedReview = await this.prismaService.review.update({
@@ -128,13 +133,16 @@ export class ReviewsService {
 		return updatedReview;
 	}
 
-	async remove(id: string) {
+	async remove(id: string, accountId: string) {
 		const existingReview = await this.prismaService.review.findUnique({
 			where: { id },
 		});
 
 		if (!existingReview) {
 			throw new NotFoundException('Review not found');
+		}
+		if (existingReview.account_id !== accountId) {
+			throw new ForbiddenException('You can only remove your own review');
 		}
 
 		await this.prismaService.review.delete({
