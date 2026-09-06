@@ -18,7 +18,7 @@
 		"db:migrate": "prisma migrate deploy",
 		"db:migrate:dev": "prisma migrate dev",
 		"db:studio": "prisma studio",
-		"db:seed": "tsx prisma/seed.ts",
+		"db:seed": "prisma migrate deploy && tsx prisma/seed.ts",
 		"test:unit": "dotenv -e .env.test -- sh -c 'jest'",
 		"test:unit:watch": "dotenv -e .env.test -- sh -c 'jest --watch'",
 		"test:unit:cov": "dotenv -e .env.test -- sh -c 'jest --coverage'",

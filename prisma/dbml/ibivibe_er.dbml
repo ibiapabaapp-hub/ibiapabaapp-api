@@ -34,6 +34,7 @@ Table account {
   avatar_url String
   gender gender
   type account_type [not null, default: 'personal']
+  role account_role [not null, default: 'user']
   name String [not null]
   active Boolean [not null, default: true]
   is_verified Boolean [not null, default: false]
@@ -63,14 +64,29 @@ Table verification_token {
 Table business {
   id String [pk]
   owner_account_id String [unique, not null]
+  commercial_name String
+  description String
   cnpj String
   max_reach_level reach_level [not null, default: 'local']
+  is_verified Boolean [not null, default: false]
+  verified_at DateTime
+  accepts_payment Boolean [not null, default: false]
+  offers_delivery Boolean [not null, default: false]
+  in_person_service Boolean [not null, default: true]
+  accessibility Boolean [not null, default: false]
+  parking Boolean [not null, default: false]
+  wifi Boolean [not null, default: false]
   created_at DateTime [default: `now()`, not null]
   updated_at DateTime [not null]
   favorites account_favorite [not null]
   account account [not null]
   tags business_tag [not null]
   cities business_city [not null]
+  social_links business_social_links
+  hours business_hours [not null]
+  hour_exceptions business_hour_exception [not null]
+  services business_service [not null]
+  medias media [not null]
   reviews review [not null]
 }
 
@@ -116,15 +132,18 @@ Table media {
   account_id String
   city_id String
   event_id String
+  business_id String
   media_type media_type [not null]
   url String [not null]
   thumbnail_url String
   is_cover Boolean [not null, default: false]
   position Int [not null, default: 0]
+  alt_text String
   created_at DateTime [default: `now()`, not null]
   account account
   city city
   event event
+  business business
 }
 
 Table account_favorite {
@@ -217,8 +236,82 @@ Table business_city {
   city_id String [not null]
   is_headquarter Boolean [not null, default: false]
   address_specific String
+  address String
+  neighborhood String
+  postal_code String
+  latitude Float
+  longitude Float
+  map_url String
   business business [not null]
   city city [not null]
+  hours business_hours [not null]
+  hour_exceptions business_hour_exception [not null]
+
+  indexes {
+    (business_id, city_id) [unique]
+  }
+}
+
+Table business_social_links {
+  id String [pk]
+  business_id String [unique, not null]
+  phone String
+  whatsapp String
+  public_email String
+  website String
+  instagram String
+  facebook String
+  business business [not null]
+}
+
+Table business_hours {
+  id String [pk]
+  business_id String [not null]
+  business_city_id String
+  weekday Int [not null]
+  is_closed Boolean [not null, default: false]
+  opens_at String
+  closes_at String
+  break_start String
+  break_end String
+  business business [not null]
+  location business_city
+
+  indexes {
+    (business_id, business_city_id, weekday) [unique]
+  }
+}
+
+Table business_hour_exception {
+  id String [pk]
+  business_id String [not null]
+  business_city_id String
+  date DateTime [not null]
+  is_closed Boolean [not null, default: true]
+  opens_at String
+  closes_at String
+  reason String
+  business business [not null]
+  location business_city
+
+  indexes {
+    (business_id, business_city_id, date) [unique]
+  }
+}
+
+Table business_service {
+  id String [pk]
+  business_id String [not null]
+  name String [not null]
+  description String
+  price_from Decimal
+  price_to Decimal
+  price_label String
+  booking_url String
+  service_type String
+  position Int [not null, default: 0]
+  active Boolean [not null, default: true]
+  business business [not null]
 }
 
 Table event_tag {
@@ -287,6 +380,12 @@ Enum account_type {
   business
 }
 
+Enum account_role {
+  user
+  admin
+  super_admin
+}
+
 Enum gender {
   male
   female
@@ -328,6 +427,8 @@ Ref: media.city_id > city.id [delete: Cascade]
 
 Ref: media.event_id > event.id [delete: Cascade]
 
+Ref: media.business_id > business.id [delete: Cascade]
+
 Ref: account_favorite.account_id > account.id [delete: Cascade]
 
 Ref: account_favorite.business_id > business.id [delete: Cascade]
@@ -353,6 +454,18 @@ Ref: business_tag.tag_id > tag.id [delete: Cascade]
 Ref: business_city.business_id > business.id [delete: Cascade]
 
 Ref: business_city.city_id > city.id [delete: Cascade]
+
+Ref: business_social_links.business_id - business.id [delete: Cascade]
+
+Ref: business_hours.business_id > business.id [delete: Cascade]
+
+Ref: business_hours.business_city_id > business_city.id [delete: Cascade]
+
+Ref: business_hour_exception.business_id > business.id [delete: Cascade]
+
+Ref: business_hour_exception.business_city_id > business_city.id [delete: Cascade]
+
+Ref: business_service.business_id > business.id [delete: Cascade]
 
 Ref: event_tag.event_id > event.id [delete: Cascade]
 

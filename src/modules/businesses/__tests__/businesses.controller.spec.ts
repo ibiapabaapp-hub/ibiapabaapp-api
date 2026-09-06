@@ -69,4 +69,34 @@ describe('BusinessesController', () => {
 		await controller.getBusinessMedia('uuid');
 		expect(mediasService.getMediaByAccount).toHaveBeenCalledWith('uuid');
 	});
+
+	it('should update the profile using the authenticated account', async () => {
+		const dto = { commercial_name: 'Empresa Nova', description: 'Descrição' };
+
+		await controller.updateProfile('business-1', 'account-1', dto);
+
+		expect(service.updateProfile).toHaveBeenCalledWith(
+			'business-1',
+			'account-1',
+			dto,
+		);
+	});
+
+	it('should delegate public profile aggregation', async () => {
+		await controller.publicProfile('business-1');
+
+		expect(service.publicProfile).toHaveBeenCalledWith('business-1');
+	});
+
+	it('should update tags using the authenticated account', async () => {
+		const dto = { tag_ids: ['tag-1', 'tag-2'] };
+
+		await controller.updateTags('business-1', 'account-1', dto);
+
+		expect(service.updateTags).toHaveBeenCalledWith(
+			'business-1',
+			'account-1',
+			dto.tag_ids,
+		);
+	});
 });
