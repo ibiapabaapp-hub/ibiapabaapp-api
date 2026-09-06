@@ -8,6 +8,7 @@ import {
 	CheckUniqueResponse,
 } from '../dtos/check-unique-field.dto';
 import { AuthResponseDto } from '../dtos/manual-auth/auth-response.dto';
+import { ChangeEmailDto } from '../dtos/manual-auth/change-email.dto';
 import { ForgotPasswordDto } from '../dtos/manual-auth/forgot-password.dto';
 import { LoginDto } from '../dtos/manual-auth/login.dto';
 import { RegisterDto } from '../dtos/manual-auth/register.dto';
@@ -79,6 +80,30 @@ describe('AuthController', () => {
 
 		expect(service.register).toHaveBeenCalledWith(dto);
 		expect(result).toEqual(response);
+	});
+
+	it('should call authService.resendVerificationEmail on resendVerification()', async () => {
+		service.resendVerificationEmail.mockResolvedValue({ success: true });
+
+		await expect(
+			controller.resendVerification('Bearer access-token'),
+		).resolves.toEqual({ success: true });
+		expect(service.resendVerificationEmail).toHaveBeenCalledWith(
+			'Bearer access-token',
+		);
+	});
+
+	it('should call authService.changeUnverifiedEmail on changeUnverifiedEmail()', async () => {
+		const dto = { email: 'new@example.com' } as ChangeEmailDto;
+		service.changeUnverifiedEmail.mockResolvedValue({ success: true });
+
+		await expect(
+			controller.changeUnverifiedEmail('Bearer access-token', dto),
+		).resolves.toEqual({ success: true });
+		expect(service.changeUnverifiedEmail).toHaveBeenCalledWith(
+			'Bearer access-token',
+			dto,
+		);
 	});
 
 	it('should call authService.requestPasswordReset on forgotPassword()', async () => {
