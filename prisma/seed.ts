@@ -51,11 +51,6 @@ interface BusinessCityRef {
 	adress_specific: string;
 }
 
-interface BusinessUserRef {
-	email: string;
-	role: string;
-}
-
 interface MediaEntry {
 	media_type: 'image' | 'video';
 	url: string;
@@ -69,11 +64,8 @@ interface BusinessEntry {
 	description: string;
 	cnpj: string;
 	max_reach_level: 'local' | 'regional';
-	active: boolean;
-	cover_img_url: string;
 	tags: string[];
 	cities: BusinessCityRef[];
-	users: BusinessUserRef[];
 	medias: MediaEntry[];
 }
 
@@ -398,33 +390,19 @@ async function main() {
 				const business = await tx.business.upsert({
 					where: { owner_account_id: businessAccount.id },
 					update: {
+						commercial_name: bizData.name,
+						description: bizData.description,
 						cnpj: bizData.cnpj,
 						max_reach_level: bizData.max_reach_level,
 					},
 					create: {
 						owner_account_id: businessAccount.id,
+						commercial_name: bizData.name,
+						description: bizData.description,
 						cnpj: bizData.cnpj,
 						max_reach_level: bizData.max_reach_level,
 					},
 				});
-
-				// Vincula usuários à conta do business (se houver)
-				for (const userRef of bizData.users) {
-					const accountId = accountMap.get(userRef.email);
-					if (!accountId) {
-						console.warn(
-							`  ⚠️  Conta "${userRef.email}" não encontrada para business "${bizData.slug}".`,
-						);
-						continue;
-					}
-
-					// No novo modelo, não há mais account_profile
-					// Os usuários são vinculados através de outras relações (se necessário)
-					// ou através de permissões específicas da aplicação
-					console.log(
-						`  ℹ️  Usuário "${userRef.email}" associado ao business "${bizData.slug}" (sem vinculo direto no schema)`,
-					);
-				}
 
 				// Tags do business
 				for (const tagName of bizData.tags) {
@@ -481,16 +459,32 @@ async function main() {
 					}
 				}
 
-				// Mídias do business (vinculadas à account)
+				// Mídias do business (vinculadas diretamente à empresa)
 				for (const media of bizData.medias) {
-					await tx.media.create({
-						data: {
-							account_id: businessAccount.id,
-							media_type: media.media_type,
-							url: media.url,
-							is_cover: media.is_cover,
-						},
+					const existingMedia = await tx.media.findFirst({
+						where: { business_id: business.id, url: media.url },
 					});
+
+					if (existingMedia) {
+						await tx.media.update({
+							where: { id: existingMedia.id },
+							data: {
+								media_type: media.media_type,
+								is_cover: media.is_cover,
+								alt_text: media.alt_text,
+							},
+						});
+					} else {
+						await tx.media.create({
+							data: {
+								business_id: business.id,
+								media_type: media.media_type,
+								url: media.url,
+								is_cover: media.is_cover,
+								alt_text: media.alt_text,
+							},
+						});
+					}
 				}
 			}
 

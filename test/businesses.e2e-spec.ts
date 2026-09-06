@@ -50,6 +50,7 @@ describe('Companies (e2e)', () => {
 	afterEach(async () => {
 		await prisma.$executeRaw`TRUNCATE TABLE "business_tag" RESTART IDENTITY CASCADE`;
 		await prisma.$executeRaw`TRUNCATE TABLE "business" RESTART IDENTITY CASCADE`;
+		await prisma.$executeRaw`TRUNCATE TABLE "city" RESTART IDENTITY CASCADE`;
 		await prisma.$executeRaw`TRUNCATE TABLE "tag" RESTART IDENTITY CASCADE`;
 		await prisma.$executeRaw`TRUNCATE TABLE "tag_group" RESTART IDENTITY CASCADE`;
 		await prisma.$executeRaw`TRUNCATE TABLE "account" RESTART IDENTITY CASCADE`;
@@ -218,5 +219,128 @@ describe('Companies (e2e)', () => {
 				headquarters_city_id: crypto.randomUUID(),
 			})
 			.expect(404);
+	});
+
+	it('PATCH /businesses/:id/profile e contact -> atualiza somente pelo proprietário', async () => {
+		const owner = await createBusinessAccount('rich-owner', 'Nome inicial');
+		const other = await createBusinessAccount('rich-other', 'Outra conta');
+		const business = await createBusiness(owner.id);
+
+		await request(app.getHttpServer())
+			.patch(`${BASE_PATH}/${business.id}/profile`)
+			.set('Authorization', `Bearer ${tokenFor(other.id)}`)
+			.send({ commercial_name: 'Não autorizado' })
+			.expect(403);
+
+		await request(app.getHttpServer())
+			.patch(`${BASE_PATH}/${business.id}/profile`)
+			.set('Authorization', `Bearer ${tokenFor(owner.id)}`)
+			.send({
+				commercial_name: 'Nome comercial',
+				bio: 'Descrição curta',
+				description: 'Descrição completa',
+				parking: true,
+			})
+			.expect(200);
+
+		await request(app.getHttpServer())
+			.patch(`${BASE_PATH}/${business.id}/contact`)
+			.set('Authorization', `Bearer ${tokenFor(owner.id)}`)
+			.send({
+				phone: '+5588999999999',
+				whatsapp: '+5588999999999',
+				public_email: 'contato@empresa.test',
+				website: 'https://empresa.test',
+			})
+			.expect(200);
+
+		const publicProfile = await request(app.getHttpServer())
+			.get(`${BASE_PATH}/${business.id}/public-profile`)
+			.expect(200);
+
+		expect(publicProfile.body.commercial_name).toBe('Nome comercial');
+		expect(publicProfile.body.description).toBe('Descrição completa');
+		expect(publicProfile.body.contact.website).toBe('https://empresa.test');
+		expect(publicProfile.body).not.toHaveProperty('cnpj');
+	});
+
+	it('locations -> mantém uma matriz e impede cidade duplicada', async () => {
+		const owner = await createBusinessAccount('rich-locations', 'Localizações');
+		const business = await createBusiness(owner.id);
+		const city = crypto.randomUUID();
+		const branch = crypto.randomUUID();
+		await createCity(city, `Matriz ${city}`);
+		await createCity(branch, `Filial ${branch}`);
+
+		await request(app.getHttpServer())
+			.post(`${BASE_PATH}/${business.id}/locations`)
+			.set('Authorization', `Bearer ${tokenFor(owner.id)}`)
+			.send({
+				city_id: city,
+				is_headquarter: true,
+				address: 'Rua Principal, 100',
+				neighborhood: 'Centro',
+				postal_code: '62320000',
+				latitude: -3.7,
+				longitude: -40.3,
+			})
+			.expect(201);
+
+		await request(app.getHttpServer())
+			.post(`${BASE_PATH}/${business.id}/locations`)
+			.set('Authorization', `Bearer ${tokenFor(owner.id)}`)
+			.send({ city_id: city, is_headquarter: false })
+			.expect(409);
+
+		await request(app.getHttpServer())
+			.post(`${BASE_PATH}/${business.id}/locations`)
+			.set('Authorization', `Bearer ${tokenFor(owner.id)}`)
+			.send({ city_id: branch, is_headquarter: true })
+			.expect(409);
+	});
+
+	it('tags, services and profile público -> retorna dados agregados', async () => {
+		const owner = await createBusinessAccount('rich-public', 'Perfil público');
+		const business = await createBusiness(owner.id);
+		const group = await prisma.tag_group.create({
+			data: { name: 'Perfil público' },
+		});
+		const tag = await prisma.tag.create({
+			data: {
+				name: 'Destaque',
+				slug: `destaque-${business.id}`,
+				group_id: group.id,
+			},
+		});
+
+		await request(app.getHttpServer())
+			.put(`${BASE_PATH}/${business.id}/tags`)
+			.set('Authorization', `Bearer ${tokenFor(owner.id)}`)
+			.send({ tag_ids: [tag.id] })
+			.expect(200);
+
+		await request(app.getHttpServer())
+			.post(`${BASE_PATH}/${business.id}/services`)
+			.set('Authorization', `Bearer ${tokenFor(owner.id)}`)
+			.send({
+				name: 'Consultoria',
+				description: 'Atendimento principal',
+				price_from: 100,
+				price_to: 200,
+				position: 0,
+			})
+			.expect(201);
+
+		const profile = await request(app.getHttpServer())
+			.get(`${BASE_PATH}/${business.id}/public-profile`)
+			.expect(200);
+
+		expect(profile.body.tags).toEqual(['Destaque']);
+		expect(profile.body.services[0].name).toBe('Consultoria');
+		expect(profile.body.reviews).toEqual({
+			average_rating: 0,
+			total_reviews: 0,
+		});
+		expect(profile.body.events).toEqual([]);
 	});
 });

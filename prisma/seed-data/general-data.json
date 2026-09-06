@@ -91,7 +91,6 @@
 			"password": "12345678",
 			"birth_date": "1990-01-01",
 			"role": "superuser",
-			"type": "business",
 			"interests": ["Turismo rural", "Espaços culturais"],
 			"bio": "Administrador do sistema",
 			"avatar_url": "https://cdn.ibivibe.com.br/media/users/admin.png"
@@ -130,8 +129,6 @@
 			"description": "Restaurante Manacá da Serra",
 			"cnpj": "12.345.678/0001-90",
 			"max_reach_level": "local",
-			"active": true,
-			"cover_img_url": "https://cdn.ibivibe.com.br/businesses/manaca.png",
 			"tags": ["Restaurantes"],
 			"cities": [
 				{
@@ -140,16 +137,10 @@
 					"adress_specific": "Centro, Ubajara - CE"
 				}
 			],
-			"users": [
-				{
-					"email": "admin@teste.com",
-					"role": "owner"
-				}
-			],
 			"medias": [
 				{
 					"media_type": "image",
-					"url": "https://cdn.ibivibe.com.br/businesses/manaca.png",
+					"url": "https://cdn.ibivibe.com.br/media/businesses/manaca.png",
 					"is_cover": true,
 					"alt_text": "Imagem do Manacá da Serra"
 				}
@@ -161,8 +152,6 @@
 			"description": "Serra Viva Music Bar",
 			"cnpj": "98.765.432/0001-10",
 			"max_reach_level": "regional",
-			"active": true,
-			"cover_img_url": "https://cdn.ibivibe.com.br/businesses/serraviva.png",
 			"tags": ["Bares e pubs", "Casas de eventos"],
 			"cities": [
 				{
@@ -176,16 +165,10 @@
 					"adress_specific": "Avenida Principal, Tianguá - CE"
 				}
 			],
-			"users": [
-				{
-					"email": "admin@teste.com",
-					"role": "admin"
-				}
-			],
 			"medias": [
 				{
 					"media_type": "image",
-					"url": "https://cdn.ibivibe.com.br/businesses/serraviva.png",
+					"url": "https://cdn.ibivibe.com.br/media/businesses/serraviva.png",
 					"is_cover": true,
 					"alt_text": "Imagem do Serra Viva"
 				}
@@ -197,7 +180,7 @@
 			"name": "Festival de Inverno de Ubajara",
 			"slug": "festival-inverno-ubajara",
 			"description": "O maior festival de inverno do Ceará",
-			"cover_img_url": "https://cdn.ibivibe.com.br/events/festival-inverno.png",
+			"cover_img_url": "https://cdn.ibivibe.com.br/media/events/festival-inverno.png",
 			"reach_level": "regional",
 			"type": "featured",
 			"start_date": "2025-06-15T19:00:00Z",
@@ -215,7 +198,7 @@
 			"medias": [
 				{
 					"media_type": "image",
-					"url": "https://cdn.ibivibe.com.br/events/festival-inverno.png",
+					"url": "https://cdn.ibivibe.com.br/media/events/festival-inverno.png",
 					"is_cover": true,
 					"alt_text": "Festival de Inverno"
 				}
@@ -225,7 +208,7 @@
 			"name": "Noite do Forró",
 			"slug": "noite-do-forro",
 			"description": "Forró tradicional no centro de Tianguá",
-			"cover_img_url": "https://cdn.ibivibe.com.br/events/noite-forro.png",
+			"cover_img_url": "https://cdn.ibivibe.com.br/media/events/noite-forro.png",
 			"reach_level": "local",
 			"type": "simple",
 			"start_date": "2025-07-05T21:00:00Z",
@@ -243,7 +226,7 @@
 			"medias": [
 				{
 					"media_type": "image",
-					"url": "https://cdn.ibivibe.com.br/events/noite-forro.png",
+					"url": "https://cdn.ibivibe.com.br/media/events/noite-forro.png",
 					"is_cover": true,
 					"alt_text": "Noite do Forró"
 				}

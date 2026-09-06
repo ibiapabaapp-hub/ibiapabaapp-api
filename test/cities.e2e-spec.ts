@@ -44,6 +44,7 @@ describe('Cities (e2e)', () => {
 		);
 
 		await app.init();
+		await prisma.$executeRaw`TRUNCATE TABLE "city" RESTART IDENTITY CASCADE`;
 	});
 
 	afterEach(async () => {

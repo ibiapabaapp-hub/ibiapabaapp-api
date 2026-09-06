@@ -5,7 +5,12 @@ import {
 	PutObjectCommand,
 	S3Client,
 } from '@aws-sdk/client-s3';
-import { Injectable } from '@nestjs/common';
+import {
+	ConflictException,
+	ForbiddenException,
+	Injectable,
+	NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
@@ -76,5 +81,130 @@ export class MediasService {
 			where: { account_id: id },
 			orderBy: [{ is_cover: 'desc' }, { position: 'asc' }],
 		});
+	}
+
+	async getMediaByBusiness(id: string) {
+		return this.prismaService.media.findMany({
+			where: { business_id: id },
+			orderBy: [{ is_cover: 'desc' }, { position: 'asc' }],
+		});
+	}
+
+	private async assertOwner(businessId: string, accountId: string) {
+		const business = await this.prismaService.business.findUnique({
+			where: { id: businessId },
+			select: { owner_account_id: true },
+		});
+		if (!business) throw new NotFoundException('Business not found');
+		if (business.owner_account_id !== accountId)
+			throw new ForbiddenException('You do not own this business');
+	}
+
+	private keyFromUrl(url: string) {
+		return url.startsWith(this.publicUrl + '/')
+			? url.slice(this.publicUrl.length + 1)
+			: url;
+	}
+
+	async addBusinessMedia(
+		businessId: string,
+		accountId: string,
+		file: Express.Multer.File,
+		dto: any,
+	) {
+		await this.assertOwner(businessId, accountId);
+		if (!file) throw new ConflictException('Media file is required');
+		const uploaded = await this.upload(file);
+		try {
+			return await this.prismaService.$transaction(async (tx) => {
+				if (dto.is_cover)
+					await tx.media.updateMany({
+						where: { business_id: businessId },
+						data: { is_cover: false },
+					});
+				const position =
+					dto.position ??
+					(await tx.media.count({ where: { business_id: businessId } }));
+				return tx.media.create({
+					data: {
+						business_id: businessId,
+						media_type: dto.media_type || 'image',
+						url: uploaded.url,
+						thumbnail_url: dto.thumbnail_url,
+						is_cover: dto.is_cover ?? false,
+						position,
+						alt_text: dto.alt_text,
+					},
+				});
+			});
+		} catch (error) {
+			await this.delete(uploaded.key).catch(() => undefined);
+			throw error;
+		}
+	}
+
+	async updateBusinessMedia(
+		businessId: string,
+		mediaId: string,
+		accountId: string,
+		dto: any,
+	) {
+		await this.assertOwner(businessId, accountId);
+		const media = await this.prismaService.media.findFirst({
+			where: { id: mediaId, business_id: businessId },
+		});
+		if (!media) throw new NotFoundException('Media not found');
+		return this.prismaService.$transaction(async (tx) => {
+			if (dto.is_cover)
+				await tx.media.updateMany({
+					where: { business_id: businessId, id: { not: mediaId } },
+					data: { is_cover: false },
+				});
+			return tx.media.update({
+				where: { id: mediaId },
+				data: {
+					is_cover: dto.is_cover,
+					position: dto.position,
+					alt_text: dto.alt_text,
+					thumbnail_url: dto.thumbnail_url,
+				},
+			});
+		});
+	}
+
+	async removeBusinessMedia(
+		businessId: string,
+		mediaId: string,
+		accountId: string,
+	) {
+		await this.assertOwner(businessId, accountId);
+		const media = await this.prismaService.media.findFirst({
+			where: { id: mediaId, business_id: businessId },
+		});
+		if (!media) throw new NotFoundException('Media not found');
+		await this.prismaService.media.delete({ where: { id: mediaId } });
+		await this.delete(this.keyFromUrl(media.url)).catch(() => undefined);
+		return { deleted: true };
+	}
+
+	async reorderBusinessMedia(
+		businessId: string,
+		accountId: string,
+		mediaIds: string[],
+	) {
+		await this.assertOwner(businessId, accountId);
+		const records = await this.prismaService.media.findMany({
+			where: { business_id: businessId, id: { in: mediaIds } },
+			select: { id: true },
+		});
+		if (records.length !== mediaIds.length)
+			throw new NotFoundException(
+				'One or more media do not belong to this business',
+			);
+		return this.prismaService.$transaction(
+			mediaIds.map((id, position) =>
+				this.prismaService.media.update({ where: { id }, data: { position } }),
+			),
+		);
 	}
 }

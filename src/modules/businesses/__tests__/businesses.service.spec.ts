@@ -1,6 +1,6 @@
 import {
-	BadRequestException,
 	ConflictException,
+	ForbiddenException,
 	NotFoundException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -201,7 +201,7 @@ describe('BusinessesService', () => {
 			);
 			expect(tx.account.update).toHaveBeenCalledWith({
 				where: { id: 'account-1' },
-				data: { display_name: dto.name },
+				data: { display_name: dto.name, type: 'business' },
 			});
 			expect(result.branch_cities).toHaveLength(1);
 		});
@@ -213,15 +213,17 @@ describe('BusinessesService', () => {
 			);
 		});
 
-		it('rejects a non-business account and an existing business', async () => {
-			configureTransaction({
+		it('converts a personal account and rejects an existing business', async () => {
+			const personalTx = configureTransaction({
 				id: 'account-1',
 				type: 'personal',
 				business: null,
 			});
-			await expect(service.onboard('account-1', dto)).rejects.toThrow(
-				BadRequestException,
-			);
+			await service.onboard('account-1', dto);
+			expect(personalTx.account.update).toHaveBeenCalledWith({
+				where: { id: 'account-1' },
+				data: { display_name: dto.name, type: 'business' },
+			});
 
 			configureTransaction({
 				id: 'account-1',
@@ -249,6 +251,67 @@ describe('BusinessesService', () => {
 				'update failed',
 			);
 			expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe('rich business profile', () => {
+		it('rejects profile edits from another account', async () => {
+			prisma.business.findUnique.mockResolvedValue({
+				id: 'business-1',
+				owner_account_id: 'owner-1',
+			} as any);
+
+			await expect(
+				service.updateProfile('business-1', 'owner-2', {
+					commercial_name: 'Novo nome',
+				}),
+			).rejects.toThrow(ForbiddenException);
+		});
+
+		it('rejects duplicate weekdays in the same hours update', async () => {
+			prisma.business.findUnique.mockResolvedValue({
+				id: 'business-1',
+				owner_account_id: 'owner-1',
+			} as any);
+
+			await expect(
+				service.putHours('business-1', 'owner-1', [
+					{ weekday: 1, opens_at: '08:00', closes_at: '18:00' },
+					{ weekday: 1, opens_at: '09:00', closes_at: '19:00' },
+				]),
+			).rejects.toThrow(ConflictException);
+		});
+
+		it('does not expose CNPJ in the public business response', async () => {
+			prisma.business.findUnique.mockResolvedValue({
+				id: 'business-1',
+				cnpj: '12345678000195',
+				commercial_name: 'Empresa',
+				created_at: new Date(),
+				updated_at: new Date(),
+				max_reach_level: 'local',
+				is_verified: false,
+				verified_at: null,
+				accepts_payment: false,
+				offers_delivery: false,
+				in_person_service: true,
+				accessibility: false,
+				parking: false,
+				wifi: false,
+				account: {
+					id: 'owner-1',
+					bio: null,
+					slug: 'empresa',
+					display_name: 'Empresa',
+					avatar_url: null,
+					type: 'business',
+				},
+				tags: [],
+			} as any);
+
+			const result = await service.findOne('business-1');
+
+			expect(result).not.toHaveProperty('cnpj');
 		});
 	});
 });
